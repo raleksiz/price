@@ -74,6 +74,20 @@
   }
 
   /* ---------- Input panel ---------- */
+  .mobile-cat-dropdown{display:none;}
+  @media (max-width:640px){
+    .mobile-cat-dropdown.open{
+      display:block;background:#fff;border-radius:0 0 14px 14px;
+      padding:6px 14px 12px;box-shadow:0 8px 20px rgba(20,20,30,0.18);
+      max-height:55vh;overflow-y:auto;
+    }
+    .mobile-cat-dropdown .nav-chip{
+      display:flex;width:100%;border-radius:8px;margin-top:4px;
+      background:transparent;border:none;padding:10px 12px;
+      font-size:13px;color:var(--navy);text-align:left;
+    }
+    .mobile-cat-dropdown .nav-chip.done{background:var(--purple-light);color:var(--purple);font-weight:700;}
+  }
   .panel-sticky{
     position:sticky;top:0;z-index:30;
     background:var(--purple);
@@ -83,9 +97,16 @@
     max-width:980px;margin:0 auto;padding:14px 20px;
     display:grid;gap:10px;
   }
+  .panel-title-row{display:flex;align-items:center;justify-content:space-between;}
   .panel-title{
     color:#fff;font-size:12px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;opacity:0.9;
   }
+  .menu-icon-btn{
+    display:none;align-items:center;justify-content:center;
+    width:30px;height:30px;border-radius:8px;background:#fff;border:none;
+    color:var(--navy);cursor:pointer;flex-shrink:0;
+  }
+  .menu-icon-btn:active,.menu-icon-btn.active{background:var(--purple-light);color:var(--purple);}
   .inputs-grid{
     display:grid;
     grid-template-columns:repeat(3,1fr);
@@ -255,12 +276,11 @@
   .footer-link:hover{color:var(--purple);text-decoration:underline;}
 
   @media (max-width:640px){
-    .inputs-grid,.results-grid{grid-template-columns:1fr 1fr;}
-    .inputs-grid .field:nth-child(3){grid-column:1 / -1;}
-    .results-grid .stat:nth-child(3){grid-column:1 / -1;}
+    .inputs-grid,.results-grid{grid-template-columns:repeat(3,1fr);}
     header.brand h1{font-size:18px;}
     table{font-size:12.5px;}
     .cat-nav{display:none;}
+    .menu-icon-btn{display:flex;}
   }
 
   ::selection{background:var(--purple-light);}
@@ -281,7 +301,12 @@
 
 <div class="panel-sticky">
   <div class="panel">
-    <div class="panel-title">Заполните параметры</div>
+    <div class="panel-title-row">
+      <div class="panel-title">Заполните параметры</div>
+      <button type="button" class="menu-icon-btn" id="mobileMenuBtn" aria-label="Меню разделов">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+    </div>
     <div class="inputs-grid">
       <div class="field">
         <label for="inBudget" id="lblBudget">Бюджет, ₽</label>
@@ -292,16 +317,17 @@
         <input id="inPrepay" type="text" inputmode="numeric" placeholder="—" autocomplete="off">
       </div>
       <div class="field">
-        <label for="inTerm">Срок договора, мес.</label>
+        <label for="inTerm">Срок, мес.</label>
         <input id="inTerm" type="text" inputmode="numeric" placeholder="—" autocomplete="off">
       </div>
     </div>
     <div class="results-grid">
-      <div class="stat" id="statStatus"><label>Статус</label><div class="val" id="valStatus">Разовая услуга</div></div>
+      <div class="stat" id="statStatus"><label>Статус</label><div class="val" id="valStatus">Одна услуга</div></div>
       <div class="stat"><label>Ваш тариф</label><div class="val" id="valTariff">—</div></div>
       <div class="stat"><label>Ваша скидка</label><div class="val" id="valDiscount">0%</div></div>
     </div>
   </div>
+  <div class="mobile-cat-dropdown" id="mobileCatDropdown"></div>
 </div>
 
 <div class="legend">
@@ -525,15 +551,15 @@ function recompute(){
   const prepay = rawNumber(document.getElementById('inPrepay'));
   const term = rawNumber(document.getElementById('inTerm'));
   const isAbon = term >= 3;
-  document.getElementById('lblBudget').textContent = isAbon ? 'Бюджет в месяц, ₽' : 'Бюджет, ₽';
-  document.getElementById('lblPrepay').textContent = isAbon ? 'Предоплата в месяц, ₽' : 'Предоплата, ₽';
+  document.getElementById('lblBudget').textContent = isAbon ? 'Бюджет, мес.' : 'Бюджет, ₽';
+  document.getElementById('lblPrepay').textContent = isAbon ? 'Аванс, мес.' : 'Предоплата, ₽';
 
   const { tariff, discount } = calcDiscount(budget, prepay, term);
   const shownTariff = isAbon ? tariff : '—';
   const shownDiscount = isAbon ? discount : 0;
 
   const statusEl = document.getElementById('statStatus');
-  document.getElementById('valStatus').textContent = isAbon ? 'Абонемент' : 'Разовая услуга';
+  document.getElementById('valStatus').textContent = isAbon ? 'Абонемент' : 'Одна услуга';
   statusEl.classList.toggle('status-on', isAbon);
   statusEl.classList.toggle('status-off', !isAbon);
   document.getElementById('valTariff').textContent = shownTariff;
@@ -657,25 +683,41 @@ function toggleCategory(section){
 }
 
 function buildNav(){
+  const mobileDropdown = document.getElementById('mobileCatDropdown');
   DATA.categories.forEach((cat, ci) => {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'nav-chip';
-    chip.dataset.idx = ci;
-    chip.textContent = cat.short;
-    chip.addEventListener('click', () => {
-      const section = document.querySelector(`section.category[data-idx="${ci}"]`);
-      if (!section.classList.contains('open')){
-        section.classList.add('open');
-        insertSorted(expandedGroup, section);
-        updateGroupVisibility();
-        updateNavChips();
-      }
-      scrollToSection(section);
-    });
-    catNav.appendChild(chip);
+    function makeChip(closeDropdownAfter){
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'nav-chip';
+      chip.dataset.idx = ci;
+      chip.textContent = cat.short;
+      chip.addEventListener('click', () => {
+        const section = document.querySelector(`section.category[data-idx="${ci}"]`);
+        if (!section.classList.contains('open')){
+          section.classList.add('open');
+          insertSorted(expandedGroup, section);
+          updateGroupVisibility();
+          updateNavChips();
+        }
+        if (closeDropdownAfter){
+          mobileDropdown.classList.remove('open');
+          mobileMenuBtn.classList.remove('active');
+        }
+        scrollToSection(section);
+      });
+      return chip;
+    }
+    catNav.appendChild(makeChip(false));
+    mobileDropdown.appendChild(makeChip(true));
   });
 }
+
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const mobileCatDropdown = document.getElementById('mobileCatDropdown');
+mobileMenuBtn.addEventListener('click', () => {
+  const open = mobileCatDropdown.classList.toggle('open');
+  mobileMenuBtn.classList.toggle('active', open);
+});
 
 const toggleAllBtn = document.getElementById('toggleAllBtn');
 toggleAllBtn.addEventListener('click', () => {
