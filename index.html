@@ -75,19 +75,17 @@
 
   /* ---------- Input panel ---------- */
   .mobile-cat-dropdown{display:none;}
-  @media (max-width:640px){
-    .mobile-cat-dropdown.open{
-      display:block;background:#fff;border-radius:0 0 14px 14px;
-      padding:6px 14px 12px;box-shadow:0 8px 20px rgba(20,20,30,0.18);
-      max-height:55vh;overflow-y:auto;
-    }
-    .mobile-cat-dropdown .nav-chip{
-      display:flex;width:100%;border-radius:8px;margin-top:4px;
-      background:transparent;border:none;padding:10px 12px;
-      font-size:13px;color:var(--navy);text-align:left;
-    }
-    .mobile-cat-dropdown .nav-chip.done{background:var(--purple-light);color:var(--purple);font-weight:700;}
+  .mobile-cat-dropdown.open{
+    display:block;background:#fff;border-radius:0 0 14px 14px;
+    padding:6px 14px 12px;box-shadow:0 8px 20px rgba(20,20,30,0.18);
+    max-height:55vh;overflow-y:auto;
   }
+  .mobile-cat-dropdown .nav-chip{
+    display:flex;width:100%;border-radius:8px;margin-top:4px;
+    background:transparent;border:none;padding:10px 12px;
+    font-size:13px;color:var(--navy);text-align:left;
+  }
+  .mobile-cat-dropdown .nav-chip.done{background:var(--purple-light);color:var(--purple);font-weight:700;}
   .panel-sticky{
     position:sticky;top:0;z-index:30;
     background:var(--purple);
@@ -102,9 +100,10 @@
     color:#fff;font-size:12px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;opacity:0.9;
   }
   .menu-icon-btn{
-    display:none;align-items:center;justify-content:center;
-    width:30px;height:30px;border-radius:8px;background:#fff;border:none;
-    color:var(--navy);cursor:pointer;flex-shrink:0;
+    display:flex;align-items:center;gap:6px;justify-content:center;
+    padding:0 12px;height:30px;border-radius:8px;background:#fff;border:none;
+    color:var(--navy);cursor:pointer;flex-shrink:0;font-size:12px;font-weight:700;
+    font-family:'Inter',sans-serif;
   }
   .menu-icon-btn:active,.menu-icon-btn.active{background:var(--purple-light);color:var(--purple);}
   .inputs-grid{
@@ -267,10 +266,19 @@
 
   footer{
     max-width:980px;margin:0 auto;padding:28px 14px 40px;color:var(--ink-soft);font-size:11px;line-height:1.6;
+    text-align:center;
   }
   footer .fline{margin-top:14px;}
-  footer .channel-line{margin-top:8px;}
-  footer .channel-line .footer-link{display:inline-flex;align-items:center;gap:5px;}
+  footer .channel-line{margin-top:10px;}
+  .channel-cta{
+    display:inline-flex;align-items:center;gap:7px;
+    background:linear-gradient(135deg, var(--purple), #8B4FB0);
+    color:#fff;font-weight:700;font-size:12.5px;
+    padding:9px 18px;border-radius:24px;text-decoration:none;
+    box-shadow:0 3px 10px rgba(110,59,140,0.3);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .channel-cta:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(110,59,140,0.4);}
   footer .rights{margin-top:28px;font-size:9.5px;color:#A9ADB6;line-height:1.5;}
   .footer-link{color:inherit;text-decoration:none;}
   .footer-link:hover{color:var(--purple);text-decoration:underline;}
@@ -280,7 +288,14 @@
     header.brand h1{font-size:18px;}
     table{font-size:12.5px;}
     .cat-nav{display:none;}
-    .menu-icon-btn{display:flex;}
+    .menu-icon-btn{width:30px;padding:0;}
+    .menu-icon-btn-label{display:none;}
+  }
+
+  @media (max-width:380px){
+    .inputs-grid,.results-grid{grid-template-columns:1fr 1fr;}
+    .inputs-grid .field:nth-child(3),
+    .results-grid .stat:nth-child(3){grid-column:1 / -1;}
   }
 
   ::selection{background:var(--purple-light);}
@@ -305,6 +320,7 @@
       <div class="panel-title">Заполните параметры</div>
       <button type="button" class="menu-icon-btn" id="mobileMenuBtn" aria-label="Меню разделов">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="menu-icon-btn-label">Меню</span>
       </button>
     </div>
     <div class="inputs-grid">
@@ -356,7 +372,7 @@
 <footer>
   <div>Итоговая стоимость рассчитывается индивидуально и может быть скорректирована при изменении условий поручения.</div>
   <div class="fline">Написать: <a class="footer-link" href="https://t.me/aruzlev" target="_blank" rel="noopener">Telegram</a> · <a class="footer-link" href="mailto:raleksiz.law@gmail.com">Почта</a></div>
-  <div class="fline channel-line"><a class="footer-link" href="https://t.me/raleksiz_law" target="_blank" rel="noopener"><svg class="icon-svg" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Raleksiz House Law — канал с разборами и новостями</a></div>
+  <div class="fline channel-line"><a class="channel-cta" href="https://t.me/raleksiz_law" target="_blank" rel="noopener"><svg class="icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Подписаться на канал</a></div>
   <div class="rights">© 2026 Алексей Рузлев. Все права защищены. Копирование, воспроизведение и использование материалов без письменного согласия автора запрещены.</div>
 </footer>
 
