@@ -299,6 +299,18 @@
   }
 
   ::selection{background:var(--purple-light);}
+
+  @media print{
+    .cat-body{max-height:none !important;overflow:visible !important;}
+    .legend-list{max-height:none !important;}
+    .legend-list::after{display:none;}
+    .legend-toggle,.cat-controls,.menu-icon-btn,.mobile-cat-dropdown{display:none !important;}
+    details.surcharges{display:block !important;}
+    details.surcharges:not([open]) > *{display:block !important;}
+    details.surcharges summary::-webkit-details-marker,
+    details.surcharges summary::marker{display:none;}
+    .cat-chevron{display:none;}
+  }
 </style>
 </head>
 <body>
@@ -371,7 +383,7 @@
 
 <footer>
   <div>Итоговая стоимость рассчитывается индивидуально и может быть скорректирована при изменении условий поручения.</div>
-  <div class="fline">Написать: <a class="footer-link" href="https://t.me/aruzlev" target="_blank" rel="noopener">Telegram</a> · <a class="footer-link" href="mailto:raleksiz.law@gmail.com">Почта</a></div>
+  <div class="fline">Не нашли нужную услугу или остались вопросы? Напишите: <a class="footer-link" href="https://t.me/aruzlev" target="_blank" rel="noopener">Telegram</a> · <a class="footer-link" href="mailto:raleksiz.law@gmail.com">Почта</a></div>
   <div class="fline channel-line"><a class="channel-cta" href="https://t.me/raleksiz_law" target="_blank" rel="noopener"><svg class="icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Подписаться на канал</a></div>
   <div class="rights">© 2026 Алексей Рузлев. Все права защищены. Копирование, воспроизведение и использование материалов без письменного согласия автора запрещены.</div>
 </footer>
@@ -416,6 +428,7 @@ function buildPage(){
     const section = document.createElement('section');
     section.className = 'category';
     section.dataset.idx = ci;
+    section.id = `cat-${ci}`;
 
     const header = document.createElement('div');
     header.className = 'cat-header';
@@ -756,10 +769,39 @@ toggleAllBtn.addEventListener('click', () => {
   updateNavChips();
 });
 
+function openFromHash(){
+  const match = window.location.hash.match(/^#cat-(\d+)$/);
+  if (!match) return;
+  const idx = Number(match[1]);
+  const section = document.querySelector(`section.category[data-idx="${idx}"]`);
+  if (!section) return;
+  if (!section.classList.contains('open')){
+    section.classList.add('open');
+    insertSorted(expandedGroup, section);
+    updateGroupVisibility();
+    updateNavChips();
+  }
+  setTimeout(() => scrollToSection(section), 50);
+}
+
 buildNav();
 buildPage();
+
+// --- pre-fill from URL query params, e.g. ?budget=60000&prepay=30000&term=6 ---
+const urlParams = new URLSearchParams(window.location.search);
+const paramMap = { budget: 'inBudget', prepay: 'inPrepay', term: 'inTerm' };
+Object.entries(paramMap).forEach(([key, id]) => {
+  const val = urlParams.get(key);
+  if (val !== null){
+    const el = document.getElementById(id);
+    el.value = val;
+    formatThousands(el);
+  }
+});
+
 updateGroupVisibility();
 recompute();
+openFromHash();
 ['inBudget','inPrepay','inTerm'].forEach(id => {
   const el = document.getElementById(id);
   el.addEventListener('input', () => { formatThousands(el); recompute(); });
