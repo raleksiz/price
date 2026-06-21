@@ -246,11 +246,11 @@
     <div class="panel-title">Заполните параметры</div>
     <div class="inputs-grid">
       <div class="field">
-        <label for="inBudget">Бюджет, ₽</label>
+        <label for="inBudget" id="lblBudget">Бюджет, ₽</label>
         <input id="inBudget" type="text" inputmode="numeric" placeholder="—" autocomplete="off">
       </div>
       <div class="field">
-        <label for="inPrepay">Предоплата, ₽</label>
+        <label for="inPrepay" id="lblPrepay">Предоплата, ₽</label>
         <input id="inPrepay" type="text" inputmode="numeric" placeholder="—" autocomplete="off">
       </div>
       <div class="field">
@@ -472,6 +472,8 @@ function recompute(){
   const prepay = rawNumber(document.getElementById('inPrepay'));
   const term = rawNumber(document.getElementById('inTerm'));
   const isAbon = term >= 3;
+  document.getElementById('lblBudget').textContent = isAbon ? 'Бюджет в месяц, ₽' : 'Бюджет, ₽';
+  document.getElementById('lblPrepay').textContent = isAbon ? 'Предоплата в месяц, ₽' : 'Предоплата, ₽';
 
   const { tariff, discount } = calcDiscount(budget, prepay, term);
   const shownTariff = isAbon ? tariff : '—';
