@@ -698,6 +698,15 @@ function scrollToSection(section){
   window.scrollTo({top, behavior:'smooth'});
 }
 
+function updateUrlHash(){
+  const openIdx = [...document.querySelectorAll('section.category.open')]
+    .map(s => Number(s.dataset.idx))
+    .sort((a,b) => a-b);
+  const newHash = openIdx.length ? '#cat-' + openIdx.join(',') : '';
+  const url = window.location.pathname + window.location.search + newHash;
+  history.replaceState(null, '', url);
+}
+
 function toggleCategory(section){
   if (section.classList.contains('open')){
     section.classList.remove('open');
@@ -708,6 +717,7 @@ function toggleCategory(section){
   }
   updateGroupVisibility();
   updateNavChips();
+  updateUrlHash();
   scrollToSection(section);
 }
 
@@ -727,6 +737,7 @@ function buildNav(){
           insertSorted(expandedGroup, section);
           updateGroupVisibility();
           updateNavChips();
+          updateUrlHash();
         }
         if (closeDropdownAfter){
           mobileDropdown.classList.remove('open');
@@ -767,21 +778,27 @@ toggleAllBtn.addEventListener('click', () => {
   }
   updateGroupVisibility();
   updateNavChips();
+  updateUrlHash();
 });
 
 function openFromHash(){
-  const match = window.location.hash.match(/^#cat-(\d+)$/);
+  const match = window.location.hash.match(/^#cat-([\d,]+)$/);
   if (!match) return;
-  const idx = Number(match[1]);
-  const section = document.querySelector(`section.category[data-idx="${idx}"]`);
-  if (!section) return;
-  if (!section.classList.contains('open')){
-    section.classList.add('open');
-    insertSorted(expandedGroup, section);
+  const indices = match[1].split(',').map(Number);
+  let lastSection = null;
+  indices.forEach(idx => {
+    const section = document.querySelector(`section.category[data-idx="${idx}"]`);
+    if (section && !section.classList.contains('open')){
+      section.classList.add('open');
+      insertSorted(expandedGroup, section);
+      lastSection = section;
+    }
+  });
+  if (lastSection){
     updateGroupVisibility();
     updateNavChips();
+    setTimeout(() => scrollToSection(lastSection), 50);
   }
-  setTimeout(() => scrollToSection(section), 50);
 }
 
 buildNav();
