@@ -303,17 +303,6 @@
 
   ::selection{background:var(--purple-light);}
 
-  @media print{
-    .cat-body{max-height:none !important;overflow:visible !important;}
-    .legend-list{max-height:none !important;}
-    .legend-list::after{display:none;}
-    .legend-toggle,.cat-controls,.menu-icon-btn,.mobile-cat-dropdown{display:none !important;}
-    details.surcharges{display:block !important;}
-    details.surcharges:not([open]) > *{display:block !important;}
-    details.surcharges summary::-webkit-details-marker,
-    details.surcharges summary::marker{display:none;}
-    .cat-chevron{display:none;}
-  }
 </style>
 </head>
 <body>
@@ -767,6 +756,13 @@ const mobileCatDropdown = document.getElementById('mobileCatDropdown');
 mobileMenuBtn.addEventListener('click', () => {
   const open = mobileCatDropdown.classList.toggle('open');
   mobileMenuBtn.classList.toggle('active', open);
+});
+
+document.addEventListener('click', (e) => {
+  if (!mobileCatDropdown.classList.contains('open')) return;
+  if (mobileCatDropdown.contains(e.target) || mobileMenuBtn.contains(e.target)) return;
+  mobileCatDropdown.classList.remove('open');
+  mobileMenuBtn.classList.remove('active');
 });
 
 const toggleAllBtn = document.getElementById('toggleAllBtn');
