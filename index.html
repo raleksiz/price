@@ -223,12 +223,9 @@
   td.block-subheading{font-size:12.5px;font-weight:700;color:var(--purple);}
   td.block-intro{font-size:11.5px;color:var(--ink-soft);line-height:1.45;font-weight:400;padding-top:0 !important;}
   table{width:100%;border-collapse:collapse;font-size:13.5px;table-layout:fixed;}
-  table:not(.dual) thead th:nth-child(1){width:54%;}
-  table:not(.dual) thead th:nth-child(2){width:16%;}
-  table:not(.dual) thead th:nth-child(3){width:30%;}
-  table.dual thead th:nth-child(1){width:52%;}
-  table.dual thead th:nth-child(2){width:24%;}
-  table.dual thead th:nth-child(3){width:24%;}
+  table.dual thead th:nth-child(1){width:55%;}
+  table.dual thead th:nth-child(2){width:22.5%;}
+  table.dual thead th:nth-child(3){width:22.5%;}
   thead th{
     text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:0.3px;
     color:var(--ink-soft);font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line);
@@ -238,7 +235,7 @@
   tbody tr{border-bottom:1px solid var(--line);transition:background-color .25s ease;}
   tbody tr:last-child{border-bottom:none;}
   tbody td{padding:9px 10px;vertical-align:top;}
-  td.service{max-width:0;width:55%;}
+  td.service{}
   td.service .code{
     display:inline-block;font-size:10px;font-weight:700;color:var(--purple);
     background:var(--purple-light);border-radius:4px;padding:1px 5px;margin-right:6px;vertical-align:middle;
@@ -248,10 +245,18 @@
   .row-note{display:block;margin-left:4px;font-size:11px;color:var(--ink-soft);font-style:italic;margin-top:3px;font-weight:400;}
   .hl{color:var(--purple);font-style:italic;}
   .hl-b{color:var(--purple);font-weight:700;}
+
   td.price{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
-  td.price .price-old{text-decoration:line-through;color:#A8ACB5;font-size:11.5px;margin-right:5px;}
+  td.price .price-content{display:inline-flex;flex-direction:row;align-items:baseline;gap:4px;white-space:nowrap;}
+  td.price .price-old{text-decoration:line-through;color:#A8ACB5;font-size:11.5px;}
+  @media (max-width:640px){
+    td.price{white-space:normal;}
+    td.price .price-content{flex-direction:column-reverse;align-items:flex-end;gap:0;}
+    td.price .price-old{font-size:10.5px;line-height:1.2;white-space:nowrap;}
+    td.price .price-final{white-space:nowrap;}
+  }
   td.price .price-final{font-weight:700;color:var(--navy);}
-  td.price .price-na{color:var(--ink-soft);font-style:italic;font-size:12px;}
+  td.price .price-na{color:var(--ink-soft);font-style:italic;font-size:12px;white-space:normal;text-align:right;}
   tbody tr.available{background:var(--green-bg);}
   tbody tr.available td.price .price-final{color:var(--green-text);}
 
@@ -313,6 +318,8 @@
 
   .footer-br{display:none;}
   @media (max-width:640px){.footer-br{display:inline;}}
+@media (max-width:640px){
+  }
   ::selection{background:var(--purple-light);}
 
 </style>
@@ -462,6 +469,16 @@ function buildPage(){
       ? `<th>Услуга</th><th class="num">${cat.col1_label.replace(', ₽','')}</th><th class="num">${cat.col2_label.replace(', ₽','')}</th>`
       : '<th>Услуга</th><th>Срок</th><th class="num">Цена для вас</th>';
     thead.appendChild(trh);
+    const colgroup = document.createElement('colgroup');
+    const isMobile = window.innerWidth <= 640;
+    if (cat.dual){
+      colgroup.innerHTML = '<col style="width:55%"><col style="width:22.5%"><col style="width:22.5%">';
+    } else if (isMobile){
+      colgroup.innerHTML = '<col style="width:54%"><col style="width:16%"><col style="width:30%">';
+    } else {
+      colgroup.innerHTML = '<col style="width:55%"><col style="width:22.5%"><col style="width:22.5%">';
+    }
+    table.appendChild(colgroup);
     table.appendChild(thead);
 
     const tbody = document.createElement('tbody');
