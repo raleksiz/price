@@ -182,21 +182,27 @@
     padding:7px 14px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;
   }
   .toolbar-btn:hover{background:var(--purple-light);border-color:var(--purple);}
-  #expandedGroup section.category{margin-top:18px;}
-  #collapsedGroup{
-    background:var(--card);border-radius:var(--radius);overflow:hidden;
-    margin-top:18px;border:1px solid var(--line);box-shadow:0 1px 3px rgba(20,20,30,0.04);
-  }
-  #collapsedGroup.empty,#expandedGroup.empty{display:none;}
-  #collapsedGroup section.category{
-    margin-top:0;border-radius:0;border:none;box-shadow:none;
-    border-bottom:1px solid var(--line);
-  }
-  #collapsedGroup section.category:last-child{border-bottom:none;}
   section.category{
     background:var(--card);border-radius:var(--radius);
     margin-top:18px;overflow:hidden;border:1px solid var(--line);
     box-shadow:0 1px 3px rgba(20,20,30,0.04);
+    transition:border-radius .15s ease;
+  }
+  /* Merged collapsed groups — no gap, no separate radius */
+  section.category.grp-first{
+    border-radius:var(--radius) var(--radius) 0 0;
+    margin-bottom:0;
+  }
+  section.category.grp-mid{
+    border-radius:0;margin-top:0;margin-bottom:0;
+    border-top:none;
+  }
+  section.category.grp-last{
+    border-radius:0 0 var(--radius) var(--radius);
+    margin-top:0;
+  }
+  section.category.grp-solo{
+    /* single collapsed — keep normal radius */
   }
   .cat-header{
     background:var(--navy-light);color:#fff;padding:12px 16px;
@@ -400,8 +406,7 @@
     <button type="button" id="toggleAllBtn" class="toolbar-btn">Развернуть все</button>
     <div class="cat-nav" id="catNav"></div>
   </div>
-  <div id="expandedGroup"></div>
-  <div id="collapsedGroup"></div>
+  <div id="sectionsContainer"></div>
 </main>
 
 <footer>
@@ -446,7 +451,7 @@ function fmtRub(n){
 }
 
 function buildPage(){
-  const root = document.getElementById('collapsedGroup');
+  const root = document.getElementById('sectionsContainer');
   DATA.categories.forEach((cat, ci) => {
     const section = document.createElement('section');
     section.className = 'category';
@@ -692,21 +697,7 @@ window.addEventListener('resize', checkHeaderWrap);
 checkHeaderWrap();
 setTimeout(checkHeaderWrap, 300);
 
-const expandedGroup = document.getElementById('expandedGroup');
-const collapsedGroup = document.getElementById('collapsedGroup');
 const catNav = document.getElementById('catNav');
-
-function insertSorted(container, section){
-  const idx = Number(section.dataset.idx);
-  const target = [...container.children].find(s => Number(s.dataset.idx) > idx);
-  if (target) container.insertBefore(section, target);
-  else container.appendChild(section);
-}
-
-function updateGroupVisibility(){
-  collapsedGroup.classList.toggle('empty', collapsedGroup.children.length === 0);
-  expandedGroup.classList.toggle('empty', expandedGroup.children.length === 0);
-}
 
 function anyOpen(){
   return document.querySelector('section.category.open') !== null;
@@ -724,6 +715,21 @@ function updateNavChips(){
   updateToggleAllBtn();
 }
 
+function updateCollapsedGroups(){
+  const sections = [...document.querySelectorAll('section.category')];
+  sections.forEach((s, i) => {
+    s.classList.remove('grp-first','grp-mid','grp-last','grp-solo');
+    if (!s.classList.contains('open')){
+      const prevClosed = i > 0 && !sections[i-1].classList.contains('open');
+      const nextClosed = i < sections.length-1 && !sections[i+1].classList.contains('open');
+      if (!prevClosed && !nextClosed) s.classList.add('grp-solo');
+      else if (!prevClosed) s.classList.add('grp-first');
+      else if (!nextClosed) s.classList.add('grp-last');
+      else s.classList.add('grp-mid');
+    }
+  });
+}
+
 function scrollToSection(section){
   const panel = document.querySelector('.panel-sticky');
   const offset = (panel ? panel.offsetHeight : 0) + 12;
@@ -739,24 +745,28 @@ function updateUrlHash(){
   const url = window.location.pathname + window.location.search + newHash;
   try {
     history.replaceState(null, '', url);
-  } catch (e) {
-    // Some embedding contexts (sandboxed preview iframes, srcdoc, etc.)
-    // restrict the History API — safe to skip the URL update there.
-  }
+  } catch (e) {}
 }
 
 function toggleCategory(section){
-  if (section.classList.contains('open')){
+  const isOpen = section.classList.contains('open');
+  if (isOpen){
+    // Closing: preserve scroll position
+    const bodyEl = section.querySelector('.cat-body');
+    const bodyH = bodyEl ? bodyEl.scrollHeight : 0;
+    const sectionTop = section.getBoundingClientRect().top + window.scrollY;
     section.classList.remove('open');
-    insertSorted(collapsedGroup, section);
+    // If section top is above current scroll position, compensate for lost height
+    if (sectionTop < window.scrollY){
+      window.scrollBy(0, -bodyH);
+    }
   } else {
     section.classList.add('open');
-    insertSorted(expandedGroup, section);
+    scrollToSection(section);
   }
-  updateGroupVisibility();
+  updateCollapsedGroups();
   updateNavChips();
   updateUrlHash();
-  scrollToSection(section);
 }
 
 function buildNav(){
@@ -770,18 +780,11 @@ function buildNav(){
       chip.textContent = cat.short;
       chip.addEventListener('click', () => {
         const section = document.querySelector(`section.category[data-idx="${ci}"]`);
-        if (!section.classList.contains('open')){
-          section.classList.add('open');
-          insertSorted(expandedGroup, section);
-          updateGroupVisibility();
-          updateNavChips();
-          updateUrlHash();
-        }
+        toggleCategory(section);
         if (closeDropdownAfter){
           mobileDropdown.classList.remove('open');
           mobileMenuBtn.classList.remove('active');
         }
-        scrollToSection(section);
       });
       return chip;
     }
@@ -807,21 +810,11 @@ document.addEventListener('click', (e) => {
 const toggleAllBtn = document.getElementById('toggleAllBtn');
 toggleAllBtn.addEventListener('click', () => {
   if (anyOpen()){
-    document.querySelectorAll('section.category').forEach(section => {
-      if (section.classList.contains('open')){
-        section.classList.remove('open');
-        insertSorted(collapsedGroup, section);
-      }
-    });
+    document.querySelectorAll('section.category').forEach(s => s.classList.remove('open'));
   } else {
-    document.querySelectorAll('section.category').forEach(section => {
-      if (!section.classList.contains('open')){
-        section.classList.add('open');
-        insertSorted(expandedGroup, section);
-      }
-    });
+    document.querySelectorAll('section.category').forEach(s => s.classList.add('open'));
   }
-  updateGroupVisibility();
+  updateCollapsedGroups();
   updateNavChips();
   updateUrlHash();
 });
@@ -835,12 +828,11 @@ function openFromHash(){
     const section = document.querySelector(`section.category[data-idx="${idx}"]`);
     if (section && !section.classList.contains('open')){
       section.classList.add('open');
-      insertSorted(expandedGroup, section);
       lastSection = section;
     }
   });
   if (lastSection){
-    updateGroupVisibility();
+    updateCollapsedGroups();
     updateNavChips();
     setTimeout(() => scrollToSection(lastSection), 50);
   }
@@ -861,7 +853,7 @@ Object.entries(paramMap).forEach(([key, id]) => {
   }
 });
 
-updateGroupVisibility();
+updateCollapsedGroups();
 recompute();
 openFromHash();
 ['inBudget','inPrepay','inTerm'].forEach(id => {
