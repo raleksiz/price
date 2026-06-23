@@ -226,6 +226,9 @@
   table.dual thead th:nth-child(1){width:55%;}
   table.dual thead th:nth-child(2){width:22.5%;}
   table.dual thead th:nth-child(3){width:22.5%;}
+  table:not(.dual) thead th:nth-child(1){width:55%;}
+  table:not(.dual) thead th:nth-child(2){width:22.5%;}
+  table:not(.dual) thead th:nth-child(3){width:22.5%;}
   thead th{
     text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:0.3px;
     color:var(--ink-soft);font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line);
@@ -319,6 +322,13 @@
   .footer-br{display:none;}
   @media (max-width:640px){.footer-br{display:inline;}}
 @media (max-width:640px){
+  }
+  
+  @media (max-width:640px){
+    table:not(.dual) thead th:nth-child(1){width:54%;}
+    table:not(.dual) thead th:nth-child(2){width:16%;}
+    table:not(.dual) thead th:nth-child(3){width:30%;}
+    td.term, table:not(.dual) thead th:nth-child(2){text-align:left;}
   }
   ::selection{background:var(--purple-light);}
 
