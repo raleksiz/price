@@ -326,7 +326,8 @@
   }
 
   .footer-br{display:none;}
-  @media (max-width:640px){.footer-br{display:inline;}}
+  .footer-dash{display:inline;}
+  @media (max-width:640px){.footer-br{display:inline;}.footer-dash{display:none;}}
 @media (max-width:640px){
   }
   
@@ -410,7 +411,7 @@
 
 <footer>
   <div>Итоговая стоимость рассчитывается индивидуально и может быть скорректирована при изменении условий оказания услуги.</div>
-  <div class="fline">Если не нашли нужную услугу или остались вопросы<br class="footer-br"> напишите: <a class="footer-link" href="https://t.me/aruzlev" target="_blank" rel="noopener">Telegram</a> · <a class="footer-link" href="mailto:raleksiz.law@gmail.com">Почта</a></div>
+  <div class="fline">Если не нашли нужную услугу или остались вопросы<span class="footer-dash"> —</span><br class="footer-br"> напишите: <a class="footer-link" href="https://t.me/aruzlev" target="_blank" rel="noopener">Telegram</a> · <a class="footer-link" href="mailto:raleksiz.law@gmail.com">Почта</a></div>
   <div class="fline channel-line"><a class="channel-cta" href="https://t.me/raleksiz_law" target="_blank" rel="noopener"><svg class="icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Подписаться на канал</a></div>
   <div class="rights">© 2026 Алексей Рузлев. Все права защищены. Копирование, воспроизведение и использование материалов без письменного согласия автора запрещены.</div>
 </footer>
@@ -694,6 +695,24 @@ function checkChipAlignment(){
 window.addEventListener('load', checkChipAlignment);
 window.addEventListener('resize', checkChipAlignment);
 
+
+function adjustFooterDash(){
+  if (window.innerWidth > 640) return;
+  const br = document.querySelector('.footer-br');
+  const dash = document.querySelector('.footer-dash');
+  const fline = br ? br.parentElement : null;
+  if (!br || !dash || !fline) return;
+  br.style.display = 'none';
+  const fits = fline.scrollHeight <= Math.ceil(parseFloat(getComputedStyle(fline).lineHeight)) + 2;
+  if (fits){
+    dash.style.display = 'inline';
+  } else {
+    br.style.display = 'inline';
+    dash.style.display = 'none';
+  }
+}
+window.addEventListener('load', adjustFooterDash);
+window.addEventListener('resize', adjustFooterDash);
 function checkHeaderWrap(){
   const logo = document.querySelector('header.brand img.logo');
   const contacts = document.querySelector('header.brand .contacts');
@@ -850,6 +869,7 @@ function openFromHash(){
 buildNav();
 checkChipAlignment();
 buildPage();
+adjustFooterDash();
 
 // --- pre-fill from URL query params, e.g. ?budget=60000&prepay=30000&term=6 ---
 const urlParams = new URLSearchParams(window.location.search);
