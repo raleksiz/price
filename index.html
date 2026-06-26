@@ -650,13 +650,13 @@ function recompute(){
     : (isAbon ? discount : 0);
   const offerBeatsAbon = offerDiscount > 0 && offerDiscount >= (isAbon ? discount : 0);
 
-  if (offerDiscount > 0 && !isAbon){
+  if (offerDiscount > 0 && (!isAbon || budget === 0)){
     // Offer only mode
     document.getElementById('valStatus').textContent = 'Одна услуга';
     statusEl.classList.remove('status-on'); statusEl.classList.add('status-off');
     document.getElementById('valTariff').textContent = 'Offer';
     document.getElementById('valDiscount').textContent = Math.round(offerDiscount*100) + '%';
-  } else if (offerDiscount > 0 && isAbon){
+  } else if (offerDiscount > 0 && isAbon && budget > 0){
     // Offer + abonement: show abonement status, max discount
     const effDisc = Math.max(offerDiscount, discount);
     document.getElementById('valStatus').textContent = 'Абонемент';
@@ -684,16 +684,16 @@ function recompute(){
         priceable = true;
         const base = Number(td.dataset.base);
         let final = base;
-        const offerOnly = offerDiscount > 0 && !isAbon;
-        if (offerDiscount > 0 && isAbon){
-          // Offer + abonement: use max discount, green only within budget
+        const offerOnlyMode = offerDiscount > 0 && (!isAbon || budget === 0);
+        if (offerOnlyMode){
+          // Offer only: apply offer to everything, green ALL
+          final = Math.round(base * (1 - offerDiscount));
+          available = true;
+        } else if (offerDiscount > 0 && isAbon && budget > 0){
+          // Offer + abonement: max discount, green within budget
           const effDisc = Math.max(offerDiscount, discount);
           final = Math.round(base * (1 - effDisc));
           if (final <= budget) available = true;
-        } else if (offerDiscount > 0){
-          // Offer only (no abon): apply offer to everything, green ALL
-          final = Math.round(base * (1 - offerDiscount));
-          available = true;
         } else if (isAbon && base <= budget){
           final = Math.round(base * (1 - discount));
           if (final <= budget) available = true;
