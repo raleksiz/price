@@ -921,7 +921,7 @@ let offerFor = '';
   const offerParam = urlParams.get('offer');
   if (!offerParam) return;
   try {
-    const decoded = JSON.parse(decodeURIComponent(escape(atob(offerParam))));
+    const decoded = JSON.parse(decodeURIComponent(atob(offerParam)));
     const expiry = new Date(decoded.exp);
     if (decoded.disc && expiry > new Date()) {
       offerDiscount = Number(decoded.disc) / 100;

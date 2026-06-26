@@ -126,7 +126,7 @@ function generate(){
   if (!exp){ alert('Укажите дату окончания'); return; }
 
   const payload = JSON.stringify({ disc, exp, for: forWhom });
-  const token = btoa(unescape(encodeURIComponent(payload)));
+  const token = btoa(encodeURIComponent(payload));
   const url = BASE_URL + '?offer=' + token;
 
   document.getElementById('resultUrl').textContent = url;
