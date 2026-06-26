@@ -13,7 +13,7 @@
   h1{font-size:17px;font-weight:700;color:#2B1A6B;margin-bottom:24px;}
   label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.3px;}
   .field{margin-bottom:20px;}
-  input[type=number], input[type=date]{
+  input[type=number], input[type=date], input[type=text], input[type=password]{
     width:100%;border:1.5px solid #DDD;border-radius:10px;padding:11px 14px;
     font-size:16px;font-family:inherit;color:#2B1A6B;outline:none;
     transition:border-color .15s;
@@ -44,10 +44,29 @@
 </style>
 </head>
 <body>
-<div class="card">
+<!-- Password screen -->
+<div class="card" id="pwdScreen">
+  <div class="logo">RALEKSIZ HOUSE</div>
+  <div class="subtitle">Только для внутреннего использования</div>
+  <h1>Вход</h1>
+  <div class="field">
+    <label for="pwdInput">Пароль</label>
+    <input type="password" id="pwdInput" placeholder="••••••••••" autocomplete="current-password">
+  </div>
+  <div style="color:#dc2626;font-size:13px;margin-bottom:12px;min-height:18px" id="pwdError"></div>
+  <button class="btn" onclick="unlock()">Войти</button>
+</div>
+
+<!-- Main screen -->
+<div class="card" id="mainScreen" style="display:none">
   <div class="logo">RALEKSIZ HOUSE</div>
   <div class="subtitle">Только для внутреннего использования</div>
   <h1>Персональное предложение</h1>
+
+  <div class="field">
+    <label for="forWhom">Для кого</label>
+    <input type="text" id="forWhom" placeholder="например, Сафонова С.В.">
+  </div>
 
   <div class="field">
     <label for="disc">Скидка, %</label>
@@ -71,22 +90,43 @@
 
 <script>
 const BASE_URL = 'https://raleksiz.github.io/price/';
+const PWD_HASH = '6fefdb650f29dd6d348c2a43f02ec33433d70e84cfac3c8d94c765b674942ada';
+
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function unlock(){
+  const pwd = document.getElementById('pwdInput').value;
+  if (!pwd){ document.getElementById('pwdError').textContent = 'Введите пароль'; return; }
+  const hash = await sha256(pwd);
+  if (hash === PWD_HASH){
+    document.getElementById('pwdScreen').style.display = 'none';
+    document.getElementById('mainScreen').style.display = 'block';
+  } else {
+    document.getElementById('pwdError').textContent = 'Неверный пароль';
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('pwdInput').focus();
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('pwdScreen').style.display !== 'none'){
+    unlock();
+  }
+});
 
 function generate(){
   const disc = parseInt(document.getElementById('disc').value);
   const exp = document.getElementById('exp').value;
+  const forWhom = document.getElementById('forWhom').value.trim();
 
-  if (!disc || disc < 1 || disc > 50){
-    alert('Укажите скидку от 1 до 50%');
-    return;
-  }
-  if (!exp){
-    alert('Укажите дату окончания');
-    return;
-  }
+  if (!disc || disc < 1 || disc > 50){ alert('Укажите скидку от 1 до 50%'); return; }
+  if (!exp){ alert('Укажите дату окончания'); return; }
 
-  const payload = JSON.stringify({ disc, exp });
-  const token = btoa(payload);
+  const payload = JSON.stringify({ disc, exp, for: forWhom });
+  const token = btoa(unescape(encodeURIComponent(payload)));
   const url = BASE_URL + '?offer=' + token;
 
   document.getElementById('resultUrl').textContent = url;
@@ -94,8 +134,9 @@ function generate(){
 
   const d = new Date(exp);
   const dateStr = d.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+  const whoStr = forWhom ? ` · Для: ${forWhom}` : '';
   document.getElementById('hint').textContent =
-    `Скидка ${disc}% · Действует до ${dateStr} · Клиент увидит цены со скидкой сразу при открытии`;
+    `Скидка ${disc}%${whoStr} · Действует до ${dateStr}`;
 
   const copyBtn = document.getElementById('copyBtn');
   copyBtn.textContent = 'Скопировать ссылку';
@@ -108,10 +149,7 @@ function copyLink(){
     const btn = document.getElementById('copyBtn');
     btn.textContent = 'Скопировано ✓';
     btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = 'Скопировать ссылку';
-      btn.classList.remove('copied');
-    }, 2000);
+    setTimeout(() => { btn.textContent = 'Скопировать ссылку'; btn.classList.remove('copied'); }, 2000);
   });
 }
 </script>

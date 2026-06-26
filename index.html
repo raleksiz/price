@@ -174,6 +174,7 @@
     font-size:13px;color:var(--navy);line-height:1.5;
   }
   .offer-icon{font-size:18px;flex-shrink:0;}
+  .offer-for{color:var(--purple);font-weight:700;}
   /* ---------- Categories ---------- */
   main{max-width:980px;margin:0 auto;padding:18px 14px 0;}
   .cat-controls{margin-bottom:12px;}
@@ -638,11 +639,18 @@ function recompute(){
   const shownDiscount = isAbon ? discount : 0;
 
   const statusEl = document.getElementById('statStatus');
+  // Effective discount: max of offer guarantee and calculated abonement discount
+  const effectiveDiscount = offerDiscount > 0
+    ? Math.max(offerDiscount, isAbon ? discount : 0)
+    : (isAbon ? discount : 0);
+  const offerBeatsAbon = offerDiscount > 0 && offerDiscount >= (isAbon ? discount : 0);
+
   if (offerDiscount > 0){
-    document.getElementById('valStatus').textContent = 'Спец. условия';
+    const statusText = offerBeatsAbon ? 'Спец. условия' : 'Абонемент';
+    document.getElementById('valStatus').textContent = statusText;
     statusEl.classList.add('status-on'); statusEl.classList.remove('status-off');
-    document.getElementById('valTariff').textContent = '—';
-    document.getElementById('valDiscount').textContent = Math.round(offerDiscount*100) + '%';
+    document.getElementById('valTariff').textContent = offerBeatsAbon ? '—' : tariff;
+    document.getElementById('valDiscount').textContent = (effectiveDiscount*100).toLocaleString('ru-RU', {maximumFractionDigits:1}) + '%';
   } else {
     document.getElementById('valStatus').textContent = isAbon ? 'Абонемент' : 'Одна услуга';
     statusEl.classList.toggle('status-on', isAbon);
@@ -665,7 +673,8 @@ function recompute(){
         const base = Number(td.dataset.base);
         let final = base;
         if (offerDiscount > 0){
-          final = Math.round(base * (1 - offerDiscount));
+          const effDisc = Math.max(offerDiscount, isAbon ? discount : 0);
+          final = Math.round(base * (1 - effDisc));
         } else if (isAbon && base <= budget){
           final = Math.round(base * (1 - discount));
         }
@@ -907,25 +916,46 @@ Object.entries(paramMap).forEach(([key, id]) => {
 // --- personal offer via ?offer=BASE64TOKEN ---
 let offerDiscount = 0;
 let offerExpiry = null;
+let offerFor = '';
 (function(){
   const offerParam = urlParams.get('offer');
   if (!offerParam) return;
   try {
-    const decoded = JSON.parse(atob(offerParam));
+    const decoded = JSON.parse(decodeURIComponent(escape(atob(offerParam))));
     const expiry = new Date(decoded.exp);
     if (decoded.disc && expiry > new Date()) {
       offerDiscount = Number(decoded.disc) / 100;
       offerExpiry = expiry;
+      offerFor = decoded.for || '';
     }
   } catch(e) {}
   if (!offerDiscount) return;
-  // Show offer banner
   const banner = document.getElementById('offerBanner');
   if (banner){
     const pct = Math.round(offerDiscount * 100);
     const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
-    banner.innerHTML = `<span class="offer-icon">🎁</span> <b>Персональное предложение:</b> скидка ${pct}% на все услуги — действует до ${dateStr}`;
+    const shortDate = offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
+    const forPart = offerFor ? ` <span class="offer-for">для ${offerFor}</span>` : '';
+    banner.innerHTML = `<span class="offer-icon">🎁</span> <b>Персональное предложение${forPart}:</b> скидка ${pct}% на все услуги — действует до ${dateStr}`;
     banner.style.display = 'flex';
+
+    // Calculate min term in full months from today to expiry
+    const now = new Date();
+    const months = (offerExpiry.getFullYear() - now.getFullYear()) * 12
+      + (offerExpiry.getMonth() - now.getMonth());
+    const offerMinTerm = Math.max(1, months);
+
+    // Pre-fill term field with min months, set minimum constraint
+    const termEl = document.getElementById('inTerm');
+    termEl.value = offerMinTerm;
+    termEl.min = offerMinTerm;
+    termEl.addEventListener('change', () => {
+      if (parseInt(termEl.value) < offerMinTerm) termEl.value = offerMinTerm;
+    });
+
+    // Update term label to show expiry date
+    const termLabel = document.querySelector('label[for="inTerm"]');
+    if (termLabel) termLabel.textContent = `Срок, мес. (до ${shortDate})`;
   }
 })();
 
