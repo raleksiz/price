@@ -107,6 +107,11 @@
     <label for="pwdInput">Пароль</label>
     <input type="password" id="pwdInput" placeholder="••••••••••" autocomplete="current-password">
   </div>
+  <div class="field" id="tokenField" style="display:none;">
+    <label for="tokenInput">GitHub Token</label>
+    <input type="password" id="tokenInput" placeholder="github_pat_..." autocomplete="off">
+    <div style="font-size:11px;color:#999;margin-top:4px;">Вводится один раз на устройстве</div>
+  </div>
   <div style="color:#dc2626;font-size:13px;margin-bottom:12px;min-height:18px" id="pwdError"></div>
   <button class="btn" onclick="unlock()">Войти</button>
 </div>
@@ -187,8 +192,11 @@
 const BASE_URL = 'https://raleksiz.github.io/price/';
 const PWD_HASH = '6fefdb650f29dd6d348c2a43f02ec33433d70e84cfac3c8d94c765b674942ada';
 const SESSION_KEY = 'raleksiz_offer_session';
-const SESSION_TTL = 3 * 24 * 60 * 60 * 1000; // 3 days
+const SESSION_TTL = 3 * 24 * 60 * 60 * 1000;
 const OFFERS_KEY = 'raleksiz_sent_offers';
+const TOKEN_KEY = 'raleksiz_gh_token';
+const GH_REPO = 'raleksiz/price';
+const GH_FILE = 'offers.json';
 
 async function sha256(str){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -203,13 +211,16 @@ function checkSession(){
       return true;
     }
   } catch(e){}
+  // Show token field if no token saved yet
+  const hasToken = !!localStorage.getItem(TOKEN_KEY);
+  document.getElementById('tokenField').style.display = hasToken ? 'none' : 'block';
   return false;
 }
 
 function showMain(){
   document.getElementById('pwdScreen').style.display = 'none';
   document.getElementById('mainScreen').style.display = 'block';
-  renderSentOffers();
+  loadOffersFromGitHub().then(renderSentOffers);
 }
 
 async function unlock(){
@@ -217,7 +228,13 @@ async function unlock(){
   if (!pwd){ document.getElementById('pwdError').textContent = 'Введите пароль'; return; }
   const hash = await sha256(pwd);
   if (hash === PWD_HASH){
-    try { localStorage.setItem(SESSION_KEY, Date.now()); } catch(e){}
+    try {
+      localStorage.setItem(SESSION_KEY, Date.now());
+      const tokenInput = document.getElementById('tokenInput');
+      if (tokenInput && tokenInput.value.trim()){
+        localStorage.setItem(TOKEN_KEY, tokenInput.value.trim());
+      }
+    } catch(e){}
     showMain();
   } else {
     document.getElementById('pwdError').textContent = 'Неверный пароль';
@@ -403,6 +420,7 @@ function saveOffer(){
     const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
     offers.unshift({ id: Date.now(), forWhom, disc, exp, cats, url, saved: new Date().toLocaleDateString('ru-RU') });
     localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
+    saveOffersToGitHub(offers);
     renderSentOffers();
     const msg = document.getElementById('savedMsg');
     msg.textContent = 'Сохранено ✓';
@@ -413,8 +431,52 @@ function saveOffer(){
 function deleteOffer(id){
   try {
     const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
-    localStorage.setItem(OFFERS_KEY, JSON.stringify(offers.filter(o => o.id !== id)));
+    const updated = offers.filter(o => o.id !== id);
+    localStorage.setItem(OFFERS_KEY, JSON.stringify(updated));
+    saveOffersToGitHub(updated);
     renderSentOffers();
+  } catch(e){}
+}
+
+async function ghHeaders(){
+  const token = localStorage.getItem(TOKEN_KEY);
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+}
+
+async function loadOffersFromGitHub(){
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, { headers: await ghHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+    const offers = JSON.parse(atob(data.content.replace(/\n/g,'')));
+    localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
+    localStorage.setItem('raleksiz_gh_sha', data.sha);
+  } catch(e){}
+}
+
+async function saveOffersToGitHub(offers){
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(offers, null, 2))));
+    const sha = localStorage.getItem('raleksiz_gh_sha');
+    const body = { message: 'Update offers', content };
+    if (sha) body.sha = sha;
+    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, {
+      method: 'PUT',
+      headers: { ...await ghHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (res.ok){
+      const data = await res.json();
+      localStorage.setItem('raleksiz_gh_sha', data.content.sha);
+    }
   } catch(e){}
 }
 
@@ -464,6 +526,7 @@ function addManualOffer(){
     autoFillFromUrl._cats = [];
     offers.unshift({ id: Date.now(), forWhom, disc, exp, cats, url, saved: new Date().toLocaleDateString('ru-RU') });
     localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
+    saveOffersToGitHub(offers);
     document.getElementById('manualName').value = '';
     document.getElementById('manualDisc').value = '';
     document.getElementById('manualExp').value = '';
