@@ -166,6 +166,14 @@
   .legend-toggle .chevron{transition:transform .2s ease;}
   .legend-toggle[aria-expanded="true"] .chevron{transform:rotate(180deg);}
 
+  .offer-banner{
+    max-width:980px;margin:12px auto 0;padding:12px 18px;
+    background:linear-gradient(135deg,#f0f7ff,#e8f0fe);
+    border:1.5px solid var(--purple);border-radius:var(--radius);
+    display:flex;align-items:center;gap:10px;
+    font-size:13px;color:var(--navy);line-height:1.5;
+  }
+  .offer-icon{font-size:18px;flex-shrink:0;}
   /* ---------- Categories ---------- */
   main{max-width:980px;margin:0 auto;padding:18px 14px 0;}
   .cat-controls{margin-bottom:12px;}
@@ -405,6 +413,7 @@
   </button>
 </div>
 
+<div id="offerBanner" class="offer-banner" style="display:none"></div>
 <main id="categories">
   <div class="cat-nav cat-controls" id="catNav">
     <button type="button" id="toggleAllBtn" class="toolbar-btn">Развернуть все</button>
@@ -629,11 +638,18 @@ function recompute(){
   const shownDiscount = isAbon ? discount : 0;
 
   const statusEl = document.getElementById('statStatus');
-  document.getElementById('valStatus').textContent = isAbon ? 'Абонемент' : 'Одна услуга';
-  statusEl.classList.toggle('status-on', isAbon);
-  statusEl.classList.toggle('status-off', !isAbon);
-  document.getElementById('valTariff').textContent = shownTariff;
-  document.getElementById('valDiscount').textContent = (shownDiscount*100).toLocaleString('ru-RU', {maximumFractionDigits:1}) + '%';
+  if (offerDiscount > 0){
+    document.getElementById('valStatus').textContent = 'Спец. условия';
+    statusEl.classList.add('status-on'); statusEl.classList.remove('status-off');
+    document.getElementById('valTariff').textContent = '—';
+    document.getElementById('valDiscount').textContent = Math.round(offerDiscount*100) + '%';
+  } else {
+    document.getElementById('valStatus').textContent = isAbon ? 'Абонемент' : 'Одна услуга';
+    statusEl.classList.toggle('status-on', isAbon);
+    statusEl.classList.toggle('status-off', !isAbon);
+    document.getElementById('valTariff').textContent = shownTariff;
+    document.getElementById('valDiscount').textContent = (shownDiscount*100).toLocaleString('ru-RU', {maximumFractionDigits:1}) + '%';
+  }
 
   document.querySelectorAll('section.category').forEach(section => {
     let anyPriceable = false;
@@ -648,10 +664,12 @@ function recompute(){
         priceable = true;
         const base = Number(td.dataset.base);
         let final = base;
-        if (isAbon && base <= budget){
+        if (offerDiscount > 0){
+          final = Math.round(base * (1 - offerDiscount));
+        } else if (isAbon && base <= budget){
           final = Math.round(base * (1 - discount));
         }
-        if (final <= budget) available = true;
+        if (offerDiscount > 0 || final <= budget) available = true;
         if (final !== base){
           span.innerHTML = `<span class="price-old">${fmtRub(base)}</span><span class="price-final">${fmtRub(final)}</span>`;
         } else {
@@ -885,6 +903,31 @@ Object.entries(paramMap).forEach(([key, id]) => {
     formatThousands(el);
   }
 });
+
+// --- personal offer via ?offer=BASE64TOKEN ---
+let offerDiscount = 0;
+let offerExpiry = null;
+(function(){
+  const offerParam = urlParams.get('offer');
+  if (!offerParam) return;
+  try {
+    const decoded = JSON.parse(atob(offerParam));
+    const expiry = new Date(decoded.exp);
+    if (decoded.disc && expiry > new Date()) {
+      offerDiscount = Number(decoded.disc) / 100;
+      offerExpiry = expiry;
+    }
+  } catch(e) {}
+  if (!offerDiscount) return;
+  // Show offer banner
+  const banner = document.getElementById('offerBanner');
+  if (banner){
+    const pct = Math.round(offerDiscount * 100);
+    const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+    banner.innerHTML = `<span class="offer-icon">🎁</span> <b>Персональное предложение:</b> скидка ${pct}% на все услуги — действует до ${dateStr}`;
+    banner.style.display = 'flex';
+  }
+})();
 
 updateCollapsedGroups();
 recompute();
