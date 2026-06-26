@@ -710,6 +710,8 @@ function recompute(){
         }
       });
       tr.classList.toggle('available', available);
+      const isOfferRow = catInOffer && offerDiscount > 0 && !available;
+      tr.classList.toggle('offer-row', isOfferRow);
       if (priceable){
         anyPriceable = true;
         if (!available) anyWhite = true;
@@ -962,7 +964,7 @@ let offerCats = []; // category keys covered by the offer
     const pct = Math.round(offerDiscount * 100);
     const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
     const forPart = offerFor ? ` для <span class="offer-for">${offerFor}</span>` : '';
-    banner.innerHTML = `<span class="offer-icon">🎁</span> Персональное предложение${forPart} — скидка ${pct}% на услуги, отмеченные зелёным (действует до ${dateStr})`;
+    banner.innerHTML = `<span class="offer-icon">🎁</span> Персональное предложение${forPart} — скидка ${pct}% на услуги, отмеченные <span style="color:var(--purple);font-weight:700">фиолетовым</span> (действует до ${dateStr})`;
     banner.style.display = 'flex';
   }
 })();
