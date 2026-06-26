@@ -631,8 +631,9 @@ function recompute(){
   const prepay = rawNumber(document.getElementById('inPrepay'));
   const term = rawNumber(document.getElementById('inTerm'));
   const isAbon = term >= 3;
-  document.getElementById('lblBudget').textContent = isAbon ? 'Бюджет, мес.' : 'Бюджет, ₽';
-  document.getElementById('lblPrepay').textContent = isAbon ? 'Аванс, мес.' : 'Предоплата, ₽';
+  const showAbonLabels = isAbon || offerDiscount > 0;
+  document.getElementById('lblBudget').textContent = showAbonLabels ? 'Бюджет, мес.' : 'Бюджет, ₽';
+  document.getElementById('lblPrepay').textContent = showAbonLabels ? 'Аванс, мес.' : 'Предоплата, ₽';
 
   const { tariff, discount } = calcDiscount(budget, prepay, term);
   const shownTariff = isAbon ? tariff : '—';
