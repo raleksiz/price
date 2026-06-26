@@ -178,6 +178,9 @@
   @media (max-width:640px){
     .offer-banner{margin-left:14px;margin-right:14px;}
   }
+  section.category.offer-cat .cat-header::after{
+    content:'🟠';font-size:13px;margin-left:8px;vertical-align:middle;
+  }
   /* ---------- Categories ---------- */
   main{max-width:980px;margin:0 auto;padding:18px 14px 0;}
   .cat-controls{margin-bottom:12px;}
@@ -664,6 +667,7 @@ function recompute(){
     const catKey = section.dataset.idx !== undefined
       ? DATA.categories[Number(section.dataset.idx)].key : '';
     const catInOffer = offerCats.length > 0 && offerCats.includes(catKey);
+    section.classList.toggle('offer-cat', catInOffer && offerDiscount > 0 && !isAbon);
     let anyPriceable = false;
     let anyWhite = false;
 
