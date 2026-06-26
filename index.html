@@ -964,6 +964,18 @@ let offerCats = []; // category keys covered by the offer
   }
 })();
 
+
+// Add offer legend item when offer is active
+(function(){
+  const legendList = document.getElementById('legendList');
+  if (!legendList || !offerDiscount) return;
+  const li = document.createElement('li');
+  li.id = 'offerLegendItem';
+  li.innerHTML = '🟠 Оранжевое — ваша персональная скидка. Поля выше — для расчёта абонемента на правовое сопровождение.';
+  li.style.fontWeight = '600';
+  legendList.insertBefore(li, legendList.firstChild);
+})();
+
 updateCollapsedGroups();
 recompute();
 openFromHash();
