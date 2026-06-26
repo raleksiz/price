@@ -411,7 +411,8 @@ function renderSentOffers(){
     const catNames = {'consult':'Консультации','contracts':'Договоры','realestate':'Недвижимость',
       'corporate':'Корпоративные','pretrial':'Досудебное','litigation_single':'Суд: разовые','full_repr':'Суд: под ключ'};
     list.innerHTML = offers.map(o => {
-      const d = o.exp ? new Date(o.exp).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+      const expParsed = o.exp ? (parseDate(o.exp) || new Date(o.exp)) : null;
+    const d = expParsed && !isNaN(expParsed) ? expParsed.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) : (o.exp || '—');
       const catsStr = (o.cats||[]).map(k => catNames[k]||k).join(', ');
       const shortUrl = o.url ? o.url.slice(0,55)+(o.url.length>55?'…':'') : '';
       return `<div class="sent-item">
@@ -419,8 +420,9 @@ function renderSentOffers(){
           <div class="sent-item-name">${o.forWhom||'Без имени'}</div>
           <div class="sent-item-meta">
             <span style="color:#E65100;font-weight:700;">-${o.disc||'?'}%</span>
-            &nbsp;·&nbsp;до ${d}&nbsp;·&nbsp;сохранено ${o.saved}
+            &nbsp;·&nbsp;действует до <b>${d}</b>
           </div>
+          <div class="sent-item-meta" style="color:#999;">сохранено ${o.saved}</div>
           ${catsStr ? `<div class="sent-item-meta">${catsStr}</div>` : ''}
           ${shortUrl ? `<div class="sent-item-link"><a href="${o.url}" target="_blank">${shortUrl}</a></div>` : ''}
         </div>
