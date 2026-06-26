@@ -41,6 +41,14 @@
   .copy-btn:hover{opacity:0.85;}
   .copy-btn.copied{background:#16a34a;}
   .hint{font-size:11.5px;color:#999;margin-top:10px;line-height:1.5;}
+  .disc-wrap{position:relative;}
+  .disc-indicator{
+    display:none;margin-top:6px;padding:7px 10px;border-radius:8px;
+    font-size:11.5px;line-height:1.4;
+  }
+  .disc-indicator.green{display:block;background:#E9F7EE;color:#1E6B3C;border:1px solid #9FD9B4;}
+  .disc-indicator.yellow{display:block;background:#FFFDE7;color:#7A6000;border:1px solid #F6D860;}
+  .disc-indicator.red{display:block;background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;}
   .sent-card{max-width:480px;width:100%;margin:16px 0 0;box-sizing:border-box;}
   .sent-card h2{font-size:15px;font-weight:700;color:#2B1A6B;margin-bottom:14px;}
   .manual-form{background:#F8F6FF;border-radius:10px;padding:14px;margin-bottom:16px;}
@@ -117,24 +125,27 @@
   <div class="field">
     <span class="cats-label">Категории со скидкой</span>
     <div class="cats-grid">
-      <label class="cat-check" id="lbl_consult"><input type="checkbox" class="cat-cb" value="consult" onchange="toggleCatStyle(this)"> Консультации</label>
-      <label class="cat-check" id="lbl_contracts"><input type="checkbox" class="cat-cb" value="contracts" onchange="toggleCatStyle(this)"> Договоры</label>
-      <label class="cat-check" id="lbl_realestate"><input type="checkbox" class="cat-cb" value="realestate" onchange="toggleCatStyle(this)"> Недвижимость</label>
-      <label class="cat-check" id="lbl_corporate"><input type="checkbox" class="cat-cb" value="corporate" onchange="toggleCatStyle(this)"> Корпоративные</label>
-      <label class="cat-check" id="lbl_pretrial"><input type="checkbox" class="cat-cb" value="pretrial" onchange="toggleCatStyle(this)"> Досудебное</label>
-      <label class="cat-check" id="lbl_litigation_single"><input type="checkbox" class="cat-cb" value="litigation_single" onchange="toggleCatStyle(this)"> Суд: разовые</label>
-      <label class="cat-check" id="lbl_full_repr"><input type="checkbox" class="cat-cb" value="full_repr" onchange="toggleCatStyle(this)"> Суд: под ключ</label>
+      <label class="cat-check" id="lbl_consult"><input type="checkbox" class="cat-cb" value="consult" onchange="toggleCatStyle(this);updateDiscIndicator()"> Консультации</label>
+      <label class="cat-check" id="lbl_contracts"><input type="checkbox" class="cat-cb" value="contracts" onchange="toggleCatStyle(this);updateDiscIndicator()"> Договоры</label>
+      <label class="cat-check" id="lbl_realestate"><input type="checkbox" class="cat-cb" value="realestate" onchange="toggleCatStyle(this);updateDiscIndicator()"> Недвижимость</label>
+      <label class="cat-check" id="lbl_corporate"><input type="checkbox" class="cat-cb" value="corporate" onchange="toggleCatStyle(this);updateDiscIndicator()"> Корпоративные</label>
+      <label class="cat-check" id="lbl_pretrial"><input type="checkbox" class="cat-cb" value="pretrial" onchange="toggleCatStyle(this);updateDiscIndicator()"> Досудебное</label>
+      <label class="cat-check" id="lbl_litigation_single"><input type="checkbox" class="cat-cb" value="litigation_single" onchange="toggleCatStyle(this);updateDiscIndicator()"> Суд: разовые</label>
+      <label class="cat-check" id="lbl_full_repr"><input type="checkbox" class="cat-cb" value="full_repr" onchange="toggleCatStyle(this);updateDiscIndicator()"> Суд: под ключ</label>
     </div>
   </div>
 
   <div class="field">
     <label for="disc">Скидка, %</label>
-    <input type="number" id="disc" min="1" max="50" placeholder="например, 15" value="">
+    <div class="disc-wrap">
+    <input type="number" id="disc" min="1" max="50" placeholder="например, 15" value="" oninput="updateDiscIndicator()">
+    <div class="disc-indicator" id="discIndicator"></div>
+  </div>
   </div>
 
   <div class="field">
     <label for="exp">Действует до</label>
-    <input type="text" id="exp" placeholder="ДД.ММ.ГГГГ" class="manual-input" style="width:100%">
+    <input type="text" id="exp" placeholder="ДД.ММ.ГГГГ" class="manual-input" style="width:100%" oninput="updateDiscIndicator()">
   </div>
 
   <button class="btn" onclick="generate()">Создать ссылку</button>
@@ -222,6 +233,69 @@ document.addEventListener('keydown', e => {
 
 // Check session on load
 window.addEventListener('DOMContentLoaded', () => { checkSession(); });
+
+function updateDiscIndicator(){
+  const disc = parseInt(document.getElementById('disc').value) || 0;
+  const cats = [...document.querySelectorAll('.cat-cb:checked')].map(c => c.value);
+  const expRaw = document.getElementById('exp').value.trim();
+  const ind = document.getElementById('discIndicator');
+  if (!disc || !cats.length){ ind.className = 'disc-indicator'; return; }
+
+  // Calculate term in months
+  let months = 0;
+  const expDate = parseDate(expRaw);
+  if (expDate && !isNaN(expDate)){
+    const now = new Date();
+    months = (expDate.getFullYear() - now.getFullYear()) * 12
+      + (expDate.getMonth() - now.getMonth());
+  }
+
+  // Term factor: short ≤3, medium 3-6, long >6
+  const termShort = months > 0 && months <= 3;
+  const termLong = months > 6;
+  const termLabel = termShort ? ' (срок короткий — плюс)' : termLong ? ` (срок ${months} мес. — ужесточает оценку)` : '';
+
+  // Category risk
+  const hasFullRepr = cats.includes('full_repr');
+  const hasRealestate = cats.includes('realestate');
+  const hasMedium = cats.some(c => ['litigation_single','corporate'].includes(c));
+  const count = cats.length;
+
+  // Adjusted thresholds based on term
+  const maxGreen = termShort ? 12 : termLong ? 8 : 10;
+  const maxYellow = termShort ? 17 : termLong ? 12 : 15;
+
+  let level, msg;
+
+  if (hasFullRepr){
+    level = 'red';
+    msg = '🔴 Суд под ключ в оффере — рискованно при любом сроке: высокий чек, клиент не перейдёт на абонемент.';
+  } else if (disc > maxYellow){
+    level = 'red';
+    msg = `🔴 Скидка слишком высокая${termLabel}. Оффер выгоднее абонемента — клиент не перейдёт, вы теряете маржу.`;
+  } else if (hasRealestate && disc > (termShort ? 12 : termLong ? 7 : 10)){
+    level = 'red';
+    msg = `🔴 Недвижимость с такой скидкой${termLabel} — крупные чеки, потери ощутимы. Снизьте до 7-8% или уберите категорию.`;
+  } else if (disc > maxGreen && count >= (termLong ? 4 : 5)){
+    level = 'red';
+    msg = `🔴 Широкий охват + высокий процент${termLabel}. Абонемент теряет привлекательность.`;
+  } else if (termLong && disc > 10){
+    level = 'yellow';
+    msg = `🟡 Скидка ${disc}% на ${months} мес. — за длинный срок накапливаются потери. Рассмотрите снижение до ${maxGreen}%.`;
+  } else if (hasMedium && disc > (termShort ? 12 : 10)){
+    level = 'yellow';
+    msg = `🟡 Судебные/корпоративные с такой скидкой${termLabel} — допустимо, но следите за маржой.`;
+  } else if (disc >= 10 && disc <= maxYellow){
+    level = 'yellow';
+    msg = `🟡 Зона Easy-абонемента${termLabel}. Клиент может не почувствовать разницу — имеет смысл если категории узкие.`;
+  } else {
+    level = 'green';
+    msg = `🟢 Хороший баланс${termLabel}. Оффер привлекательный, но абонемент заметно выгоднее.`;
+  }
+
+  ind.className = 'disc-indicator ' + level;
+  ind.textContent = msg;
+}
 
 function toggleCatStyle(cb){
   cb.closest('.cat-check').classList.toggle('checked', cb.checked);
