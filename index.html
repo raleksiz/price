@@ -714,7 +714,8 @@ function recompute(){
     const oplataEl = section.querySelector('.oplata');
     if (oplataEl){
       const txt = oplataEl.querySelector('.oplata-text');
-      if (!isAbon){
+      const offerOnlyModeOp = offerDiscount > 0 && (!isAbon || budget === 0);
+      if (offerOnlyModeOp || !isAbon){
         txt.innerHTML = oplataEl.dataset.normal;
       } else if (anyPriceable && anyWhite){
         txt.innerHTML = `Услуги, выделенные зелёным, оплачиваются в рамках абонентского обслуживания. Остальные — на условиях разового заказа: ${oplataEl.dataset.normal}`;
