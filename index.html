@@ -279,6 +279,8 @@
   td.price .price-final{font-weight:700;color:var(--navy);}
   td.price .price-na{color:var(--ink-soft);font-style:italic;font-size:12px;white-space:normal;text-align:right;}
   tbody tr.available{background:var(--green-bg);}
+  tbody tr.offer-row{background:#F3ECFA;}
+  tbody tr.offer-row td.price .price-final{color:var(--purple);}
   tbody tr.available td.price .price-final{color:var(--green-text);}
 
   details.surcharges{border-top:1px dashed var(--line);padding:0;}
@@ -955,7 +957,7 @@ let offerCats = []; // category keys covered by the offer
       offerDiscount = Number(decoded.disc) / 100;
       offerExpiry = expiry;
       offerFor = decoded.for || '';
-      offerCats = decoded.cats || [];
+      offerCats = (decoded.cats && decoded.cats.length > 0) ? decoded.cats : DATA.categories.map(c => c.key);
     }
   } catch(e) {}
   if (!offerDiscount) return;
