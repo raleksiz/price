@@ -173,8 +173,6 @@
     font-size:13px;color:var(--navy);line-height:1.5;
   }
   .offer-for{color:var(--purple);font-weight:700;}
-  @media (max-width:640px){
-  }
   section.category.offer-cat .cat-chevron{display:none;}
   section.category.offer-cat .cat-header::after{
     content:'🟠';font-size:15px;flex-shrink:0;
@@ -960,7 +958,7 @@ let offerCats = []; // category keys covered by the offer
     const forPart = offerFor ? ` для <span class="offer-for">${offerFor}</span>` : '';
     const namePart = offerFor ? `Для ${offerFor} ` : '';
     banner.innerHTML = `🎁 ${namePart}<b style="color:#E65100">−${pct}%</b> на услуги, отмеченные 🟡 (действует до ${dateStr} или начала действия абонемента)`;
-    banner.style.display = 'flex';
+    banner.style.display = 'block';
     // Ensure all categories start collapsed when opening via offer link
     document.querySelectorAll('section.category.open').forEach(s => s.classList.remove('open'));
     updateCollapsedGroups();
