@@ -934,8 +934,8 @@ let offerFor = '';
   const banner = document.getElementById('offerBanner');
   if (banner){
     const pct = Math.round(offerDiscount * 100);
-    const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
-    const shortDate = offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
+    const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
+    const shortDate = dateStr;
     const forPart = offerFor ? ` <span class="offer-for">для ${offerFor}</span>` : '';
     banner.innerHTML = `<span class="offer-icon">🎁</span> <b>Персональное предложение${forPart}:</b> скидка ${pct}% на все услуги — действует до ${dateStr}`;
     banner.style.display = 'flex';
