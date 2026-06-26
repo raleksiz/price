@@ -327,7 +327,7 @@
     .inputs-grid,.results-grid{grid-template-columns:repeat(3,1fr);}
     header.brand h1{font-size:18px;}
     table{font-size:12.5px;}
-    .cat-nav{display:flex;flex-wrap:wrap;gap:7px;}
+  
     .cat-nav .nav-chip{display:none;}
     .menu-icon-btn{width:30px;padding:0;}
     .menu-icon-btn-label{display:none;}
@@ -647,18 +647,14 @@ function recompute(){
 
   const statusEl = document.getElementById('statStatus');
   // Effective discount: max of offer guarantee and calculated abonement discount
-  const effectiveDiscount = offerDiscount > 0
-    ? Math.max(offerDiscount, isAbon ? discount : 0)
-    : (isAbon ? discount : 0);
-  const offerBeatsAbon = offerDiscount > 0 && offerDiscount >= (isAbon ? discount : 0);
 
-  if (offerDiscount > 0 && (!isAbon || tariffIndex(budget) === 0)){
+  if (offerDiscount > 0 && !isAbon){
     // Offer only mode
     document.getElementById('valStatus').textContent = 'Одна услуга';
     statusEl.classList.remove('status-on'); statusEl.classList.add('status-off');
     document.getElementById('valTariff').textContent = 'Offer';
     document.getElementById('valDiscount').textContent = '—';
-  } else if (offerDiscount > 0 && isAbon && tariffIndex(budget) > 0){
+  } else if (offerDiscount > 0 && isAbon){
     // Offer + abonement: show abonement status, max discount
     const effDisc = Math.max(offerDiscount, discount);
     document.getElementById('valStatus').textContent = 'Абонемент';
