@@ -652,13 +652,13 @@ function recompute(){
     : (isAbon ? discount : 0);
   const offerBeatsAbon = offerDiscount > 0 && offerDiscount >= (isAbon ? discount : 0);
 
-  if (offerDiscount > 0 && (!isAbon || budget === 0)){
+  if (offerDiscount > 0 && (!isAbon || tariffIndex(budget) === 0)){
     // Offer only mode
     document.getElementById('valStatus').textContent = 'Одна услуга';
     statusEl.classList.remove('status-on'); statusEl.classList.add('status-off');
     document.getElementById('valTariff').textContent = 'Offer';
     document.getElementById('valDiscount').textContent = '—';
-  } else if (offerDiscount > 0 && isAbon && budget > 0){
+  } else if (offerDiscount > 0 && isAbon && tariffIndex(budget) > 0){
     // Offer + abonement: show abonement status, max discount
     const effDisc = Math.max(offerDiscount, discount);
     document.getElementById('valStatus').textContent = 'Абонемент';
@@ -969,7 +969,7 @@ let offerCats = []; // category keys covered by the offer
     const pct = Math.round(offerDiscount * 100);
     const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
     const forPart = offerFor ? ` для <span class="offer-for">${offerFor}</span>` : '';
-    banner.innerHTML = `<span class="offer-icon">🎁</span><span>Персональное предложение${forPart} — скидка ${pct}% на услуги, отмеченные <span style="color:#F6C700;font-weight:700">жёлтым</span> (действует до ${dateStr})</span>`;
+    banner.innerHTML = `<span class="offer-icon">🎁</span><span>Персональное предложение${forPart} — скидка ${pct}% на услуги, отмеченные <span style="color:#E65100;font-weight:700">оранжевым</span> (действует до ${dateStr})</span>`;
     banner.style.display = 'flex';
     // Ensure all categories start collapsed when opening via offer link
     document.querySelectorAll('section.category.open').forEach(s => s.classList.remove('open'));
