@@ -474,7 +474,7 @@ async function loadOffersFromGitHub(){
     const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, { headers: await ghHeaders() });
     if (!res.ok) return;
     const data = await res.json();
-    const offers = JSON.parse(atob(data.content.replace(/\n/g,'')));
+    const offers = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))));
     localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
     localStorage.setItem('raleksiz_gh_sha', data.sha);
   } catch(e){}
