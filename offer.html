@@ -149,6 +149,7 @@
   </div>
 
   <button class="btn" onclick="generate()">Создать ссылку</button>
+  <button class="btn" onclick="preview()" style="background:var(--bg,#F3ECFA);color:#6E3B8C;border:1.5px solid #C4B5FD;margin-top:8px;">Предпросмотр</button>
 
   <div class="result" id="result">
     <div class="result-label">Ссылка для клиента</div>
@@ -317,6 +318,25 @@ function autoFillFromUrl(url){
     // cats stored but used by renderSentOffers from offer object
     autoFillFromUrl._cats = decoded.cats || [];
   } catch(e){}
+}
+
+function preview(){
+  const disc = parseInt(document.getElementById('disc').value);
+  const expRaw = document.getElementById('exp').value.trim();
+  const forWhom = document.getElementById('forWhom').value.trim();
+  const cats = [...document.querySelectorAll('.cat-cb:checked')].map(c => c.value);
+
+  if (!disc || disc < 1 || disc > 50){ alert('Укажите скидку от 1 до 50%'); return; }
+  if (cats.length === 0){ alert('Выберите хотя бы одну категорию'); return; }
+
+  const expDate = parseDate(expRaw);
+  const exp = expDate && !isNaN(expDate)
+    ? expDate.toISOString().slice(0,10)
+    : new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0,10); // fallback: +30 days
+
+  const payload = JSON.stringify({ disc, exp, for: forWhom, cats });
+  const token = btoa(encodeURIComponent(payload));
+  window.open(BASE_URL + '?offer=' + token, '_blank');
 }
 
 function parseDate(str){
