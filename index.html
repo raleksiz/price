@@ -699,6 +699,9 @@ function recompute(){
           // Standard abonement for non-offer categories
           final = Math.round(base * (1 - discount));
           if (final <= budget) available = true;
+        } else if (!isAbon && base <= budget){
+          // Standard single service: green if base price fits budget (no discount)
+          available = true;
         }
         if (final !== base){
           span.innerHTML = `<span class="price-old">${fmtRub(base)}</span><span class="price-final">${fmtRub(final)}</span>`;
