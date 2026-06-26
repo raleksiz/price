@@ -170,7 +170,7 @@
     margin:0 0 12px 0;padding:11px 16px;
     background:linear-gradient(135deg,#f0f7ff,#e8f0fe);
     border:1.5px solid var(--purple);border-radius:var(--radius);
-    font-size:13px;color:var(--navy);line-height:1.5;
+    font-size:13px;color:var(--navy);line-height:1.5;text-align:center;
   }
   .offer-for{color:var(--purple);font-weight:700;}
   section.category.offer-cat .cat-chevron{display:none;}
@@ -956,8 +956,8 @@ let offerCats = []; // category keys covered by the offer
     const pct = Math.round(offerDiscount * 100);
     const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
     const forPart = offerFor ? ` для <span class="offer-for">${offerFor}</span>` : '';
-    const namePart = offerFor ? `Для ${offerFor} ` : '';
-    banner.innerHTML = `🎁 ${namePart}<b style="color:#E65100">−${pct}%</b> на услуги, отмеченные 🟡 (действует до ${dateStr} или начала действия абонемента)`;
+    const namePart = offerFor ? `Для <b style="color:var(--purple);font-weight:700">${offerFor}</b> ` : '';
+    banner.innerHTML = `🎁 ${namePart}<b style="color:#E65100">-${pct}%</b> на услуги, отмеченные 🟠 (действует до ${dateStr} или начала действия абонемента)`;
     banner.style.display = 'block';
     // Ensure all categories start collapsed when opening via offer link
     document.querySelectorAll('section.category.open').forEach(s => s.classList.remove('open'));
