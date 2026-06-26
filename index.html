@@ -681,26 +681,27 @@ function recompute(){
     section.querySelectorAll('tbody tr').forEach(tr => {
       let available = false;
       let priceable = false;
+      const isInOffer = catInOffer && offerDiscount > 0;
       tr.querySelectorAll('td.price').forEach(td => {
         const span = td.querySelector('.price-content');
         if (td.dataset.base === undefined) return;
         priceable = true;
         const base = Number(td.dataset.base);
         let final = base;
-        if (catInOffer && !isAbon){
-          // Category in offer, no abonement: offer discount, green ALL in this cat
+        if (isInOffer && !isAbon){
+          // Offer category, no abonement: apply discount, green only if fits budget
           final = Math.round(base * (1 - offerDiscount));
-          available = true;
-        } else if (catInOffer && isAbon && budget > 0){
-          // Category in offer + abonement: max discount, green within budget
+          if (budget > 0 && final <= budget) available = true;
+        } else if (isInOffer && isAbon && budget > 0){
+          // Offer category + abonement: max discount, green if fits budget
           final = Math.round(base * (1 - Math.max(offerDiscount, discount)));
           if (final <= budget) available = true;
         } else if (isAbon && base <= budget){
-          // Standard abonement for non-offer categories
+          // Standard abonement
           final = Math.round(base * (1 - discount));
           if (final <= budget) available = true;
         } else if (!isAbon && base <= budget){
-          // Standard single service: green if base price fits budget (no discount)
+          // Standard single service: green if base fits budget
           available = true;
         }
         if (final !== base){
@@ -710,8 +711,7 @@ function recompute(){
         }
       });
       tr.classList.toggle('available', available);
-      const isOfferRow = catInOffer && offerDiscount > 0 && !available;
-      tr.classList.toggle('offer-row', isOfferRow);
+      tr.classList.toggle('offer-row', isInOffer && !available);
       if (priceable){
         anyPriceable = true;
         if (!available) anyWhite = true;
@@ -964,8 +964,11 @@ let offerCats = []; // category keys covered by the offer
     const pct = Math.round(offerDiscount * 100);
     const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
     const forPart = offerFor ? ` для <span class="offer-for">${offerFor}</span>` : '';
-    banner.innerHTML = `<span class="offer-icon">🎁</span> Персональное предложение${forPart} — скидка ${pct}% на услуги, отмеченные <span style="color:var(--purple);font-weight:700">фиолетовым</span> (действует до ${dateStr})`;
+    banner.innerHTML = `<span class="offer-icon">🎁</span><span>Персональное предложение${forPart} — скидка ${pct}% на услуги, отмеченные <span style="color:var(--purple);font-weight:700">фиолетовым</span> (действует до ${dateStr})</span>`;
     banner.style.display = 'flex';
+    // Ensure all categories start collapsed when opening via offer link
+    document.querySelectorAll('section.category.open').forEach(s => s.classList.remove('open'));
+    updateCollapsedGroups();
   }
 })();
 
