@@ -336,7 +336,7 @@ function preview(){
 
   const payload = JSON.stringify({ disc, exp, for: forWhom, cats });
   const token = btoa(encodeURIComponent(payload));
-  window.open(BASE_URL + '?offer=' + token, '_blank');
+  window.open(BASE_URL + '?offer=' + encodeURIComponent(token), '_blank');
 }
 
 function parseDate(str){
@@ -364,7 +364,7 @@ function generate(){
 
   const payload = JSON.stringify({ disc, exp, for: forWhom, cats });
   const token = btoa(encodeURIComponent(payload));
-  const url = BASE_URL + '?offer=' + token;
+  const url = BASE_URL + '?offer=' + encodeURIComponent(token);
 
   document.getElementById('resultUrl').textContent = url;
   document.getElementById('result').style.display = 'block';
