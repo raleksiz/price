@@ -160,7 +160,7 @@
       </div>
       <div class="manual-grid">
         <input type="text" id="manualExp" placeholder="ДД.ММ.ГГГГ" class="manual-input">
-        <input type="text" id="manualUrl" placeholder="Ссылка" class="manual-input">
+        <input type="text" id="manualUrl" placeholder="Ссылка" class="manual-input" oninput="autoFillFromUrl(this.value)">
       </div>
       <button onclick="addManualOffer()" class="manual-add-btn">Добавить</button>
     </div>
@@ -225,6 +225,24 @@ window.addEventListener('DOMContentLoaded', () => { checkSession(); });
 
 function toggleCatStyle(cb){
   cb.closest('.cat-check').classList.toggle('checked', cb.checked);
+}
+
+function autoFillFromUrl(url){
+  try {
+    const m = url.match(/[?&]offer=([^&]+)/);
+    if (!m) return;
+    const decoded = JSON.parse(decodeURIComponent(atob(m[1])));
+    if (decoded.for) document.getElementById('manualName').value = decoded.for;
+    if (decoded.disc) document.getElementById('manualDisc').value = decoded.disc;
+    if (decoded.exp){
+      const d = new Date(decoded.exp);
+      document.getElementById('manualExp').value =
+        String(d.getDate()).padStart(2,'0') + '.' +
+        String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
+    }
+    // cats stored but used by renderSentOffers from offer object
+    autoFillFromUrl._cats = decoded.cats || [];
+  } catch(e){}
 }
 
 function parseDate(str){
@@ -346,7 +364,9 @@ function addManualOffer(){
   if (!forWhom && !url){ alert('Заполните хотя бы получателя или ссылку'); return; }
   try {
     const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
-    offers.unshift({ id: Date.now(), forWhom, disc, exp, cats:[], url, saved: new Date().toLocaleDateString('ru-RU') });
+    const cats = autoFillFromUrl._cats || [];
+    autoFillFromUrl._cats = [];
+    offers.unshift({ id: Date.now(), forWhom, disc, exp, cats, url, saved: new Date().toLocaleDateString('ru-RU') });
     localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
     document.getElementById('manualName').value = '';
     document.getElementById('manualDisc').value = '';
