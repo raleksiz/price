@@ -6,8 +6,8 @@
 <title>RALEKSIZ HOUSE — Генератор персональных предложений</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Inter',system-ui,sans-serif;background:#F4F0FA;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-  .card{background:#fff;border-radius:16px;padding:36px 40px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(80,40,120,0.12);box-sizing:border-box;}
+  body{font-family:'Inter',system-ui,sans-serif;background:#F4F0FA;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px 16px;}
+  .card{background:#fff;border-radius:16px;padding:28px 24px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(80,40,120,0.12);box-sizing:border-box;}
   .logo{font-family:'Montserrat',system-ui,sans-serif;font-weight:800;font-size:18px;color:#2B1A6B;letter-spacing:0.5px;margin-bottom:4px;}
   .subtitle{font-size:12px;color:#888;margin-bottom:28px;}
   h1{font-size:17px;font-weight:700;color:#2B1A6B;margin-bottom:24px;}
@@ -134,7 +134,7 @@
 
   <div class="field">
     <label for="exp">Действует до</label>
-    <input type="date" id="exp">
+    <input type="text" id="exp" placeholder="ДД.ММ.ГГГГ" class="manual-input" style="width:100%">
   </div>
 
   <button class="btn" onclick="generate()">Создать ссылку</button>
@@ -159,7 +159,7 @@
         <input type="text" id="manualDisc" placeholder="Скидка, %" class="manual-input">
       </div>
       <div class="manual-grid">
-        <input type="date" id="manualExp" class="manual-input">
+        <input type="text" id="manualExp" placeholder="ДД.ММ.ГГГГ" class="manual-input">
         <input type="text" id="manualUrl" placeholder="Ссылка" class="manual-input">
       </div>
       <button onclick="addManualOffer()" class="manual-add-btn">Добавить</button>
@@ -227,14 +227,27 @@ function toggleCatStyle(cb){
   cb.closest('.cat-check').classList.toggle('checked', cb.checked);
 }
 
+function parseDate(str){
+  if (!str) return null;
+  // DD.MM.YYYY
+  const ru = str.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (ru) return new Date(ru[3], ru[2]-1, ru[1]);
+  // YYYY-MM-DD
+  const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return new Date(iso[1], iso[2]-1, iso[3]);
+  return null;
+}
+
 function generate(){
   const disc = parseInt(document.getElementById('disc').value);
-  const exp = document.getElementById('exp').value;
+  const expRaw = document.getElementById('exp').value.trim();
   const forWhom = document.getElementById('forWhom').value.trim();
   const cats = [...document.querySelectorAll('.cat-cb:checked')].map(c => c.value);
 
   if (!disc || disc < 1 || disc > 50){ alert('Укажите скидку от 1 до 50%'); return; }
-  if (!exp){ alert('Укажите дату окончания'); return; }
+  const expDate = parseDate(expRaw);
+  if (!expDate || isNaN(expDate)){ alert('Укажите дату в формате ДД.ММ.ГГГГ'); return; }
+  const exp = expDate.toISOString().slice(0,10);
   if (cats.length === 0){ alert('Выберите хотя бы одну категорию услуг'); return; }
 
   const payload = JSON.stringify({ disc, exp, for: forWhom, cats });
