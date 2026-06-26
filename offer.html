@@ -119,7 +119,7 @@
 <!-- Main screen -->
 <div class="card" id="mainScreen" style="display:none">
   <div class="logo">RALEKSIZ HOUSE</div>
-  <div class="subtitle">Только для внутреннего использования</div>
+  <div class="subtitle">Только для внутреннего использования · <a href="#" onclick="showTokenBanner();return false;" style="color:#7C3AED;font-size:11px;">обновить токен</a></div>
 
   <!-- GitHub token banner — shown if token not saved -->
   <div id="tokenBanner" style="display:none;background:#FFF8E6;border:1.5px solid #F6D860;border-radius:10px;padding:12px 14px;margin-bottom:20px;">
@@ -233,6 +233,11 @@ function showMain(){
   const banner = document.getElementById('tokenBanner');
   if (banner) banner.style.display = hasToken ? 'none' : 'block';
   loadOffersFromGitHub().then(renderSentOffers);
+}
+
+function showTokenBanner(){
+  const banner = document.getElementById('tokenBanner');
+  if (banner){ banner.style.display = 'block'; document.getElementById('tokenBannerInput').focus(); }
 }
 
 function saveTokenFromBanner(){
