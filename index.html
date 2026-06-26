@@ -635,7 +635,7 @@ function recompute(){
   const prepay = rawNumber(document.getElementById('inPrepay'));
   const term = rawNumber(document.getElementById('inTerm'));
   const isAbon = term >= 3;
-  const showAbonLabels = isAbon || offerDiscount > 0;
+  const showAbonLabels = isAbon;
   document.getElementById('lblBudget').textContent = showAbonLabels ? 'Бюджет, мес.' : 'Бюджет, ₽';
   document.getElementById('lblPrepay').textContent = showAbonLabels ? 'Аванс, мес.' : 'Предоплата, ₽';
 
@@ -655,7 +655,7 @@ function recompute(){
     document.getElementById('valStatus').textContent = 'Одна услуга';
     statusEl.classList.remove('status-on'); statusEl.classList.add('status-off');
     document.getElementById('valTariff').textContent = 'Offer';
-    document.getElementById('valDiscount').textContent = Math.round(offerDiscount*100) + '%';
+    document.getElementById('valDiscount').textContent = '—';
   } else if (offerDiscount > 0 && isAbon && budget > 0){
     // Offer + abonement: show abonement status, max discount
     const effDisc = Math.max(offerDiscount, discount);
@@ -672,6 +672,9 @@ function recompute(){
   }
 
   document.querySelectorAll('section.category').forEach(section => {
+    const catKey = section.dataset.idx !== undefined
+      ? DATA.categories[Number(section.dataset.idx)].key : '';
+    const catInOffer = offerCats.length > 0 && offerCats.includes(catKey);
     let anyPriceable = false;
     let anyWhite = false;
 
@@ -684,17 +687,16 @@ function recompute(){
         priceable = true;
         const base = Number(td.dataset.base);
         let final = base;
-        const offerOnlyMode = offerDiscount > 0 && (!isAbon || budget === 0);
-        if (offerOnlyMode){
-          // Offer only: apply offer to everything, green ALL
+        if (catInOffer && !isAbon){
+          // Category in offer, no abonement: offer discount, green ALL in this cat
           final = Math.round(base * (1 - offerDiscount));
           available = true;
-        } else if (offerDiscount > 0 && isAbon && budget > 0){
-          // Offer + abonement: max discount, green within budget
-          const effDisc = Math.max(offerDiscount, discount);
-          final = Math.round(base * (1 - effDisc));
+        } else if (catInOffer && isAbon && budget > 0){
+          // Category in offer + abonement: max discount, green within budget
+          final = Math.round(base * (1 - Math.max(offerDiscount, discount)));
           if (final <= budget) available = true;
         } else if (isAbon && base <= budget){
+          // Standard abonement for non-offer categories
           final = Math.round(base * (1 - discount));
           if (final <= budget) available = true;
         }
@@ -714,8 +716,7 @@ function recompute(){
     const oplataEl = section.querySelector('.oplata');
     if (oplataEl){
       const txt = oplataEl.querySelector('.oplata-text');
-      const offerOnlyModeOp = offerDiscount > 0 && (!isAbon || budget === 0);
-      if (offerOnlyModeOp || !isAbon){
+      if (!isAbon){
         txt.innerHTML = oplataEl.dataset.normal;
       } else if (anyPriceable && anyWhite){
         txt.innerHTML = `Услуги, выделенные зелёным, оплачиваются в рамках абонентского обслуживания. Остальные — на условиях разового заказа: ${oplataEl.dataset.normal}`;
@@ -937,6 +938,8 @@ Object.entries(paramMap).forEach(([key, id]) => {
 let offerDiscount = 0;
 let offerExpiry = null;
 let offerFor = '';
+let offerCats = []; // category keys covered by the offer
+
 (function(){
   const offerParam = urlParams.get('offer');
   if (!offerParam) return;
@@ -947,6 +950,7 @@ let offerFor = '';
       offerDiscount = Number(decoded.disc) / 100;
       offerExpiry = expiry;
       offerFor = decoded.for || '';
+      offerCats = decoded.cats || [];
     }
   } catch(e) {}
   if (!offerDiscount) return;
@@ -954,28 +958,9 @@ let offerFor = '';
   if (banner){
     const pct = Math.round(offerDiscount * 100);
     const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
-    const shortDate = dateStr;
-    const forPart = offerFor ? ` <span class="offer-for">для ${offerFor}</span>` : '';
-    banner.innerHTML = `<span class="offer-icon">🎁</span> <b>Персональное предложение${forPart}:</b> скидка ${pct}% на все услуги — действует до ${dateStr}`;
+    const forPart = offerFor ? ` для <span class="offer-for">${offerFor}</span>` : '';
+    banner.innerHTML = `<span class="offer-icon">🎁</span> Персональное предложение${forPart} — скидка ${pct}% на услуги, отмеченные зелёным (действует до ${dateStr})`;
     banner.style.display = 'flex';
-
-    // Calculate min term in full months from today to expiry
-    const now = new Date();
-    const months = (offerExpiry.getFullYear() - now.getFullYear()) * 12
-      + (offerExpiry.getMonth() - now.getMonth());
-    const offerMinTerm = Math.max(1, months);
-
-    // Pre-fill term field with min months, set minimum constraint
-    const termEl = document.getElementById('inTerm');
-    termEl.value = offerMinTerm;
-    termEl.min = offerMinTerm;
-    termEl.addEventListener('change', () => {
-      if (parseInt(termEl.value) < offerMinTerm) termEl.value = offerMinTerm;
-    });
-
-    // Update term label to show expiry date
-    const termLabel = document.querySelector('label[for="inTerm"]');
-    if (termLabel) termLabel.textContent = `Срок, мес. (до ${shortDate})`;
   }
 })();
 

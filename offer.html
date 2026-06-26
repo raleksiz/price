@@ -41,6 +41,12 @@
   .copy-btn:hover{opacity:0.85;}
   .copy-btn.copied{background:#16a34a;}
   .hint{font-size:11.5px;color:#999;margin-top:10px;line-height:1.5;}
+  .cats-label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.3px;}
+  .cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:20px;}
+  .cat-check{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid #DDD;border-radius:8px;cursor:pointer;font-size:13px;color:#2B1A6B;transition:border-color .15s,background .15s;}
+  .cat-check:hover{border-color:#7C3AED;background:#F9F6FF;}
+  .cat-check input{accent-color:#7C3AED;width:16px;height:16px;cursor:pointer;}
+  .cat-check.checked{border-color:#7C3AED;background:#F3ECFA;}
 </style>
 </head>
 <body>
@@ -66,6 +72,19 @@
   <div class="field">
     <label for="forWhom">Для кого</label>
     <input type="text" id="forWhom" placeholder="например, Сафоновой С.В.">
+  </div>
+
+  <div class="field">
+    <span class="cats-label">Категории со скидкой</span>
+    <div class="cats-grid">
+      <label class="cat-check" id="lbl_consult"><input type="checkbox" class="cat-cb" value="consult" onchange="toggleCatStyle(this)"> Консультации</label>
+      <label class="cat-check" id="lbl_contracts"><input type="checkbox" class="cat-cb" value="contracts" onchange="toggleCatStyle(this)"> Договоры</label>
+      <label class="cat-check" id="lbl_realestate"><input type="checkbox" class="cat-cb" value="realestate" onchange="toggleCatStyle(this)"> Недвижимость</label>
+      <label class="cat-check" id="lbl_corporate"><input type="checkbox" class="cat-cb" value="corporate" onchange="toggleCatStyle(this)"> Корпоративные</label>
+      <label class="cat-check" id="lbl_pretrial"><input type="checkbox" class="cat-cb" value="pretrial" onchange="toggleCatStyle(this)"> Досудебное</label>
+      <label class="cat-check" id="lbl_litigation_single"><input type="checkbox" class="cat-cb" value="litigation_single" onchange="toggleCatStyle(this)"> Суд: разовые</label>
+      <label class="cat-check" id="lbl_full_repr"><input type="checkbox" class="cat-cb" value="full_repr" onchange="toggleCatStyle(this)"> Суд: под ключ</label>
+    </div>
   </div>
 
   <div class="field">
@@ -117,15 +136,21 @@ document.addEventListener('keydown', e => {
   }
 });
 
+function toggleCatStyle(cb){
+  cb.closest('.cat-check').classList.toggle('checked', cb.checked);
+}
+
 function generate(){
   const disc = parseInt(document.getElementById('disc').value);
   const exp = document.getElementById('exp').value;
   const forWhom = document.getElementById('forWhom').value.trim();
+  const cats = [...document.querySelectorAll('.cat-cb:checked')].map(c => c.value);
 
   if (!disc || disc < 1 || disc > 50){ alert('Укажите скидку от 1 до 50%'); return; }
   if (!exp){ alert('Укажите дату окончания'); return; }
+  if (cats.length === 0){ alert('Выберите хотя бы одну категорию услуг'); return; }
 
-  const payload = JSON.stringify({ disc, exp, for: forWhom });
+  const payload = JSON.stringify({ disc, exp, for: forWhom, cats });
   const token = btoa(encodeURIComponent(payload));
   const url = BASE_URL + '?offer=' + token;
 
@@ -133,10 +158,11 @@ function generate(){
   document.getElementById('result').style.display = 'block';
 
   const d = new Date(exp);
-  const dateStr = d.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+  const dateStr = d.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
   const whoStr = forWhom ? ` · Для: ${forWhom}` : '';
+  const catsStr = cats.length + ' кат.';
   document.getElementById('hint').textContent =
-    `Скидка ${disc}%${whoStr} · Действует до ${dateStr}`;
+    `Скидка ${disc}% · ${catsStr}${whoStr} · Действует до ${dateStr}`;
 
   const copyBtn = document.getElementById('copyBtn');
   copyBtn.textContent = 'Скопировать ссылку';
