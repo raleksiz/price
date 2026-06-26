@@ -345,9 +345,6 @@
   @media (max-width:640px){.sur-br{display:inline;} details.surcharges li .amt{text-align:right;}}
   .footer-dash{display:inline;}
   @media (max-width:640px){.footer-br{display:inline;}.footer-dash{display:none;}}
-@media (max-width:640px){
-  }
-  
   @media (max-width:640px){
     table:not(.dual) thead th:nth-child(1){width:54%;}
     table:not(.dual) thead th:nth-child(2){width:16%;}
@@ -654,13 +651,7 @@ function recompute(){
     statusEl.classList.remove('status-on'); statusEl.classList.add('status-off');
     document.getElementById('valTariff').textContent = 'Offer';
     document.getElementById('valDiscount').textContent = '—';
-  } else if (offerDiscount > 0 && isAbon){
-    // Offer + abonement: show abonement status, max discount
-    const effDisc = Math.max(offerDiscount, discount);
-    document.getElementById('valStatus').textContent = 'Абонемент';
-    statusEl.classList.add('status-on'); statusEl.classList.remove('status-off');
-    document.getElementById('valTariff').textContent = tariff;
-    document.getElementById('valDiscount').textContent = (effDisc*100).toLocaleString('ru-RU', {maximumFractionDigits:1}) + '%';
+
   } else {
     document.getElementById('valStatus').textContent = isAbon ? 'Абонемент' : 'Одна услуга';
     statusEl.classList.toggle('status-on', isAbon);
@@ -679,7 +670,7 @@ function recompute(){
     section.querySelectorAll('tbody tr').forEach(tr => {
       let available = false;
       let priceable = false;
-      const isInOffer = catInOffer && offerDiscount > 0;
+      const isInOffer = catInOffer && offerDiscount > 0 && !isAbon;
       tr.querySelectorAll('td.price').forEach(td => {
         const span = td.querySelector('.price-content');
         if (td.dataset.base === undefined) return;
