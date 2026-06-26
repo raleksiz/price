@@ -279,8 +279,8 @@
   td.price .price-final{font-weight:700;color:var(--navy);}
   td.price .price-na{color:var(--ink-soft);font-style:italic;font-size:12px;white-space:normal;text-align:right;}
   tbody tr.available{background:var(--green-bg);}
-  tbody tr.offer-row{background:#F3ECFA;}
-  tbody tr.offer-row td.price .price-final{color:var(--purple);}
+  tbody tr.offer-row{background:#FFF8E6;}
+  tbody tr.offer-row td.price .price-final{color:#B45309;}
   tbody tr.available td.price .price-final{color:var(--green-text);}
 
   details.surcharges{border-top:1px dashed var(--line);padding:0;}
@@ -713,7 +713,7 @@ function recompute(){
         }
       });
       tr.classList.toggle('available', available);
-      tr.classList.toggle('offer-row', isInOffer && !available);
+      tr.classList.toggle('offer-row', isInOffer && !available && priceable);
       if (priceable){
         anyPriceable = true;
         if (!available) anyWhite = true;
@@ -966,7 +966,7 @@ let offerCats = []; // category keys covered by the offer
     const pct = Math.round(offerDiscount * 100);
     const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
     const forPart = offerFor ? ` для <span class="offer-for">${offerFor}</span>` : '';
-    banner.innerHTML = `<span class="offer-icon">🎁</span><span>Персональное предложение${forPart} — скидка ${pct}% на услуги, отмеченные <span style="color:var(--purple);font-weight:700">фиолетовым</span> (действует до ${dateStr})</span>`;
+    banner.innerHTML = `<span class="offer-icon">🎁</span><span>Персональное предложение${forPart} — скидка ${pct}% на услуги, отмеченные <span style="color:#B45309;font-weight:700">жёлтым</span> (действует до ${dateStr})</span>`;
     banner.style.display = 'flex';
     // Ensure all categories start collapsed when opening via offer link
     document.querySelectorAll('section.category.open').forEach(s => s.classList.remove('open'));
