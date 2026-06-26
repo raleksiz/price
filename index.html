@@ -712,8 +712,11 @@ function recompute(){
           span.innerHTML = `<span class="price-final">${fmtRub(base)}</span>`;
         }
       });
-      tr.classList.toggle('available', available);
-      tr.classList.toggle('offer-row', isInOffer && !available && priceable);
+      // For offer rows: green only when status is Абонемент
+      const showGreen = available && (!isInOffer || isAbon);
+      const showYellow = isInOffer && priceable && !(available && isAbon);
+      tr.classList.toggle('available', showGreen);
+      tr.classList.toggle('offer-row', showYellow);
       if (priceable){
         anyPriceable = true;
         if (!available) anyWhite = true;
@@ -966,7 +969,7 @@ let offerCats = []; // category keys covered by the offer
     const pct = Math.round(offerDiscount * 100);
     const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
     const forPart = offerFor ? ` для <span class="offer-for">${offerFor}</span>` : '';
-    banner.innerHTML = `<span class="offer-icon">🎁</span><span>Персональное предложение${forPart} — скидка ${pct}% на услуги, отмеченные <span style="color:#E65100;font-weight:700">жёлтым</span> (действует до ${dateStr})</span>`;
+    banner.innerHTML = `<span class="offer-icon">🎁</span><span>Персональное предложение${forPart} — скидка ${pct}% на услуги, отмеченные <span style="color:#F6C700;font-weight:700">жёлтым</span> (действует до ${dateStr})</span>`;
     banner.style.display = 'flex';
     // Ensure all categories start collapsed when opening via offer link
     document.querySelectorAll('section.category.open').forEach(s => s.classList.remove('open'));
