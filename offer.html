@@ -120,6 +120,14 @@
 <div class="card" id="mainScreen" style="display:none">
   <div class="logo">RALEKSIZ HOUSE</div>
   <div class="subtitle">Только для внутреннего использования</div>
+
+  <!-- GitHub token banner — shown if token not saved -->
+  <div id="tokenBanner" style="display:none;background:#FFF8E6;border:1.5px solid #F6D860;border-radius:10px;padding:12px 14px;margin-bottom:20px;">
+    <div style="font-size:12px;font-weight:700;color:#7A6000;margin-bottom:8px;">⚠️ Синхронизация с GitHub не настроена</div>
+    <input type="password" id="tokenBannerInput" placeholder="github_pat_..." style="width:100%;border:1.5px solid #DDD;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:#2B1A6B;outline:none;box-sizing:border-box;margin-bottom:8px;">
+    <button onclick="saveTokenFromBanner()" style="width:100%;background:#2B1A6B;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">Сохранить токен</button>
+  </div>
+
   <h1>Персональное предложение</h1>
 
   <div class="field">
@@ -220,6 +228,18 @@ function checkSession(){
 function showMain(){
   document.getElementById('pwdScreen').style.display = 'none';
   document.getElementById('mainScreen').style.display = 'block';
+  // Show token banner if no token saved
+  const hasToken = !!localStorage.getItem(TOKEN_KEY);
+  const banner = document.getElementById('tokenBanner');
+  if (banner) banner.style.display = hasToken ? 'none' : 'block';
+  loadOffersFromGitHub().then(renderSentOffers);
+}
+
+function saveTokenFromBanner(){
+  const val = document.getElementById('tokenBannerInput').value.trim();
+  if (!val){ alert('Введите токен'); return; }
+  localStorage.setItem(TOKEN_KEY, val);
+  document.getElementById('tokenBanner').style.display = 'none';
   loadOffersFromGitHub().then(renderSentOffers);
 }
 
