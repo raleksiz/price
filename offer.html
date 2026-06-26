@@ -133,7 +133,36 @@
 <!-- Sent offers list -->
 <div class="card" id="sentOffersCard" style="display:none;margin-top:16px;">
   <h2 style="font-size:15px;font-weight:700;color:#2B1A6B;margin-bottom:16px;">Разосланные персональные предложения</h2>
-  <div id="sentOffersList"></div>
+
+  <!-- Manual add form -->
+  <div style="background:#F8F6FF;border-radius:10px;padding:12px 14px;margin-bottom:16px;">
+    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:10px;">Добавить вручную</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <input type="text" id="manualName" placeholder="Для кого (дат. падеж)" style="border:1.5px solid #DDD;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:#2B1A6B;outline:none;">
+      <input type="text" id="manualDisc" placeholder="Скидка, %" style="border:1.5px solid #DDD;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:#2B1A6B;outline:none;">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <input type="date" id="manualExp" style="border:1.5px solid #DDD;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:#2B1A6B;outline:none;">
+      <input type="text" id="manualUrl" placeholder="Ссылка" style="border:1.5px solid #DDD;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:#2B1A6B;outline:none;">
+    </div>
+    <button onclick="addManualOffer()" style="width:100%;background:#2B1A6B;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">Добавить</button>
+  </div>
+
+  <!-- Table -->
+  <div style="overflow-x:auto;">
+    <table id="sentOffersTable" style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead>
+        <tr style="border-bottom:2px solid #E4E5EA;text-align:left;">
+          <th style="padding:6px 8px;color:#888;font-weight:700;font-size:11px;text-transform:uppercase;">Получатель</th>
+          <th style="padding:6px 8px;color:#888;font-weight:700;font-size:11px;text-transform:uppercase;">Скидка</th>
+          <th style="padding:6px 8px;color:#888;font-weight:700;font-size:11px;text-transform:uppercase;">Действует до</th>
+          <th style="padding:6px 8px;color:#888;font-weight:700;font-size:11px;text-transform:uppercase;">Ссылка</th>
+          <th style="padding:6px 8px;"></th>
+        </tr>
+      </thead>
+      <tbody id="sentOffersList"></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
@@ -262,25 +291,42 @@ function renderSentOffers(){
   try {
     const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
     const card = document.getElementById('sentOffersCard');
-    const list = document.getElementById('sentOffersList');
-    if (!offers.length){ card.style.display = 'none'; return; }
+    const tbody = document.getElementById('sentOffersList');
     card.style.display = 'block';
-    list.innerHTML = offers.map(o => {
-      const d = new Date(o.exp).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'});
-      const catNames = {'consult':'Консультации','contracts':'Договоры','realestate':'Недвижимость',
-        'corporate':'Корпоративные','pretrial':'Досудебное','litigation_single':'Суд: разовые','full_repr':'Суд: под ключ'};
-      const catsStr = (o.cats||[]).map(k => catNames[k]||k).join(', ');
-      return `<div class="offer-item">
-        <div class="offer-item-info">
-          <div class="offer-item-name">${o.forWhom || 'Без имени'}</div>
-          <div class="offer-item-meta">Скидка ${o.disc}% · до ${d} · Сохранено ${o.saved}</div>
-          <div class="offer-item-meta">${catsStr}</div>
-          <div class="offer-item-link"><a href="${o.url}" target="_blank">${o.url.slice(0,60)}…</a></div>
-        </div>
-        <button class="del-btn" onclick="deleteOffer(${o.id})" title="Удалить">✕</button>
-      </div>`;
+    if (!offers.length){
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:16px 8px;color:#aaa;text-align:center;font-size:13px;">Список пуст</td></tr>';
+      return;
+    }
+    tbody.innerHTML = offers.map(o => {
+      const d = o.exp ? new Date(o.exp).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+      const shortUrl = o.url ? o.url.replace('https://raleksiz.github.io/price/?offer=','…?offer=').slice(0,30)+'…' : '—';
+      return `<tr style="border-bottom:1px solid #F0F0F3;">
+        <td style="padding:8px 8px;color:#2B1A6B;font-weight:600;">${o.forWhom||'—'}</td>
+        <td style="padding:8px 8px;color:#E65100;font-weight:700;">${o.disc ? '-'+o.disc+'%' : '—'}</td>
+        <td style="padding:8px 8px;color:#555;">${d}</td>
+        <td style="padding:8px 8px;"><a href="${o.url||'#'}" target="_blank" style="color:#7C3AED;font-size:11px;word-break:break-all;">${shortUrl}</a></td>
+        <td style="padding:8px 4px;"><button onclick="deleteOffer(${o.id})" style="background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:0;" title="Удалить">✕</button></td>
+      </tr>`;
     }).join('');
   } catch(e){}
+}
+
+function addManualOffer(){
+  const forWhom = document.getElementById('manualName').value.trim();
+  const disc = document.getElementById('manualDisc').value.trim();
+  const exp = document.getElementById('manualExp').value;
+  const url = document.getElementById('manualUrl').value.trim();
+  if (!forWhom && !url){ alert('Заполните хотя бы получателя или ссылку'); return; }
+  try {
+    const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
+    offers.unshift({ id: Date.now(), forWhom, disc, exp, cats:[], url, saved: new Date().toLocaleDateString('ru-RU') });
+    localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
+    document.getElementById('manualName').value = '';
+    document.getElementById('manualDisc').value = '';
+    document.getElementById('manualExp').value = '';
+    document.getElementById('manualUrl').value = '';
+    renderSentOffers();
+  } catch(e){ alert('Не удалось сохранить'); }
 }
 </script>
 </body>
