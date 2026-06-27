@@ -538,7 +538,7 @@ function renderSentOffers(){
       const datePrefix = isExpiring ? '⚠️ ' : isExpired ? '' : '';
       return `<div class="${cardClass}">
         <div class="sent-item-body">
-          <div class="sent-item-name">${o.forWhom||'Без имени'}</div>
+          <div class="sent-item-name">${o.forWhom ? 'Для ' + o.forWhom : 'Без имени'}</div>
           <div class="sent-item-meta">
             <span style="color:#E65100;font-weight:700;">-${o.disc||'?'}%</span>
             &nbsp;·&nbsp;действует до <span class="${dateClass}">${datePrefix}<b>${d}</b></span>
