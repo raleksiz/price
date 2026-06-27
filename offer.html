@@ -68,6 +68,10 @@
   .sent-del{background:none;border:none;color:#CCC;font-size:18px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;}
   .sent-del:hover{color:#dc2626;}
   .sent-empty{text-align:center;color:#aaa;font-size:13px;padding:20px 0;}
+  .sent-item.expired{background:#F5F5F5;opacity:0.75;}
+  .sent-item.expiring{background:#FFF8E6;border-color:#F6D860;}
+  .date-expired{text-decoration:line-through;color:#aaa;}
+  .date-expiring{color:#E65100;font-weight:700;}
   .save-btn{
     margin-top:8px;width:100%;background:#F3ECFA;color:#6E3B8C;border:1.5px solid #C4B5FD;
     border-radius:10px;padding:11px;font-size:14px;font-weight:700;font-family:inherit;
@@ -399,6 +403,7 @@ function generate(){
   const cats = [...document.querySelectorAll('.cat-cb:checked')].map(c => c.value);
 
   if (!disc || disc < 0.5 || disc > 50){ alert('Укажите скидку от 0.5 до 50%'); return; }
+  if (!expRaw){ alert('Укажите дату окончания'); return; }
   const expDate = parseDate(expRaw);
   if (!expDate || isNaN(expDate)){ alert('Укажите дату в формате ДД.ММ.ГГГГ'); return; }
   const exp = expDate.toISOString().slice(0,10);
@@ -517,17 +522,26 @@ function renderSentOffers(){
     }
     const catNames = {'consult':'Консультации','contracts':'Договоры','realestate':'Недвижимость',
       'corporate':'Корпоративные','pretrial':'Досудебное','litigation_single':'Суд: разовые','full_repr':'Суд: под ключ'};
+    const now = new Date(); now.setHours(0,0,0,0);
+    const twoWeeks = new Date(now); twoWeeks.setDate(twoWeeks.getDate()+14);
     list.innerHTML = offers.map(o => {
       const expParsed = o.exp ? (parseDate(o.exp) || new Date(o.exp)) : null;
     const d = expParsed && !isNaN(expParsed) ? expParsed.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) : (o.exp || '—');
       const catsStr = (o.cats||[]).map(k => catNames[k]||k).join(', ');
       const shortUrl = o.url ? o.url.slice(0,55)+(o.url.length>55?'…':'') : '';
-      return `<div class="sent-item">
+      const expParsed2 = o.exp ? (parseDate(o.exp) || new Date(o.exp)) : null;
+      if (expParsed2) expParsed2.setHours(0,0,0,0);
+      const isExpired = expParsed2 && expParsed2 < now;
+      const isExpiring = expParsed2 && !isExpired && expParsed2 <= twoWeeks;
+      const cardClass = isExpired ? 'sent-item expired' : isExpiring ? 'sent-item expiring' : 'sent-item';
+      const dateClass = isExpired ? 'date-expired' : isExpiring ? 'date-expiring' : '';
+      const datePrefix = isExpiring ? '⚠️ ' : isExpired ? '' : '';
+      return `<div class="${cardClass}">
         <div class="sent-item-body">
           <div class="sent-item-name">${o.forWhom||'Без имени'}</div>
           <div class="sent-item-meta">
             <span style="color:#E65100;font-weight:700;">-${o.disc||'?'}%</span>
-            &nbsp;·&nbsp;действует до <b>${d}</b>
+            &nbsp;·&nbsp;действует до <span class="${dateClass}">${datePrefix}<b>${d}</b></span>
           </div>
           <div class="sent-item-meta" style="color:#999;">сохранено ${o.saved}</div>
           ${catsStr ? `<div class="sent-item-meta">${catsStr}</div>` : ''}
@@ -544,6 +558,7 @@ function addManualOffer(){
   const disc = document.getElementById('manualDisc').value.trim();
   const exp = document.getElementById('manualExp').value;
   const url = document.getElementById('manualUrl').value.trim();
+  if (!exp){ alert('Укажите дату окончания оффера'); return; }
   if (!forWhom && !url){ alert('Заполните хотя бы получателя или ссылку'); return; }
   try {
     const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
