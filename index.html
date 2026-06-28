@@ -665,7 +665,8 @@ function recompute(){
     const catKey = section.dataset.idx !== undefined
       ? DATA.categories[Number(section.dataset.idx)].key : '';
     const catInOffer = offerCats.length > 0 && offerCats.includes(catKey);
-    section.classList.toggle('offer-cat', catInOffer && offerDiscount > 0 && !isAbon);
+    const sectionIsInOffer = catInOffer && offerDiscount > 0 && !isAbon;
+    section.classList.toggle('offer-cat', sectionIsInOffer);
     section.classList.toggle('has-available', false); // reset, set after rows
     let anyPriceable = false;
     let anyWhite = false;
@@ -718,7 +719,7 @@ function recompute(){
     // Green marker: show if has available rows AND section is not an offer-cat
     // In offer mode: only for non-offer sections
     // In abon mode: for all sections (offer-cat is already cleared when isAbon)
-    const showGreenMarker = anyAvailableRow && !catInOffer;
+    const showGreenMarker = anyAvailableRow && !sectionIsInOffer;
     section.classList.toggle('has-available', showGreenMarker);
     const oplataEl = section.querySelector('.oplata');
     if (oplataEl){
