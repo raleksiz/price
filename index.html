@@ -150,12 +150,11 @@
     background:var(--gold);border:1px solid var(--gold-border);border-radius:10px;
     font-size:12.5px;color:var(--navy);
   }
-  .legend-list{list-style:none;margin:0;padding:0;max-height:58px;overflow:hidden;
-    position:relative;transition:max-height .25s ease;}
-  .legend-list.expanded{max-height:600px;}
-  .legend-list li{position:relative;padding-left:16px;margin-bottom:5px;line-height:1.42;}
-  .legend-list li::before{content:"–";position:absolute;left:0;font-weight:700;}
-  .legend-list:not(.expanded)::after{
+  #legendContainer{max-height:58px;overflow:hidden;position:relative;transition:max-height .25s ease;}
+  ul.legend-bullets{list-style:none;margin:0;padding:0;}
+  ol.legend-numbered{margin:6px 0 0 0;padding-left:18px;}
+  #legendContainer.expanded{max-height:600px;}
+  #legendContainer:not(.expanded)::after{
     content:"";position:absolute;left:0;right:0;bottom:0;height:22px;
     background:linear-gradient(to bottom, rgba(255,242,204,0), var(--gold));
   }
@@ -404,14 +403,15 @@
 </div>
 
 <div class="legend">
-  <ul class="legend-list" id="legendList">
-    <li>🟩 Зелёным выделены услуги, доступные в рамках вашего бюджета хотя бы 1 раз (для строк с двумя ценами — если хотя бы одна из них укладывается в бюджет).</li>
-    <li>Срок договора от 3 мес. переводит вас на абонентское обслуживание — цены фиксируются на весь срок его действия.</li>
-    <li>Скидка дополнительно зависит от бюджета и применяется только к услугам, чья базовая цена не выше бюджета.</li>
-    <li>Услуги, чья цена не выше суммы бюджета, оказываются на условиях абонентского обслуживания; всё, что выше суммы бюджета, — по стоимости разовых услуг согласно прайсу.</li>
-    <li>Заказы в рамках бюджета исполняются по очереди поступления; в пределах одного дня — в порядке убывания цены.</li>
-    <li>Размер надбавок и скидок фиксирован и не зависит от применяемой тарифной скидки.</li>
-  </ul>
+  <div id="legendContainer"><p id="legendList" class="legend-colors" style="margin:0 0 6px 0;font-size:12.5px;color:var(--navy);line-height:1.42;">🟩 Зелёным выделены услуги, доступные в рамках вашего бюджета хотя бы 1 раз (для строк с двумя ценами — если хотя бы одна из них укладывается в бюджет).</p>
+  <div id="legendItems">
+    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">1</span>Срок договора от 3 мес. переводит на абонентское обслуживание — цены фиксируются на весь срок его действия.</p>
+    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">2</span>Абонентский платёж — до 10-го числа текущего месяца.</p>
+    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">3</span>Услуги, чья цена вписывается в бюджет, оказываются на условиях абонентского обслуживания; остальные — по стоимости разовых услуг согласно прайсу.</p>
+    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">4</span>Заказы в рамках бюджета исполняются по очереди поступления; в пределах одного дня — в порядке убывания цены.</p>
+    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">5</span>Скидка зависит от бюджета и применяется только к услугам, чья базовая цена не выше бюджета.</p>
+    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">6</span>Надбавки и скидки применяются к цене с учётом тарифной скидки; их размер фиксирован.</p>
+  </div></div>
   <button class="legend-toggle" id="legendToggle" type="button" aria-expanded="false">
     <span id="legendToggleText">Показать всё</span>
     <svg class="chevron" id="legendChevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -739,7 +739,7 @@ const legendList = document.getElementById('legendList');
 const legendToggle = document.getElementById('legendToggle');
 const legendToggleText = document.getElementById('legendToggleText');
 legendToggle.addEventListener('click', () => {
-  const expanded = legendList.classList.toggle('expanded');
+  const expanded = document.getElementById('legendContainer').classList.toggle('expanded');
   legendToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
   legendToggleText.textContent = expanded ? 'Свернуть' : 'Показать всё';
 });
@@ -983,11 +983,13 @@ let offerDiscOrig = 0; // category keys covered by the offer
 (function(){
   const legendList = document.getElementById('legendList');
   if (!legendList || !offerDiscount) return;
-  const li = document.createElement('li');
-  li.id = 'offerLegendItem';
-  li.innerHTML = '🟠 Оранжевое — ваша персональная скидка. Поля выше — для расчёта абонемента на правовое сопровождение.';
+  const offerP = document.createElement('p');
+  offerP.id = 'offerLegendItem';
+  offerP.style.cssText = 'margin:0 0 4px 0;font-size:12.5px;color:var(--navy);line-height:1.42;';
+  offerP.innerHTML = '🟠 Оранжевое — ваша персональная скидка. Поля выше — для расчёта абонемента на правовое сопровождение.';
 
-  legendList.insertBefore(li, legendList.firstChild);
+  const legendContainer = document.getElementById('legendContainer');
+  legendContainer.insertBefore(offerP, legendContainer.firstChild);
 })();
 
 updateCollapsedGroups();
