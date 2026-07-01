@@ -166,7 +166,7 @@
   </div>
 
   <button class="btn" onclick="generate()">Создать ссылку</button>
-  <button class="btn" onclick="preview()" style="background:#F3ECFA;color:#6E3B8C;border:1.5px solid #C4B5FD;margin-top:8px;">Предпросмотр</button>
+  <button class="btn" onclick="preview()" style="background:var(--bg,#F3ECFA);color:#6E3B8C;border:1.5px solid #C4B5FD;margin-top:8px;">Предпросмотр</button>
 
   <div class="result" id="result">
     <div class="result-label">Ссылка для клиента</div>
@@ -376,11 +376,9 @@ function preview(){
   if (cats.length === 0){ alert('Выберите хотя бы одну категорию'); return; }
 
   const expDate = parseDate(expRaw);
-  const fallback = new Date(Date.now() + 30*24*60*60*1000);
-  const d = expDate && !isNaN(expDate) ? expDate : fallback;
-  const exp = d.getFullYear() + '-' +
-    String(d.getMonth()+1).padStart(2,'0') + '-' +
-    String(d.getDate()).padStart(2,'0');
+  const exp = expDate && !isNaN(expDate)
+    ? expDate.toISOString().slice(0,10)
+    : new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0,10); // fallback: +30 days
 
   const payload = JSON.stringify({ disc, exp, for: forWhom, cats });
   const token = btoa(encodeURIComponent(payload));
@@ -408,9 +406,7 @@ function generate(){
   if (!expRaw){ alert('Укажите дату окончания'); return; }
   const expDate = parseDate(expRaw);
   if (!expDate || isNaN(expDate)){ alert('Укажите дату в формате ДД.ММ.ГГГГ'); return; }
-  const exp = expDate.getFullYear() + '-' +
-    String(expDate.getMonth()+1).padStart(2,'0') + '-' +
-    String(expDate.getDate()).padStart(2,'0');
+  const exp = expDate.toISOString().slice(0,10);
   if (cats.length === 0){ alert('Выберите хотя бы одну категорию услуг'); return; }
 
   const payload = JSON.stringify({ disc, exp, for: forWhom, cats });
