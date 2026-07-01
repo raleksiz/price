@@ -353,6 +353,68 @@
   }
   ::selection{background:var(--purple-light);}
 
+
+  /* ===== SECRET PRINT (only via hidden link, class body.print-mode) ===== */
+  @media print {
+    body.print-mode { background: #fff !important; }
+
+    /* Hide footer only in print-mode */
+    body.print-mode footer { display: none !important; }
+
+    /* Hide nav controls */
+    body.print-mode .cat-nav,
+    body.print-mode .menu-icon-btn,
+    body.print-mode .cat-controls,
+    body.print-mode .cat-chevron,
+    body.print-mode .legend-toggle { display: none !important; }
+
+    /* Sticky panel to static so it prints in place */
+    body.print-mode .panel-sticky {
+      position: static !important;
+      box-shadow: none !important;
+    }
+
+    /* Disable transitions to prevent half-rendered max-height */
+    body.print-mode * {
+      transition: none !important;
+      animation: none !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Sections: remove overflow:hidden that clips multi-page content */
+    body.print-mode section.category {
+      overflow: visible !important;
+      page-break-inside: auto !important;
+    }
+    /* cat-body: natural height, visible overflow */
+    body.print-mode section.category .cat-body {
+      max-height: none !important;
+      height: auto !important;
+      overflow: visible !important;
+      display: block !important;
+    }
+
+    /* Legend expanded */
+    body.print-mode #legendContainer {
+      max-height: none !important;
+      overflow: visible !important;
+    }
+    body.print-mode #legendContainer::after { display: none !important; }
+
+    /* Surcharges open, hide toggle arrow */
+    body.print-mode details { display: block !important; }
+    body.print-mode details > summary { list-style: none !important; pointer-events: none; }
+    body.print-mode details > summary::-webkit-details-marker { display: none !important; }
+
+    /* Avoid breaking rows across pages */
+    body.print-mode tr { page-break-inside: avoid; }
+    body.print-mode thead { display: table-header-group; }
+
+    /* Hide the secret link itself in print */
+    body.print-mode #printLink { display: none !important; }
+  }
+  #printLink{font-size:10px;color:var(--paper);text-decoration:none;padding:4px 8px;}
 </style>
 </head>
 <body>
@@ -405,11 +467,11 @@
 <div class="legend">
   <div id="legendContainer"><p id="legendList" class="legend-colors" style="margin:0 0 6px 0;font-size:12.5px;color:var(--navy);line-height:1.42;">🟩 Зелёным выделены услуги, доступные в рамках вашего бюджета хотя бы 1 раз (для строк с двумя ценами — если хотя бы одна из них укладывается в бюджет).</p>
   <div id="legendItems">
-    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">1</span>Срок договора от 3 мес. переводит на абонентское обслуживание – цены фиксируются на весь срок его действия.</p>
-    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">2</span>Абонентский платёж – до 10-го числа текущего месяца.</p>
-    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">3</span>Услуги, чья цена вписывается в бюджет, оказываются на условиях абонентского обслуживания; остальные – по стоимости разовых услуг согласно прайсу.</p>
-    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">4</span>Заказы в рамках бюджета исполняются по очереди поступления; в пределах одного дня – в порядке убывания цены.</p>
-    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">5</span>Скидка применяется только к услугам, чья базовая цена ниже бюджета.</p>
+    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">1</span>Срок договора от 3 мес. переводит на абонентское обслуживание — цены фиксируются на весь срок его действия.</p>
+    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">2</span>Абонентский платёж — до 10-го числа текущего месяца.</p>
+    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">3</span>Услуги, чья цена вписывается в бюджет, оказываются на условиях абонентского обслуживания; остальные — по стоимости разовых услуг согласно прайсу.</p>
+    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">4</span>Заказы в рамках бюджета исполняются по очереди поступления; в пределах одного дня — в порядке убывания цены.</p>
+    <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">5</span>Скидка зависит от бюджета и применяется только к услугам, чья базовая цена не выше бюджета.</p>
     <p style="margin:0 0 6px 0;font-size:12.5px;color:#1F2A44;line-height:1.5;"><span style="display:inline-block;font-size:10px;font-weight:700;color:#6E3B8C;background:#F3ECFA;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:middle;">6</span>Надбавки и скидки применяются к цене с учётом тарифной скидки; их размер фиксирован.</p>
   </div></div>
   <button class="legend-toggle" id="legendToggle" type="button" aria-expanded="false">
@@ -431,6 +493,7 @@
   <div class="fline">Если не нашли нужную услугу или остались вопросы<span class="footer-dash"> —</span><br class="footer-br"> напишите: <a class="footer-link" href="https://t.me/aruzlev" target="_blank" rel="noopener">Telegram</a> · <a class="footer-link" href="mailto:raleksiz.law@gmail.com">Почта</a></div>
   <div class="fline channel-line"><a class="channel-cta" href="https://t.me/raleksiz_law" target="_blank" rel="noopener"><svg class="icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Подписаться на канал</a></div>
   <div class="rights">© 2026 Алексей Рузлев. Все права защищены. Копирование, воспроизведение и использование материалов без письменного согласия автора запрещены.</div>
+  <div style="text-align:right;margin-top:4px;"><a id="printLink" href="#" onclick="doPrint();return false;">печать</a></div>
 </footer>
 
 <script>
@@ -998,6 +1061,37 @@ let offerDiscOrig = 0; // category keys covered by the offer
 updateCollapsedGroups();
 recompute();
 openFromHash();
+function doPrint(){
+  // Save current state to restore afterwards
+  const wasClosed = [...document.querySelectorAll('section.category:not(.open)')];
+  const lc = document.getElementById('legendContainer');
+  const lgWas = lc && lc.classList.contains('expanded');
+  const detWas = [...document.querySelectorAll('details:not([open])')];
+
+  // Enable print mode + expand everything
+  document.body.classList.add('print-mode');
+  document.querySelectorAll('section.category').forEach(s => s.classList.add('open'));
+  updateCollapsedGroups(); updateToggleAllBtn();
+  if (lc) lc.classList.add('expanded');
+  document.querySelectorAll('details').forEach(d => d.setAttribute('open',''));
+
+  // Restore function
+  function restore(){
+    document.body.classList.remove('print-mode');
+    wasClosed.forEach(s => s.classList.remove('open'));
+    if (!lgWas && lc) lc.classList.remove('expanded');
+    detWas.forEach(d => d.removeAttribute('open'));
+    updateCollapsedGroups(); updateToggleAllBtn();
+  }
+
+  // Wait for DOM to fully expand, then print, then restore after a safe delay
+  setTimeout(function(){
+    window.print();
+    // Restore after print dialog interaction (works on desktop + mobile)
+    setTimeout(restore, 1500);
+  }, 500);
+}
+
 ['inBudget','inPrepay','inTerm'].forEach(id => {
   const el = document.getElementById(id);
   el.addEventListener('input', () => { formatThousands(el); recompute(); });
