@@ -947,6 +947,7 @@ let offerDiscount = 0;
 let offerExpiry = null;
 let offerFor = '';
 let offerCats = [];
+let offerExpiryStr = '';
 let offerDiscOrig = 0; // category keys covered by the offer
 
 (function(){
@@ -958,6 +959,7 @@ let offerDiscOrig = 0; // category keys covered by the offer
     if (decoded.disc && expiry > new Date()) {
       offerDiscount = Number(decoded.disc) / 100;
       offerExpiry = expiry;
+      offerExpiryStr = decoded.exp || '';
       offerFor = decoded.for || '';
       offerCats = (decoded.cats && decoded.cats.length > 0) ? decoded.cats : DATA.categories.map(c => c.key);
       offerDiscOrig = decoded.disc;
@@ -967,8 +969,8 @@ let offerDiscOrig = 0; // category keys covered by the offer
   const banner = document.getElementById('offerBanner');
   if (banner){
     const pct = offerDiscOrig || Math.round(offerDiscount * 100);
-    const [ey,em,ed] = decoded.exp.split('-');
-    const dateStr = `${ed}.${em}.${ey}`;
+    const parts = offerExpiryStr.split('-');
+    const dateStr = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'});
     const forPart = offerFor ? ` для <span class="offer-for">${offerFor}</span>` : '';
     const namePart = offerFor ? `Для <b style="color:var(--purple);font-weight:700">${offerFor}</b> ` : '';
     banner.innerHTML = `🎁 ${namePart}<b style="color:#E65100">-${pct}%</b> на услуги, отмеченные 🟠 (действует до ${dateStr} или начала действия абонемента)`;
