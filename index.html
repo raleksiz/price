@@ -967,7 +967,8 @@ let offerDiscOrig = 0; // category keys covered by the offer
   const banner = document.getElementById('offerBanner');
   if (banner){
     const pct = offerDiscOrig || Math.round(offerDiscount * 100);
-    const dateStr = offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
+    const [ey,em,ed] = decoded.exp.split('-');
+    const dateStr = `${ed}.${em}.${ey}`;
     const forPart = offerFor ? ` для <span class="offer-for">${offerFor}</span>` : '';
     const namePart = offerFor ? `Для <b style="color:var(--purple);font-weight:700">${offerFor}</b> ` : '';
     banner.innerHTML = `🎁 ${namePart}<b style="color:#E65100">-${pct}%</b> на услуги, отмеченные 🟠 (действует до ${dateStr} или начала действия абонемента)`;
