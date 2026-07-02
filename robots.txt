@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://raleksiz.github.io/price/sitemap.xml
