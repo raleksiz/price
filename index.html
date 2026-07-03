@@ -1037,7 +1037,7 @@ let offerDiscOrig = 0; // category keys covered by the offer
     const dateStr = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : offerExpiry.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'});
     const forPart = offerFor ? ` для <span class="offer-for">${offerFor}</span>` : '';
     const namePart = offerFor ? `Для <b style="color:var(--purple);font-weight:700">${offerFor}</b> ` : '';
-    banner.innerHTML = `🎁 ${namePart}<b style="color:#E65100">-${pct}%</b> на услуги, отмеченные 🟠 (действует до ${dateStr} или начала действия абонемента)`;
+    banner.innerHTML = `🎁 ${namePart}<b style="color:#E65100">-${pct}%</b> на услуги, отмеченные 🟠 (до ${dateStr} или начала действия абонемента)`;
     banner.style.display = 'block';
     // Ensure all categories start collapsed when opening via offer link
     document.querySelectorAll('section.category.open').forEach(s => s.classList.remove('open'));
