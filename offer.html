@@ -248,8 +248,14 @@ function saveTokenFromBanner(){
   const val = document.getElementById('tokenBannerInput').value.trim();
   if (!val){ alert('Введите токен'); return; }
   localStorage.setItem(TOKEN_KEY, val);
+  // После смены репозитория старый sha ломает запись — сбрасываем.
+  localStorage.removeItem('raleksiz_gh_sha');
   document.getElementById('tokenBanner').style.display = 'none';
-  loadOffersFromGitHub().then(renderSentOffers);
+  loadOffersFromGitHub().then(ok => {
+    renderSentOffers();
+    if (!ok) alert('Токен сохранён, но GitHub не ответил. Проверьте права на репозиторий raleksiz/price (Contents: Read and write).');
+    else alert('Токен сохранён, список синхронизирован с GitHub.');
+  });
 }
 
 async function unlock(){
@@ -262,6 +268,7 @@ async function unlock(){
       const tokenInput = document.getElementById('tokenInput');
       if (tokenInput && tokenInput.value.trim()){
         localStorage.setItem(TOKEN_KEY, tokenInput.value.trim());
+        localStorage.removeItem('raleksiz_gh_sha');
       }
     } catch(e){}
     showMain();
@@ -442,7 +449,7 @@ function copyLink(){
   });
 }
 
-function saveOffer(){
+async function saveOffer(){
   const url = document.getElementById('resultUrl').textContent;
   const forWhom = document.getElementById('forWhom').value.trim();
   const disc = document.getElementById('disc').value;
@@ -454,21 +461,24 @@ function saveOffer(){
     const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
     offers.unshift({ id: Date.now(), forWhom, disc, exp, cats, url, saved: new Date().toLocaleDateString('ru-RU') });
     localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
-    saveOffersToGitHub(offers);
     renderSentOffers();
     const msg = document.getElementById('savedMsg');
-    msg.textContent = 'Сохранено ✓';
-    setTimeout(() => msg.textContent = '', 2000);
+    msg.textContent = 'Сохранение в GitHub…';
+    const ok = await saveOffersToGitHub(offers);
+    if (ok){
+      msg.textContent = 'Сохранено в GitHub ✓';
+      setTimeout(() => msg.textContent = '', 2500);
+    }
   } catch(e) { alert('Не удалось сохранить'); }
 }
 
-function deleteOffer(id){
+async function deleteOffer(id){
   try {
     const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
     const updated = offers.filter(o => o.id !== id);
     localStorage.setItem(OFFERS_KEY, JSON.stringify(updated));
-    saveOffersToGitHub(updated);
     renderSentOffers();
+    await saveOffersToGitHub(updated);
   } catch(e){}
 }
 
@@ -481,37 +491,77 @@ async function ghHeaders(){
   };
 }
 
+async function refreshOffersSha(){
+  const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}?ref=main`, {
+    headers: await ghHeaders(),
+    cache: 'no-store'
+  });
+  if (!res.ok) return { ok:false, status: res.status };
+  const data = await res.json();
+  localStorage.setItem('raleksiz_gh_sha', data.sha);
+  return { ok:true, sha: data.sha, data };
+}
+
 async function loadOffersFromGitHub(){
   try {
     const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) return;
-    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, { headers: await ghHeaders() });
-    if (!res.ok) return;
-    const data = await res.json();
-    const offers = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))));
+    if (!token) return false;
+    const got = await refreshOffersSha();
+    if (!got.ok){
+      if (got.status === 401 || got.status === 403) showTokenBanner();
+      return false;
+    }
+    const offers = JSON.parse(decodeURIComponent(escape(atob(got.data.content.replace(/\n/g,'')))));
     localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
-    localStorage.setItem('raleksiz_gh_sha', data.sha);
-  } catch(e){}
+    return true;
+  } catch(e){
+    return false;
+  }
 }
 
 async function saveOffersToGitHub(offers){
   try {
     const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) return;
+    if (!token){
+      showTokenBanner();
+      alert('Нет GitHub-токена. Вставьте токен с доступом к raleksiz/price и сохраните.');
+      return false;
+    }
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(offers, null, 2))));
-    const sha = localStorage.getItem('raleksiz_gh_sha');
-    const body = { message: 'Update offers', content };
-    if (sha) body.sha = sha;
-    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, {
-      method: 'PUT',
-      headers: { ...await ghHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    const putOnce = async (sha) => {
+      const body = { message: 'Update offers', content, branch: 'main' };
+      if (sha) body.sha = sha;
+      return fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, {
+        method: 'PUT',
+        headers: { ...await ghHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    };
+
+    let sha = localStorage.getItem('raleksiz_gh_sha');
+    let res = await putOnce(sha);
+    // После пересоздания репо старый sha даёт 409 — обновляем и повторяем.
+    if (res.status === 409 || res.status === 422){
+      const got = await refreshOffersSha();
+      if (got.ok) res = await putOnce(got.sha);
+    }
     if (res.ok){
       const data = await res.json();
       localStorage.setItem('raleksiz_gh_sha', data.content.sha);
+      return true;
     }
-  } catch(e){}
+    if (res.status === 401 || res.status === 403){
+      showTokenBanner();
+      alert('Нет доступа к raleksiz/price. Обновите токен: Contents → Read and write для нового репозитория price.');
+      return false;
+    }
+    const errText = await res.text().catch(()=> '');
+    alert('Не удалось сохранить в GitHub (код ' + res.status + '). ' + (errText.slice(0,180) || 'Попробуйте обновить токен.'));
+    return false;
+  } catch(e){
+    alert('Ошибка сети при сохранении в GitHub.');
+    return false;
+  }
 }
 
 function renderSentOffers(){
@@ -557,7 +607,7 @@ function renderSentOffers(){
   } catch(e){}
 }
 
-function addManualOffer(){
+async function addManualOffer(){
   const forWhom = document.getElementById('manualName').value.trim();
   const disc = document.getElementById('manualDisc').value.trim();
   const exp = document.getElementById('manualExp').value;
@@ -570,12 +620,13 @@ function addManualOffer(){
     autoFillFromUrl._cats = [];
     offers.unshift({ id: Date.now(), forWhom, disc, exp, cats, url, saved: new Date().toLocaleDateString('ru-RU') });
     localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
-    saveOffersToGitHub(offers);
+    renderSentOffers();
+    const ok = await saveOffersToGitHub(offers);
+    if (!ok) return;
     document.getElementById('manualName').value = '';
     document.getElementById('manualDisc').value = '';
     document.getElementById('manualExp').value = '';
     document.getElementById('manualUrl').value = '';
-    renderSentOffers();
   } catch(e){ alert('Не удалось сохранить'); }
 }
 </script>
