@@ -623,17 +623,41 @@ details[open] summary::before{content:"▾ ";}
       <div class="filters-toolbar">
         <button type="button" class="btn sm ghost filters-toggle" onclick="toggleAllFilters()" id="filtersToggle">Свернуть фильтры</button>
         <div id="allFilters" class="all-filters">
-          <div><label>Заказчик</label><select id="fClient" onchange="renderAll()"></select></div>
-          <div><label>Основание</label><input id="fBasis" placeholder="договор, предложение..." oninput="renderAll()"></div>
-          <div class="filter-date"><label>Дата с</label><input type="date" id="fFrom" onchange="renderAll()"></div>
-          <div class="filter-date"><label>Дата по</label><input type="date" id="fTo" onchange="renderAll()"></div>
-          <div><label>Статус оплаты</label>
-            <select id="fPay" onchange="renderAll()">
-              <option value="">Любой</option><option value="none">Не оплачено</option>
-              <option value="paid">Оплачено</option><option value="partial">Оплачено частично</option>
-              <option value="prepay">С зачётом предоплаты</option>
-            </select></div>
-          <div><label>Поиск по расшифровке</label><input id="fText" placeholder="текст" oninput="renderAll()"></div>
+          <div>
+            <label>Заказчик</label>
+            <input id="fClient" list="fClientList" placeholder="Все / имя заказчика" oninput="renderAll()" autocomplete="off">
+            <datalist id="fClientList"></datalist>
+          </div>
+          <div>
+            <label>Основание</label>
+            <input id="fBasis" list="fBasisList" placeholder="основание или название договора" oninput="renderAll()" autocomplete="off">
+            <datalist id="fBasisList"></datalist>
+          </div>
+          <div class="filter-date">
+            <label>Дата с</label>
+            <input id="fFrom" list="fFromList" placeholder="ГГГГ-ММ-ДД или ДД.ММ.ГГГГ" oninput="renderAll()" autocomplete="off">
+            <datalist id="fFromList"></datalist>
+          </div>
+          <div class="filter-date">
+            <label>Дата по</label>
+            <input id="fTo" list="fToList" placeholder="ГГГГ-ММ-ДД или ДД.ММ.ГГГГ" oninput="renderAll()" autocomplete="off">
+            <datalist id="fToList"></datalist>
+          </div>
+          <div>
+            <label>Статус оплаты</label>
+            <input id="fPay" list="fPayList" placeholder="Любой / статус" oninput="renderAll()" autocomplete="off">
+            <datalist id="fPayList">
+              <option value="Не оплачено"></option>
+              <option value="Оплачено"></option>
+              <option value="Оплачено частично"></option>
+              <option value="С зачётом предоплаты"></option>
+            </datalist>
+          </div>
+          <div>
+            <label>Поиск по расшифровке</label>
+            <input id="fText" list="fTextList" placeholder="текст" oninput="renderAll()" autocomplete="off">
+            <datalist id="fTextList"></datalist>
+          </div>
         </div>
       </div>
       <div class="totals" id="allTotals"></div>
@@ -1437,7 +1461,7 @@ function bindSwipeNav(){
   }, {passive:true});
 }
 function renderAllViews(){
-  renderClients(); renderFields(); fillClientFilter(); renderAll();
+  renderClients(); renderFields(); fillAllFilters(); renderAll();
   const box=document.getElementById('allFilters');
   const btn=document.getElementById('filtersToggle');
   if(box && btn && window.matchMedia('(max-width:720px)').matches){
@@ -2502,11 +2526,80 @@ function deleteService(clientId, svcId){
 }
 
 /* ====================== ВКЛАДКА «ВСЕ УСЛУГИ» ====================== */
-function fillClientFilter(){
-  const sel = document.getElementById('fClient');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">Все</option>' + sortedClients().map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  sel.value = cur;
+function fillDatalist(id, values){
+  const list = document.getElementById(id);
+  if(!list) return;
+  const uniq = [...new Set((values||[]).map(v=>String(v||'').trim()).filter(Boolean))];
+  uniq.sort((a,b)=>a.localeCompare(b,'ru',{sensitivity:'base'}));
+  list.innerHTML = uniq.map(v=>`<option value="${esc(v)}"></option>`).join('');
+}
+function contractFilterLabels(ct){
+  if(!ct) return [];
+  const labels = [];
+  const title = String(ct.title||'').trim();
+  if(title) labels.push(title);
+  const basis = basisText(ct);
+  if(basis) labels.push(basis);
+  const label = contractLabel(ct);
+  if(label) labels.push(label);
+  return [...new Set(labels.map(v=>String(v).trim()).filter(Boolean))];
+}
+function matchBasisFilter(ct, fbasis){
+  if(!fbasis) return true;
+  if(!ct) return false;
+  const q = fbasis.toLowerCase();
+  return contractFilterLabels(ct).some(l=>l.toLowerCase().indexOf(q)>=0);
+}
+function filterDateISO(raw){
+  const s = String(raw||'').trim();
+  if(!s) return '';
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  return parseRuDate(s) || '';
+}
+function matchPayFilter(s, fpayRaw){
+  const q = String(fpayRaw||'').trim().toLowerCase();
+  if(!q || q==='любой' || q==='все') return true;
+  const paid = paidOf(s), price = Number(s.price)||0;
+  const isPaid = isPayFull(s) || (price>0 && paid>=price);
+  const isNone = !isPaid && paid<=0;
+  const isPart = !isPaid && paid>0 && paid<price;
+  const isPre = prepayOf(s)>0;
+
+  if(q==='none' || q==='не оплачено' || q==='неоплачено' || (q.includes('не оплач'))) return isNone;
+  if(q==='partial' || q.includes('частич')) return isPart;
+  if(q==='prepay' || q.includes('предоплат') || q.includes('зачёт') || q.includes('зачет')) return isPre;
+  if(q==='paid' || q==='оплачено' || q==='оплачено полностью') return isPaid;
+  if(q.includes('оплачен') && !q.includes('не')) return isPaid;
+
+  const label = (isNone?'не оплачено': isPaid?'оплачено': 'оплачено частично') + (isPre?' предоплата':'');
+  return label.indexOf(q)>=0;
+}
+function fillAllFilters(){
+  if(!DB) return;
+  const clients = [];
+  const bases = [];
+  const dates = [];
+  const descs = [];
+  (DB.clients||[]).forEach(c=>{
+    if(c.name) clients.push(c.name);
+    (c.contracts||[]).forEach(ct=>{
+      contractFilterLabels(ct).forEach(l=>bases.push(l));
+    });
+    (c.services||[]).forEach(s=>{
+      if(s.date){
+        dates.push(s.date);
+        const d = fmtDate(s.date);
+        if(d) dates.push(d);
+      }
+      const desc = String(s.desc||'').trim();
+      if(desc) descs.push(desc.length>120 ? desc.slice(0,120) : desc);
+    });
+  });
+  fillDatalist('fClientList', clients);
+  fillDatalist('fBasisList', bases);
+  fillDatalist('fFromList', dates);
+  fillDatalist('fToList', dates);
+  fillDatalist('fTextList', descs);
 }
 function toggleAllFilters(){
   const box=document.getElementById('allFilters');
@@ -2518,26 +2611,21 @@ function toggleAllFilters(){
 
 function renderAll(){
   if(!DB) return;
-  const fc = document.getElementById('fClient').value;
+  const fc = document.getElementById('fClient').value.trim().toLowerCase();
   const fbasis = document.getElementById('fBasis').value.trim().toLowerCase();
   const fpay = document.getElementById('fPay').value;
-  const from = document.getElementById('fFrom').value;
-  const to   = document.getElementById('fTo').value;
+  const from = filterDateISO(document.getElementById('fFrom').value);
+  const to   = filterDateISO(document.getElementById('fTo').value);
   const ftext= document.getElementById('fText').value.trim().toLowerCase();
 
   const rows = [];
   DB.clients.forEach(c=>{
-    if(fc && c.id!==fc) return;
+    if(fc && String(c.name||'').toLowerCase().indexOf(fc)<0) return;
     filterByPeriod(c.services, from, to).forEach(s=>{
       const ct = getContract(c, s.contractId);
-      const basis = ct ? contractLabel(ct) : '';
-      if(fbasis && basis.toLowerCase().indexOf(fbasis)<0) return;
+      if(!matchBasisFilter(ct, fbasis)) return;
       if(ftext && String(s.desc||'').toLowerCase().indexOf(ftext)<0) return;
-      const paid = paidOf(s), price = Number(s.price)||0;
-      if(fpay==='none' && (paid>0 || isPayFull(s))) return;
-      if(fpay==='paid' && !(isPayFull(s) || (price>0 && paid>=price))) return;
-      if(fpay==='partial' && !(paid>0 && paid<price)) return;
-      if(fpay==='prepay' && prepayOf(s)<=0) return;
+      if(!matchPayFilter(s, fpay)) return;
       rows.push({c,s});
     });
   });
