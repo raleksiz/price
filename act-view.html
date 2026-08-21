@@ -34,11 +34,14 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .pill.no{background:#FEE2E2;color:#991B1B;}
 .pill.part{background:#FFFDE7;color:#7A6000;}
 .pill.pre{background:#EDE9FE;color:#5B21B6;}
-.svc-row .c-status .pill.part{
-  white-space:normal;
-  line-height:1.25;
-  max-width:100%;
-  box-sizing:border-box;
+@media (min-width:721px){
+  .svc-row .c-status .pill.part{
+    white-space:normal;
+    line-height:1.25;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  .svc-row .c-status .pill.part .part-rest{display:block;}
 }
 
 .svc-list{display:flex;flex-direction:column;overflow-x:visible;width:100%;}
@@ -326,7 +329,7 @@ function payPill(s){
   let main;
   if(paid<=0) main='<span class="pill no">Не оплачено</span>';
   else if(paid>=price&&price>0) main='<span class="pill ok">Оплачено</span>';
-  else main='<span class="pill part">Оплачено <wbr>частично</span>';
+  else main='<span class="pill part">Оплачено <span class="part-rest">частично</span></span>';
   return `<span class="pay-stack">${main}${pre?'<span class="pill pre">Предоплата</span>':''}</span>`;
 }
 function clientPayLabel(s){
