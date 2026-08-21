@@ -748,8 +748,8 @@ const TOKEN_KEY  = 'raleksiz_gh_token';
 const DB_KEY     = 'raleksiz_acts_db';
 const SHA_KEY    = 'raleksiz_acts_sha';
 const CAT_SHA_KEY= 'raleksiz_price_catalog_sha';
-const GH_REPO        = 'raleksiz/Price-private'; // acts.json (private)
-const GH_PUBLIC_REPO = 'raleksiz/price';         // offers.json + price-catalog.json (public)
+const GH_REPO        = 'raleksiz/Price-private'; // acts.json + offers.json (private)
+const GH_PUBLIC_REPO = 'raleksiz/price';         // price-catalog.json (public)
 const GH_FILE        = 'acts.json';
 const GH_OFFERS      = 'offers.json';
 const GH_CATALOG     = 'price-catalog.json';
@@ -1043,12 +1043,10 @@ async function pushPriceCatalog(retry){
 async function loadOffers(){
   try{
     const token = localStorage.getItem(TOKEN_KEY);
-    if(token){
-      const res = await fetch(`https://api.github.com/repos/${GH_PUBLIC_REPO}/contents/${GH_OFFERS}?ref=main`, {headers:ghHeaders(), cache:'no-store'});
-      if(res.ok){ const d = await res.json(); OFFERS = JSON.parse(b64dec(d.content)); return; }
-    }
-    const r2 = await fetch(RAW_BASE+GH_OFFERS+'?t='+Date.now(), {cache:'no-store'});
-    if(r2.ok) OFFERS = await r2.json();
+    if(!token){ OFFERS = []; return; }
+    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_OFFERS}?ref=main`, {headers:ghHeaders(), cache:'no-store'});
+    if(res.ok){ const d = await res.json(); OFFERS = JSON.parse(b64dec(d.content)); return; }
+    OFFERS = [];
   }catch(e){ OFFERS = []; }
 }
 

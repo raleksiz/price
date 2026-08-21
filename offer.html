@@ -207,7 +207,7 @@ const SESSION_KEY = 'raleksiz_offer_session';
 const SESSION_TTL = 3 * 24 * 60 * 60 * 1000;
 const OFFERS_KEY = 'raleksiz_sent_offers';
 const TOKEN_KEY = 'raleksiz_gh_token';
-const GH_REPO = 'raleksiz/price';
+const GH_REPO = 'raleksiz/Price-private';
 const GH_FILE = 'offers.json';
 
 async function sha256(str){
@@ -253,7 +253,7 @@ function saveTokenFromBanner(){
   document.getElementById('tokenBanner').style.display = 'none';
   loadOffersFromGitHub().then(ok => {
     renderSentOffers();
-    if (!ok) alert('Токен сохранён, но GitHub не ответил. Проверьте права на репозиторий raleksiz/price (Contents: Read and write).');
+    if (!ok) alert('Токен сохранён, но GitHub не ответил. Проверьте права на репозиторий raleksiz/Price-private (Contents: Read and write).');
     else alert('Токен сохранён, список синхронизирован с GitHub.');
   });
 }
@@ -524,7 +524,7 @@ async function saveOffersToGitHub(offers){
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token){
       showTokenBanner();
-      alert('Нет GitHub-токена. Вставьте токен с доступом к raleksiz/price и сохраните.');
+      alert('Нет GitHub-токена. Вставьте токен с доступом к raleksiz/Price-private и сохраните.');
       return false;
     }
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(offers, null, 2))));
@@ -552,7 +552,7 @@ async function saveOffersToGitHub(offers){
     }
     if (res.status === 401 || res.status === 403){
       showTokenBanner();
-      alert('Нет доступа к raleksiz/price. Обновите токен: Contents → Read and write для нового репозитория price.');
+      alert('Нет доступа к raleksiz/Price-private. Обновите токен: Contents → Read and write для Price-private.');
       return false;
     }
     const errText = await res.text().catch(()=> '');
