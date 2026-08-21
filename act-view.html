@@ -277,6 +277,13 @@ function basisText(ct, opts){
   if(!ct) return '';
   const useOffer = opts.useOfferWord !== false;
   if(ct.basisType==='contract') return 'договор'+(ct.basisDoc?' № '+ct.basisDoc:'')+(ct.basisDate?' от '+fmtDate(ct.basisDate):'');
+  if(ct.basisType==='addendum'){
+    let t = 'дополнительное соглашение'+(ct.basisDoc?' № '+ct.basisDoc:'')+(ct.basisDate?' от '+fmtDate(ct.basisDate):'');
+    if(ct.basisParentDoc || ct.basisParentDate){
+      t += ' к договору'+(ct.basisParentDoc?' № '+ct.basisParentDoc:'')+(ct.basisParentDate?' от '+fmtDate(ct.basisParentDate):'');
+    }
+    return t;
+  }
   if(ct.basisType==='offer'){
     const d = offerBasisDate(ct);
     const word = useOffer ? 'оффер' : 'персональное предложение';

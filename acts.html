@@ -816,6 +816,8 @@ function normalizeDB(db){
         basisDoc:  c.basisDoc  || '',
         basisDate: c.basisDate || '',
         basisUrl:  c.basisUrl  || '',
+        basisParentDoc: c.basisParentDoc || '',
+        basisParentDate: c.basisParentDate || '',
         offerId:   c.offerId   || '',
         contractPrice: Number(c.contractPrice)||0,
         offerExpiry: c.offerExpiry || '',
@@ -853,6 +855,8 @@ function normalizeDB(db){
         ct.basisDoc = ct.basisDoc || '';
         ct.basisDate = ct.basisDate || '';
         ct.basisUrl = ct.basisUrl || '';
+        ct.basisParentDoc = ct.basisParentDoc || '';
+        ct.basisParentDate = ct.basisParentDate || '';
         ct.offerId = ct.offerId || '';
         ct.contractPrice = Number(ct.contractPrice)||0;
         ct.offerExpiry = ct.offerExpiry || '';
@@ -1553,7 +1557,8 @@ function getAutoContractParams(){
 }
 
 function refreshAutoContractParams(){
-  if (document.getElementById('clBasisType')?.value !== 'contract') return;
+  const type = document.getElementById('clBasisType')?.value;
+  if (type !== 'contract' && type !== 'addendum') return;
 
   const result = getAutoContractParams();
   document.getElementById('clStatus').value = result.status;
@@ -1630,6 +1635,13 @@ function onBasisChange(){
   const box = document.getElementById('basisFields');
   const basis = window.basis || {};
   const cats = offerCatNames();
+  const setResultEditable = (on) => {
+    ['clStatus','clTariff','clDisc'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.disabled = !on;
+    });
+  };
+  setResultEditable(false);
 
   if (type === 'contract'){
     box.innerHTML = `
@@ -1644,6 +1656,48 @@ function onBasisChange(){
         </div>
       </div>
 
+      <div class="grid3 contract-params-row">
+        <div class="field">
+          <label>Цена</label>
+          <input type="number" min="0" step="100" id="ctContractPrice" value="${Number(basis.contractPrice || 0)}" oninput="refreshAutoContractParams()">
+        </div>
+        <div class="field">
+          <label>Предоплата / Аванс, мес.</label>
+          <input type="number" min="0" step="100" id="clPrepay" value="${Number(basis.prepay || 0)}" oninput="refreshAutoContractParams()">
+        </div>
+        <div class="field">
+          <label>Срок, мес.</label>
+          <input type="number" min="0" id="ctTerm" value="${Number(basis.term || 0)}" oninput="refreshAutoContractParams()">
+        </div>
+      </div>
+    `;
+    setTimeout(refreshAutoContractParams, 0);
+    return;
+  }
+
+  if (type === 'addendum'){
+    box.innerHTML = `
+      <div class="grid2 contract-date-row">
+        <div class="field">
+          <label>Дата доп. соглашения</label>
+          <input type="date" id="bDate" value="${esc(basis.date || '')}">
+        </div>
+        <div class="field">
+          <label>Номер доп. соглашения</label>
+          <input id="bDoc" value="${esc(basis.doc || '')}" placeholder="б/N">
+        </div>
+      </div>
+      <div class="grid2 contract-date-row">
+        <div class="field">
+          <label>К договору — дата</label>
+          <input type="date" id="bParentDate" value="${esc(basis.parentDate || '')}">
+        </div>
+        <div class="field">
+          <label>К договору — номер</label>
+          <input id="bParentDoc" value="${esc(basis.parentDoc || '')}" placeholder="номер договора">
+        </div>
+      </div>
+      <p class="muted" style="margin:-4px 0 12px;font-size:12px;">Основной (рамочный) договор указывать желательно — так основание в акте читается однозначно.</p>
       <div class="grid3 contract-params-row">
         <div class="field">
           <label>Цена</label>
@@ -1743,6 +1797,8 @@ function openContractForm(clientId, contractId){
     basisDoc: '',
     basisDate: '',
     basisUrl: '',
+    basisParentDoc: '',
+    basisParentDate: '',
     offerId: '',
     offerExpiry: '',
     offerCats: [],
@@ -1766,6 +1822,7 @@ function openContractForm(clientId, contractId){
       <select id="clBasisType" onchange="onBasisChange()">
         <option value="" ${!ct.basisType ? 'selected' : ''}>Выберите основание</option>
         <option value="contract" ${ct.basisType === 'contract' ? 'selected' : ''}>Договор</option>
+        <option value="addendum" ${ct.basisType === 'addendum' ? 'selected' : ''}>Дополнительное соглашение</option>
         <option value="offer" ${ct.basisType === 'offer' ? 'selected' : ''}>Персональное предложение</option>
         <option value="request" ${ct.basisType === 'request' ? 'selected' : ''}>Обращение</option>
       </select>
@@ -1813,6 +1870,8 @@ function openContractForm(clientId, contractId){
     doc: ct.basisDoc,
     date: ct.basisDate,
     url: ct.basisUrl,
+    parentDoc: ct.basisParentDoc || '',
+    parentDate: ct.basisParentDate || '',
     term: ct.term || 0,
     prepay: ct.prepay || 0,
     contractPrice: ct.contractPrice || 0,
@@ -1856,6 +1915,8 @@ function saveContract(clientId, contractId){
     basisDoc: getValue('bDoc'),
     basisDate: getValue('bDate'),
     basisUrl: basisUrl,
+    basisParentDoc: getValue('bParentDoc'),
+    basisParentDate: getValue('bParentDate'),
     offerId: getValue('offerSel'),
     offerExpiry: getValue('basisOfferExpiry') || decodedOffer?.exp || '',
     offerCats: selectedCats.length ? selectedCats : (decodedOffer?.cats || []),
@@ -1873,7 +1934,7 @@ function saveContract(clientId, contractId){
     data.term = 0;
   }
 
-  if (basisType === 'contract'){
+  if (basisType === 'contract' || basisType === 'addendum'){
     const auto = getAutoContractParams();
     data.status = auto.status;
     data.tariff = auto.tariff;
@@ -1883,6 +1944,14 @@ function saveContract(clientId, contractId){
   if (basisType === 'offer'){
     data.status = 'Разовая услуга';
     data.tariff = 'Offer';
+  }
+
+  if (basisType === 'addendum'){
+    data.basisUrl = '';
+    data.offerId = '';
+    data.offerExpiry = '';
+    data.offerCats = [];
+    data.offerDate = '';
   }
 
   if (contractId){
@@ -2726,6 +2795,13 @@ function renderContractDetail(c, ct){
 function basisText(ct){
   if(!ct) return '';
   if(ct.basisType==='contract') return 'договор' + (ct.basisDoc?' № '+ct.basisDoc:'') + (ct.basisDate?' от '+fmtDate(ct.basisDate):'');
+  if(ct.basisType==='addendum'){
+    let t = 'дополнительное соглашение' + (ct.basisDoc?' № '+ct.basisDoc:'') + (ct.basisDate?' от '+fmtDate(ct.basisDate):'');
+    if(ct.basisParentDoc || ct.basisParentDate){
+      t += ' к договору' + (ct.basisParentDoc?' № '+ct.basisParentDoc:'') + (ct.basisParentDate?' от '+fmtDate(ct.basisParentDate):'');
+    }
+    return t;
+  }
   if(ct.basisType==='offer')    return 'персональное предложение' + (ct.basisDate?' от '+fmtDate(ct.basisDate):'');
   if(ct.basisType==='request')  return 'обращение' + (ct.basisDate?' от '+fmtDate(ct.basisDate):'');
   return '';
