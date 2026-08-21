@@ -201,7 +201,8 @@ function money(n){ return Math.round(Number(n)||0).toLocaleString('ru-RU') + ' �
 function fmtDate(iso){ if(!iso) return ''; const p=String(iso).split('-'); return p.length===3?`${p[2]}.${p[1]}.${p[0]}`:String(iso); }
 function monthKey(iso){ return iso?String(iso).slice(0,7):''; }
 function monthTitle(mk){ if(!mk) return ''; const [y,m]=mk.split('-'); return (MONTHS[Number(m)-1]||'')+' '+y; }
-function isComplete(s){ return !!(s&&s.date&&s.code&&String(s.desc||'').trim()&&Number(s.price)>0); }
+function isComplete(s){ return !!(s&&s.date&&String(s.desc||'').trim()); }
+function isPayFull(s){ return !!(s&&(s.pay==='full'||s.pay==='full_prepay')); }
 function todayISO(){
   const d=new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -327,15 +328,15 @@ function basisBlockHtml(ct){
 function payPill(s){
   const price=Number(s.price)||0, paid=paidOf(s), pre=prepayOf(s)>0;
   let main;
-  if(paid<=0) main='<span class="pill no">Не оплачено</span>';
-  else if(paid>=price&&price>0) main='<span class="pill ok">Оплачено</span>';
+  if(isPayFull(s) || (price>0 && paid>=price)) main='<span class="pill ok">Оплачено</span>';
+  else if(paid<=0) main='<span class="pill no">Не оплачено</span>';
   else main='<span class="pill part">Оплачено <span class="part-rest">частично</span></span>';
   return `<span class="pay-stack">${main}${pre?'<span class="pill pre">Предоплата</span>':''}</span>`;
 }
 function clientPayLabel(s){
   const paid=paidOf(s), price=Number(s.price)||0;
+  if(isPayFull(s) || (price>0 && paid>=price)) return 'Оплачено';
   if(paid<=0) return 'Не оплачено';
-  if(paid>=price&&price>0) return 'Оплачено';
   return 'Оплачено частично';
 }
 function contractTotals(c,id,listOverride){
@@ -428,8 +429,8 @@ function filterServices(list,f){
     if(f.to&&(!s.date||s.date>f.to)) return false;
     if(f.code&&String(s.code||'').toLowerCase().indexOf(f.code)<0) return false;
     const paid=paidOf(s),price=Number(s.price)||0;
-    if(f.pay==='none'&&paid>0) return false;
-    if(f.pay==='paid'&&!(price>0&&paid>=price)) return false;
+    if(f.pay==='none'&&(paid>0||isPayFull(s))) return false;
+    if(f.pay==='paid'&&!(isPayFull(s)||(price>0&&paid>=price))) return false;
     if(f.pay==='partial'&&!(paid>0&&paid<price)) return false;
     if(f.pay==='prepay'&&prepayOf(s)<=0) return false;
     return true;
@@ -460,13 +461,14 @@ function renderContractById(id){
 }
 function renderServiceRow(s,num,special){
   const extra = special ? renderCustomFields(s,CURRENT_DB) : (appliedHtml(s)+renderCustomFields(s,CURRENT_DB));
+  const codeLabel = String(s.code||'').trim() || '—';
   return `<div class="svc-row${special?' abon-special':''}">
-    <div class="c-num">${num}</div><div class="c-date">${fmtDate(s.date)}</div><div class="c-code">${esc(s.code)}</div>
+    <div class="c-num">${num}</div><div class="c-date">${fmtDate(s.date)}</div><div class="c-code">${esc(codeLabel)}</div>
     <div class="c-desc">${esc(s.desc)}${extra}</div>
-    ${special?'':`<div class="c-price">${money(s.price)}</div><div class="c-paid">${paidOf(s)?money(paidOf(s)):'—'}</div>`}
+    ${special?'':`<div class="c-price">${money(Number(s.price)||0)}</div><div class="c-paid">${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</div>`}
     <div class="c-status">${payPill(s)}</div>
-    <div class="c-codedesc"><span class="pill no">${esc(s.code)}</span> ${esc(s.desc)}${extra}</div>
-    <div class="c-priceinfo">${special?'':`<span class="price-main">${money(s.price)}</span><span class="paid-amt">Оплачено: ${paidOf(s)?money(paidOf(s)):'—'}</span>`}${payPill(s)}</div>
+    <div class="c-codedesc"><span class="pill no">${esc(codeLabel)}</span> ${esc(s.desc)}${extra}</div>
+    <div class="c-priceinfo">${special?'':`<span class="price-main">${money(Number(s.price)||0)}</span><span class="paid-amt">Оплачено: ${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</span>`}${payPill(s)}</div>
   </div>`;
 }
 function renderTable(list, special){

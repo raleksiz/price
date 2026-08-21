@@ -1249,7 +1249,29 @@ function clientTotals(c, from, to){
   return { sum, paid, pre, debt: Math.max(0, sum-paid), count: list.length };
 }
 function isComplete(s){
-  return !!(s && s.date && s.code && String(s.desc||'').trim() && Number(s.price)>0);
+  // Обязательны дата и расшифровка. Код и стоимость (в т.ч. 0) — по необходимости.
+  return !!(s && s.date && String(s.desc||'').trim());
+}
+function isPayFull(s){
+  return !!(s && (s.pay==='full' || s.pay==='full_prepay'));
+}
+function payPill(s){
+  const price = Number(s.price)||0, paid = paidOf(s);
+  const pre = prepayOf(s)>0;
+  let main;
+  if(isPayFull(s) || (price>0 && paid>=price)) main = '<span class="pill ok">Оплачено</span>';
+  else if(paid<=0) main = '<span class="pill no">Не оплачено</span>';
+  else main = '<span class="pill part">Оплачено <wbr>частично</span>';
+  const parts = [main];
+  if(pre) parts.push('<span class="pill pre">Предоплата</span>');
+  return `<span class="pay-stack">${parts.join('')}</span>`;
+}
+function fmtSvcCode(s){
+  const code = String(s && s.code || '').trim();
+  return code ? esc(code) : '—';
+}
+function fmtSvcPrice(s){
+  return money(Number(s && s.price)||0);
 }
 function filterByPeriod(services, from, to){
   return services.filter(s=>{
@@ -2378,6 +2400,8 @@ function saveService(clientId, svcId){
   const code = document.getElementById('svcCode').value;
   const desc = document.getElementById('svcDesc').value.trim();
   const price= Number(document.getElementById('svcPrice').value)||0;
+  if(!date){ alert('Укажите дату оказания услуги'); return; }
+  if(!desc){ alert('Укажите расшифровку услуги'); return; }
   if(code === '4.3'){
     const baseContractCode = document.getElementById('baseContractSel')?.value || window.__ctx.baseContractCode || '';
     const baseContractPrice = get4_3BaseCost(baseContractCode);
@@ -2481,8 +2505,8 @@ function renderAll(){
       if(fbasis && basis.toLowerCase().indexOf(fbasis)<0) return;
       if(ftext && String(s.desc||'').toLowerCase().indexOf(ftext)<0) return;
       const paid = paidOf(s), price = Number(s.price)||0;
-      if(fpay==='none' && paid>0) return;
-      if(fpay==='paid' && paid<price) return;
+      if(fpay==='none' && (paid>0 || isPayFull(s))) return;
+      if(fpay==='paid' && !(isPayFull(s) || (price>0 && paid>=price))) return;
       if(fpay==='partial' && !(paid>0 && paid<price)) return;
       if(fpay==='prepay' && prepayOf(s)<=0) return;
       rows.push({c,s});
@@ -2507,18 +2531,18 @@ function renderAll(){
       <div class="c-client"><a href="#client/${c.id}" target="_blank" rel="noopener">${esc(c.name)}</a></div>
       <div class="c-basis">${basisLabel ? contractLinkHtml(ct) : '<span class="pill no">нет</span>'}</div>
       <div class="c-date">${fmtDate(s.date)||'<span class="pill no">нет</span>'}</div>
-      <div class="c-code">${esc(s.code)||'<span class="pill no">нет</span>'}</div>
+      <div class="c-code">${fmtSvcCode(s)}</div>
       <div class="c-desc">${esc(s.desc)||'<span class="pill no">нет</span>'}${appliedHtml(s)}</div>
-      <div class="c-price">${Number(s.price)?money(s.price):'<span class="pill no">нет</span>'}</div>
-      <div class="c-paid">${paidOf(s)?money(paidOf(s)):'—'}</div>
+      <div class="c-price">${fmtSvcPrice(s)}</div>
+      <div class="c-paid">${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</div>
       <div class="c-status">${payPill(s)}${s.locked?' <span class="pill lock">отправлено</span>':''}</div>
       <div class="c-codedesc">
-        <span class="pill no">${esc(s.code)||'нет'}</span> <span class="brk">${esc(s.desc)||'нет'}</span>
+        <span class="pill no">${fmtSvcCode(s)}</span> <span class="brk">${esc(s.desc)||'нет'}</span>
         ${appliedHtml(s)}
       </div>
       <div class="c-priceinfo">
-        <span class="price-main">${Number(s.price)?money(s.price):'нет'}</span>
-        <span class="paid-amt">Оплачено: ${paidOf(s)?money(paidOf(s)):'—'}</span>
+        <span class="price-main">${fmtSvcPrice(s)}</span>
+        <span class="paid-amt">Оплачено: ${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</span>
         ${payPill(s)}
         ${s.locked?'<span class="pill lock">отправлено</span>':''}
       </div>
@@ -2610,17 +2634,6 @@ function appliedHtml(s){
     const extra=Number(a.extraAmount)||0;
     return `<li>${esc(a.name||'')}${a.amount?' ('+esc(a.amount)+')':''}${Number(a.count)>1?' × '+Number(a.count):''}${comment?' — '+esc(comment):''}${extra?' — фактические расходы: '+money(extra):''}</li>`;
   }).join('')}</ul></details>`;
-}
-function payPill(s){
-  const price = Number(s.price)||0, paid = paidOf(s);
-  const pre = prepayOf(s)>0;
-  let main;
-  if(paid<=0) main = '<span class="pill no">Не оплачено</span>';
-  else if(paid>=price && price>0) main = '<span class="pill ok">Оплачено</span>';
-  else main = '<span class="pill part">Оплачено <wbr>частично</span>';
-  const parts = [main];
-  if(pre) parts.push('<span class="pill pre">Предоплата</span>');
-  return `<span class="pay-stack">${parts.join('')}</span>`;
 }
 
 /* ====================== КАРТОЧКА ЗАКАЗЧИКА ====================== */
@@ -2765,18 +2778,18 @@ function renderContractDetail(c, ct){
     <div class="svc-row ${s.locked?'locked':''}">
       <div class="c-num">${list.length-i}</div>
       <div class="c-date">${fmtDate(s.date)||'<span class="pill no">нет</span>'}</div>
-      <div class="c-code">${esc(s.code)||'<span class="pill no">нет</span>'}</div>
+      <div class="c-code">${fmtSvcCode(s)}</div>
       <div class="c-desc">${esc(s.desc)||'<span class="pill no">нет</span>'}${appliedHtml(s)}</div>
-      <div class="c-price">${Number(s.price)?money(s.price):'<span class="pill no">нет</span>'}</div>
-      <div class="c-paid">${paidOf(s)?money(paidOf(s)):'—'}</div>
+      <div class="c-price">${fmtSvcPrice(s)}</div>
+      <div class="c-paid">${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</div>
       <div class="c-status">${payPill(s)}${s.locked?' <span class="pill lock">отправлено</span>':''}</div>
       <div class="c-codedesc">
-        <span class="pill no">${esc(s.code)||'нет'}</span> <span class="brk">${esc(s.desc)||'нет'}</span>
+        <span class="pill no">${fmtSvcCode(s)}</span> <span class="brk">${esc(s.desc)||'нет'}</span>
         ${appliedHtml(s)}
       </div>
       <div class="c-priceinfo">
-        <span class="price-main">${Number(s.price)?money(s.price):'нет'}</span>
-        <span class="paid-amt">Оплачено: ${paidOf(s)?money(paidOf(s)):'—'}</span>
+        <span class="price-main">${fmtSvcPrice(s)}</span>
+        <span class="paid-amt">Оплачено: ${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</span>
         ${payPill(s)}
         ${s.locked?'<span class="pill lock">отправлено</span>':''}
       </div>
@@ -2836,7 +2849,7 @@ function toggleSent(){
   const services = contractServices(c, ct.id);
   if(on){
     const ready = services.filter(isComplete);
-    if(!ready.length){ alert('Нет ни одной услуги с заполненными обязательными полями'); document.getElementById('sentFlag').checked=false; return; }
+    if(!ready.length){ alert('Нет ни одной услуги с датой и расшифровкой'); document.getElementById('sentFlag').checked=false; return; }
     ready.forEach(s=>{ s.locked = true; });
     ct.sent = true;
     ct.sentDates = ct.sentDates || [];
@@ -2886,7 +2899,7 @@ function openPreview(){
 function clientViewHtml(c, ct){
   const services = contractServices(c, ct.id);
   const list = sortServices(services.filter(isComplete));
-  if(!list.length) return '<div class="muted">Нет услуг с заполненными обязательными полями.</div>';
+  if(!list.length) return '<div class="muted">Нет услуг с датой и расшифровкой.</div>';
   const groups = {};
   list.forEach(s=>{ (groups[monthKey(s.date)] = groups[monthKey(s.date)] || []).push(s); });
   const keys = Object.keys(groups).sort().reverse();
@@ -2900,7 +2913,7 @@ function clientViewHtml(c, ct){
     return `<h3 style="margin-top:14px">${monthTitle(k)}</h3>
     <div class="tbl-scroll"><table>
       <thead><tr><th>№</th><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">Стоимость</th><th>Оплата</th></tr></thead>
-      <tbody>${g.map((s,i)=>`<tr><td>${g.length-i}</td><td>${fmtDate(s.date)}</td><td>${esc(s.code)}</td>
+      <tbody>${g.map((s,i)=>`<tr><td>${g.length-i}</td><td>${fmtDate(s.date)}</td><td>${String(s.code||'').trim()||'—'}</td>
         <td>${esc(s.desc)}${appliedHtml(s)}</td><td class="num">${money(s.price)}</td>
         <td>${clientPayPill(s)}</td></tr>`).join('')}</tbody></table></div>
     <div class="muted" style="margin-top:6px">За месяц: ${money(gs)} · оплачено ${money(gp)} · остаток ${money(Math.max(0,gs-gp))}</div>`;
@@ -2910,8 +2923,8 @@ function clientViewHtml(c, ct){
 }
 function clientPayPill(s){
   const price = Number(s.price)||0, paid = paidOf(s);
+  if(isPayFull(s) || (price>0 && paid>=price)) return '<span class="pill ok">Оплачено</span>';
   if(paid<=0) return '<span class="pill no">Не оплачено</span>';
-  if(paid>=price) return '<span class="pill ok">Оплачено</span>';
   return '<span class="pill part">Оплачено ' + money(paid) + '</span>';
 }
 
@@ -3013,7 +3026,7 @@ function buildPrintHtml(c, ct, from, to, no){
     return `<tr>
           <td>${i+1}</td>
           <td>${fmtDate(s.date)}</td>
-          <td>${esc(s.code)}</td>
+          <td>${String(s.code||'').trim()||'—'}</td>
           <td class="pa-service-desc">
             <div>${esc(s.desc)}</div>
             ${special ? customFieldHtmlForPdf(s) : (appliedPdfHtml(s)+customFieldHtmlForPdf(s))}
@@ -3083,7 +3096,7 @@ async function makePdf(){
   const err  = document.getElementById('pdfErr');
   const btn  = document.getElementById('pdfBtn');
   const list = filterByPeriod(contractServices(c, ct.id), from, to).filter(isComplete);
-  if(!list.length){ err.textContent='За выбранный период нет услуг с заполненными обязательными полями'; return; }
+  if(!list.length){ err.textContent='За выбранный период нет услуг с датой и расшифровкой'; return; }
   if(typeof html2canvas==='undefined' || !window.jspdf){ err.textContent='Не загрузились библиотеки PDF. Проверь интернет и обнови страницу.'; return; }
   btn.disabled = true; btn.textContent = 'Формирую…'; err.textContent='';
   try{
