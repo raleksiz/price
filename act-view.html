@@ -151,6 +151,19 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
   .grand-tot .v{font-size:11px;}
 }
 
+.act-footer{
+  margin-top:16px;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.6;
+}
+.act-footer-link{
+  color:var(--violet);
+  text-decoration:none;
+  font-weight:600;
+}
+.act-footer-link:hover{text-decoration:underline;}
+
 .filter-box{margin:10px 0 12px;padding:10px 12px;background:#F8F6FF;border:1px solid #E7DFF7;border-radius:10px;}
 .filter-toggle{border:1px solid #C4B5FD;background:#fff;color:#6E3B8C;border-radius:8px;padding:7px 10px;font:600 12px inherit;cursor:pointer;}
 .filter-form{display:none;margin-top:10px;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:end;}
@@ -531,6 +544,9 @@ function renderContract(c,ct,presetFilters){
     ${(ct.sentDates||[]).length?`<div class="muted" style="margin-top:8px">Даты направления актов: ${ct.sentDates.map(fmtDate).join(', ')}</div>`:''}
   </div>`;
 }
+function actFooterHtml(){
+  return `<div class="act-footer">Вопросы по кодам и условиям — <a class="act-footer-link" href="${BASE_URL}" target="_blank" rel="noopener">Прайс</a> · <a class="act-footer-link" href="https://t.me/aruzlev" target="_blank" rel="noopener">Telegram</a> · <a class="act-footer-link" href="mailto:raleksiz.law@gmail.com">Почта</a></div>`;
+}
 function renderClient(c,db){
   CURRENT_CLIENT=c; CURRENT_DB=db;
   const root=document.getElementById('root');
@@ -539,7 +555,10 @@ function renderClient(c,db){
   const today=todayISO();
   const grand=contracts.reduce((acc,ct)=>{const t=displayContractTotals(c,ct,today);acc.sum+=t.sum;acc.paid+=t.paid;acc.debt+=t.debt;return acc;},{sum:0,paid:0,debt:0});
   const sorted=contracts.slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-  root.innerHTML=`<div class="logo">RALEKSIZ HOUSE</div><h1 class="client-name">${esc(c.name)}</h1><div class="muted" style="margin-bottom:16px">Акты оказанных услуг по всем договорам и основаниям</div>${sorted.map(ct=>renderContract(c,ct)).join('')}${contracts.length>1?`<div style="margin-top:4px"><h2 style="border-top:none;padding-top:0">Итого по всем договорам</h2><div class="grand-totals">${grandTot('Общая стоимость услуг',money(grand.sum))}${grandTot('Оплачено',money(grand.paid))}${grandTot('К оплате',money(grand.debt))}</div></div>`:''}`;
+  const grandBlock = contracts.length>1
+    ? `<div style="margin-top:4px"><h2 style="border-top:none;padding-top:0">Итого по всем договорам</h2><div class="grand-totals">${grandTot('Общая стоимость услуг',money(grand.sum))}${grandTot('Оплачено',money(grand.paid))}${grandTot('К оплате',money(grand.debt))}</div></div>`
+    : '';
+  root.innerHTML=`<div class="logo">RALEKSIZ HOUSE</div><h1 class="client-name">${esc(c.name)}</h1><div class="muted" style="margin-bottom:16px">Акты оказанных услуг по всем договорам и основаниям</div>${sorted.map(ct=>renderContract(c,ct)).join('')}${grandBlock}${actFooterHtml()}`;
 }
 async function loadAndRender(){
   const root=document.getElementById('root');
