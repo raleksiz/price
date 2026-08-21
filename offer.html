@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RALEKSIZ HOUSE — Генератор персональных предложений</title>
+<script>
+(function(){
+  try{
+    var ts = localStorage.getItem('raleksiz_offer_session');
+    if(ts && (Date.now() - Number(ts) < 7*24*60*60*1000)) document.documentElement.classList.add('session-ok');
+  }catch(e){}
+})();
+</script>
+<style>html.session-ok #pwdScreen{display:none!important}html.session-ok #mainScreen{display:block!important}</style>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Inter',system-ui,sans-serif;background:#F4F0FA;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px 16px;}
@@ -204,7 +213,7 @@
 const BASE_URL = 'https://raleksiz.github.io/price/';
 const PWD_HASH = '6fefdb650f29dd6d348c2a43f02ec33433d70e84cfac3c8d94c765b674942ada';
 const SESSION_KEY = 'raleksiz_offer_session';
-const SESSION_TTL = 3 * 24 * 60 * 60 * 1000;
+const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
 const OFFERS_KEY = 'raleksiz_sent_offers';
 const TOKEN_KEY = 'raleksiz_gh_token';
 const GH_REPO = 'raleksiz/Price-private';
@@ -230,6 +239,7 @@ function checkSession(){
 }
 
 function showMain(){
+  document.documentElement.classList.add('session-ok');
   document.getElementById('pwdScreen').style.display = 'none';
   document.getElementById('mainScreen').style.display = 'block';
   // Show token banner if no token saved
