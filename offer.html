@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RALEKSIZ HOUSE — Генератор персональных предложений</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',system-ui,sans-serif;background:#F4F0FA;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px 16px;}
+  .card{background:#fff;border-radius:16px;padding:28px 24px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(80,40,120,0.12);box-sizing:border-box;}
+  .logo{font-family:'Montserrat',system-ui,sans-serif;font-weight:800;font-size:18px;color:#2B1A6B;letter-spacing:0.5px;margin-bottom:4px;}
+  .subtitle{font-size:12px;color:#888;margin-bottom:28px;}
+  h1{font-size:17px;font-weight:700;color:#2B1A6B;margin-bottom:24px;}
+  label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.3px;}
+  .field{margin-bottom:20px;}
+  input[type=number], input[type=date], input[type=text], input[type=password]{
+    width:100%;border:1.5px solid #DDD;border-radius:10px;padding:11px 14px;
+    font-size:16px;font-family:inherit;color:#2B1A6B;outline:none;
+    transition:border-color .15s;
+  }
+  input:focus{border-color:#7C3AED;}
+  .btn{
+    width:100%;background:linear-gradient(135deg,#7C3AED,#5B21B6);
+    color:#fff;border:none;border-radius:10px;padding:14px;
+    font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;
+    transition:opacity .15s;margin-top:4px;
+  }
+  .btn:hover{opacity:0.9;}
+  .result{margin-top:24px;display:none;}
+  .result-label{font-size:12px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;}
+  .result-url{
+    background:#F4F0FA;border:1.5px solid #C4B5FD;border-radius:10px;
+    padding:12px 14px;font-size:13px;color:#2B1A6B;word-break:break-all;
+    line-height:1.5;
+  }
+  .copy-btn{
+    margin-top:10px;width:100%;background:#2B1A6B;color:#fff;border:none;
+    border-radius:10px;padding:11px;font-size:14px;font-weight:700;
+    font-family:inherit;cursor:pointer;transition:opacity .15s;
+  }
+  .copy-btn:hover{opacity:0.85;}
+  .copy-btn.copied{background:#16a34a;}
+  .hint{font-size:11.5px;color:#999;margin-top:10px;line-height:1.5;}
+  .disc-wrap{position:relative;}
+  .disc-indicator{
+    display:none;margin-top:6px;padding:7px 10px;border-radius:8px;
+    font-size:11.5px;line-height:1.4;
+  }
+  .disc-indicator.green{display:block;background:#E9F7EE;color:#1E6B3C;border:1px solid #9FD9B4;}
+  .disc-indicator.yellow{display:block;background:#FFFDE7;color:#7A6000;border:1px solid #F6D860;}
+  .disc-indicator.red{display:block;background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;}
+  .sent-card{max-width:480px;width:100%;margin:16px 0 0;box-sizing:border-box;}
+  .sent-card h2{font-size:15px;font-weight:700;color:#2B1A6B;margin-bottom:14px;}
+  .manual-form{background:#F8F6FF;border-radius:10px;padding:14px;margin-bottom:16px;}
+  .manual-form .form-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:10px;display:block;}
+  .manual-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  @media(max-width:520px){.manual-grid{grid-template-columns:1fr;} .card{padding:24px 20px;}}
+  .manual-input{width:100%;border:1.5px solid #DDD;border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;color:#2B1A6B;outline:none;box-sizing:border-box;}
+  .manual-input:focus{border-color:#7C3AED;}
+  .manual-add-btn{width:100%;background:#2B1A6B;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:4px;}
+  .manual-add-btn:hover{opacity:0.85;}
+  .sent-list{display:flex;flex-direction:column;gap:10px;}
+  .sent-item{border:1px solid #E4E5EA;border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px;}
+  .sent-item-body{flex:1;min-width:0;}
+  .sent-item-name{font-weight:700;color:#2B1A6B;font-size:13px;margin-bottom:4px;}
+  .sent-item-meta{font-size:12px;color:#666;line-height:1.6;}
+  .sent-item-link{font-size:11px;color:#7C3AED;word-break:break-all;margin-top:4px;}
+  .sent-del{background:none;border:none;color:#CCC;font-size:18px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;}
+  .sent-del:hover{color:#dc2626;}
+  .sent-empty{text-align:center;color:#aaa;font-size:13px;padding:20px 0;}
+  .sent-item.expired{background:#F5F5F5;opacity:0.75;}
+  .sent-item.expiring{background:#FFF8E6;border-color:#F6D860;}
+  .date-expired{text-decoration:line-through;color:#aaa;}
+  .date-expiring{color:#E65100;font-weight:700;}
+  .save-btn{
+    margin-top:8px;width:100%;background:#F3ECFA;color:#6E3B8C;border:1.5px solid #C4B5FD;
+    border-radius:10px;padding:11px;font-size:14px;font-weight:700;font-family:inherit;
+    cursor:pointer;transition:opacity .15s;
+  }
+  .save-btn:hover{opacity:0.85;}
+  .saved-msg{font-size:12px;color:#16a34a;margin-top:8px;text-align:center;min-height:16px;}
+  .offer-item{
+    padding:12px 0;border-bottom:1px solid #F0F0F3;display:flex;
+    align-items:flex-start;gap:12px;
+  }
+  .offer-item:last-child{border-bottom:none;}
+  .offer-item-info{flex:1;min-width:0;}
+  .offer-item-name{font-weight:700;color:#2B1A6B;font-size:13px;margin-bottom:3px;}
+  .offer-item-meta{font-size:11.5px;color:#888;line-height:1.6;}
+  .offer-item-link{font-size:11px;color:#7C3AED;word-break:break-all;margin-top:3px;}
+  .del-btn{
+    background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;
+    padding:0 4px;flex-shrink:0;line-height:1;
+  }
+  .del-btn:hover{color:#dc2626;}
+  .cats-label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.3px;}
+  .cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:20px;}
+  .cat-check{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid #DDD;border-radius:8px;cursor:pointer;font-size:13px;color:#2B1A6B;transition:border-color .15s,background .15s;}
+  .cat-check:hover{border-color:#7C3AED;background:#F9F6FF;}
+  .cat-check input{accent-color:#7C3AED;width:16px;height:16px;cursor:pointer;}
+  .cat-check.checked{border-color:#7C3AED;background:#F3ECFA;}
+</style>
+</head>
+<body>
+<!-- Password screen -->
+<div class="card" id="pwdScreen">
+  <div class="logo">RALEKSIZ HOUSE</div>
+  <div class="subtitle">Только для внутреннего использования</div>
+  <h1>Вход</h1>
+  <div class="field">
+    <label for="pwdInput">Пароль</label>
+    <input type="password" id="pwdInput" placeholder="••••••••••" autocomplete="current-password">
+  </div>
+  <div class="field" id="tokenField" style="display:none;">
+    <label for="tokenInput">GitHub Token</label>
+    <input type="password" id="tokenInput" placeholder="github_pat_..." autocomplete="off">
+    <div style="font-size:11px;color:#999;margin-top:4px;">Вводится один раз на устройстве</div>
+  </div>
+  <div style="color:#dc2626;font-size:13px;margin-bottom:12px;min-height:18px" id="pwdError"></div>
+  <button class="btn" onclick="unlock()">Войти</button>
+</div>
+
+<!-- Main screen -->
+<div class="card" id="mainScreen" style="display:none">
+  <div class="logo">RALEKSIZ HOUSE</div>
+  <div class="subtitle">Только для внутреннего использования · <a href="#" onclick="showTokenBanner();return false;" style="color:#7C3AED;font-size:11px;">обновить токен</a></div>
+
+  <!-- GitHub token banner — shown if token not saved -->
+  <div id="tokenBanner" style="display:none;background:#FFF8E6;border:1.5px solid #F6D860;border-radius:10px;padding:12px 14px;margin-bottom:20px;">
+    <div style="font-size:12px;font-weight:700;color:#7A6000;margin-bottom:8px;">⚠️ Синхронизация с GitHub не настроена</div>
+    <input type="password" id="tokenBannerInput" placeholder="github_pat_..." style="width:100%;border:1.5px solid #DDD;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:#2B1A6B;outline:none;box-sizing:border-box;margin-bottom:8px;">
+    <button onclick="saveTokenFromBanner()" style="width:100%;background:#2B1A6B;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">Сохранить токен</button>
+  </div>
+
+  <h1>Персональное предложение</h1>
+
+  <div class="field">
+    <label for="forWhom">Для кого</label>
+    <input type="text" id="forWhom" placeholder="например, Ивановой И.И.">
+  </div>
+
+  <div class="field">
+    <span class="cats-label">Категории со скидкой</span>
+    <div class="cats-grid">
+      <label class="cat-check" id="lbl_consult"><input type="checkbox" class="cat-cb" value="consult" onchange="toggleCatStyle(this);updateDiscIndicator()"> Консультации</label>
+      <label class="cat-check" id="lbl_contracts"><input type="checkbox" class="cat-cb" value="contracts" onchange="toggleCatStyle(this);updateDiscIndicator()"> Договоры</label>
+      <label class="cat-check" id="lbl_realestate"><input type="checkbox" class="cat-cb" value="realestate" onchange="toggleCatStyle(this);updateDiscIndicator()"> Недвижимость</label>
+      <label class="cat-check" id="lbl_corporate"><input type="checkbox" class="cat-cb" value="corporate" onchange="toggleCatStyle(this);updateDiscIndicator()"> Корпоративные</label>
+      <label class="cat-check" id="lbl_pretrial"><input type="checkbox" class="cat-cb" value="pretrial" onchange="toggleCatStyle(this);updateDiscIndicator()"> Досудебное</label>
+      <label class="cat-check" id="lbl_litigation_single"><input type="checkbox" class="cat-cb" value="litigation_single" onchange="toggleCatStyle(this);updateDiscIndicator()"> Суд: разовые</label>
+      <label class="cat-check" id="lbl_full_repr"><input type="checkbox" class="cat-cb" value="full_repr" onchange="toggleCatStyle(this);updateDiscIndicator()"> Суд: под ключ</label>
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="disc">Скидка, %</label>
+    <div class="disc-wrap">
+    <input type="number" id="disc" min="0.5" max="50" step="0.5" placeholder="например, 12.5" value="" oninput="updateDiscIndicator()">
+    <div class="disc-indicator" id="discIndicator"></div>
+  </div>
+  </div>
+
+  <div class="field">
+    <label for="exp">Действует до</label>
+    <input type="text" id="exp" placeholder="ДД.ММ.ГГГГ" class="manual-input" style="width:100%" oninput="updateDiscIndicator()">
+  </div>
+
+  <button class="btn" onclick="generate()">Создать ссылку</button>
+  <button class="btn" onclick="preview()" style="background:#F3ECFA;color:#6E3B8C;border:1.5px solid #C4B5FD;margin-top:8px;">Предпросмотр</button>
+
+  <div class="result" id="result">
+    <div class="result-label">Ссылка для клиента</div>
+    <div class="result-url" id="resultUrl"></div>
+    <button class="copy-btn" id="copyBtn" onclick="copyLink()">Скопировать ссылку</button>
+    <button class="save-btn" id="saveBtn" onclick="saveOffer()">Сохранить в список</button>
+    <div class="hint" id="hint"></div>
+    <div class="saved-msg" id="savedMsg"></div>
+  </div>
+
+  <!-- Sent offers — same width as main card -->
+  <div id="sentOffersSection" style="display:none;margin-top:24px;border-top:1px solid #EEE;padding-top:20px;">
+    <h2 style="font-size:14px;font-weight:700;color:#2B1A6B;margin-bottom:14px;">Разосланные персональные предложения</h2>
+
+    <div class="manual-form">
+      <span class="form-label">Добавить вручную</span>
+      <div class="manual-grid">
+        <input type="text" id="manualName" placeholder="например, Иванова И.И." class="manual-input">
+        <input type="text" id="manualDisc" placeholder="Скидка, %" class="manual-input">
+      </div>
+      <div class="manual-grid">
+        <input type="text" id="manualExp" placeholder="ДД.ММ.ГГГГ" class="manual-input">
+        <input type="text" id="manualUrl" placeholder="Ссылка" class="manual-input" oninput="autoFillFromUrl(this.value)">
+      </div>
+      <button onclick="addManualOffer()" class="manual-add-btn">Добавить</button>
+    </div>
+
+    <div class="sent-list" id="sentOffersList"></div>
+  </div>
+</div>
+
+
+
+<script>
+const BASE_URL = 'https://raleksiz.github.io/price/';
+const PWD_HASH = '6fefdb650f29dd6d348c2a43f02ec33433d70e84cfac3c8d94c765b674942ada';
+const SESSION_KEY = 'raleksiz_offer_session';
+const SESSION_TTL = 3 * 24 * 60 * 60 * 1000;
+const OFFERS_KEY = 'raleksiz_sent_offers';
+const TOKEN_KEY = 'raleksiz_gh_token';
+const GH_REPO = 'raleksiz/price';
+const GH_FILE = 'offers.json';
+
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function checkSession(){
+  try {
+    const ts = localStorage.getItem(SESSION_KEY);
+    if (ts && (Date.now() - Number(ts)) < SESSION_TTL){
+      showMain();
+      return true;
+    }
+  } catch(e){}
+  // Show token field if no token saved yet
+  const hasToken = !!localStorage.getItem(TOKEN_KEY);
+  document.getElementById('tokenField').style.display = hasToken ? 'none' : 'block';
+  return false;
+}
+
+function showMain(){
+  document.getElementById('pwdScreen').style.display = 'none';
+  document.getElementById('mainScreen').style.display = 'block';
+  // Show token banner if no token saved
+  const hasToken = !!localStorage.getItem(TOKEN_KEY);
+  const banner = document.getElementById('tokenBanner');
+  if (banner) banner.style.display = hasToken ? 'none' : 'block';
+  loadOffersFromGitHub().then(renderSentOffers);
+}
+
+function showTokenBanner(){
+  const banner = document.getElementById('tokenBanner');
+  if (banner){ banner.style.display = 'block'; document.getElementById('tokenBannerInput').focus(); }
+}
+
+function saveTokenFromBanner(){
+  const val = document.getElementById('tokenBannerInput').value.trim();
+  if (!val){ alert('Введите токен'); return; }
+  localStorage.setItem(TOKEN_KEY, val);
+  document.getElementById('tokenBanner').style.display = 'none';
+  loadOffersFromGitHub().then(renderSentOffers);
+}
+
+async function unlock(){
+  const pwd = document.getElementById('pwdInput').value;
+  if (!pwd){ document.getElementById('pwdError').textContent = 'Введите пароль'; return; }
+  const hash = await sha256(pwd);
+  if (hash === PWD_HASH){
+    try {
+      localStorage.setItem(SESSION_KEY, Date.now());
+      const tokenInput = document.getElementById('tokenInput');
+      if (tokenInput && tokenInput.value.trim()){
+        localStorage.setItem(TOKEN_KEY, tokenInput.value.trim());
+      }
+    } catch(e){}
+    showMain();
+  } else {
+    document.getElementById('pwdError').textContent = 'Неверный пароль';
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('pwdInput').focus();
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('pwdScreen').style.display !== 'none'){
+    unlock();
+  }
+});
+
+// Check session on load
+window.addEventListener('DOMContentLoaded', () => { checkSession(); });
+
+function updateDiscIndicator(){
+  const disc = parseFloat(document.getElementById('disc').value) || 0;
+  const cats = [...document.querySelectorAll('.cat-cb:checked')].map(c => c.value);
+  const expRaw = document.getElementById('exp').value.trim();
+  const ind = document.getElementById('discIndicator');
+  if (!disc || !cats.length){ ind.className = 'disc-indicator'; return; }
+
+  // Calculate term in months
+  let months = 0;
+  const expDate = parseDate(expRaw);
+  if (expDate && !isNaN(expDate)){
+    const now = new Date();
+    months = (expDate.getFullYear() - now.getFullYear()) * 12
+      + (expDate.getMonth() - now.getMonth());
+  }
+
+  // Term factor: short ≤3, medium 3-6, long >6
+  const termShort = months > 0 && months <= 3;
+  const termLong = months > 6;
+  const termLabel = termShort ? ' (срок короткий — плюс)' : termLong ? ` (срок ${months} мес. — ужесточает оценку)` : '';
+
+  // Category risk
+  const hasFullRepr = cats.includes('full_repr');
+  const hasRealestate = cats.includes('realestate');
+  const hasMedium = cats.some(c => ['litigation_single','corporate'].includes(c));
+  const count = cats.length;
+
+  // Adjusted thresholds based on term
+  const maxGreen = termShort ? 12 : termLong ? 8 : 10;
+  const maxYellow = termShort ? 17 : termLong ? 12 : 15;
+
+  let level, msg;
+
+  if (hasFullRepr){
+    level = 'red';
+    msg = '🔴 Суд под ключ в оффере — рискованно при любом сроке: высокий чек, клиент не перейдёт на абонемент.';
+  } else if (disc > maxYellow){
+    level = 'red';
+    msg = `🔴 Скидка слишком высокая${termLabel}. Оффер выгоднее абонемента — клиент не перейдёт, вы теряете маржу.`;
+  } else if (hasRealestate && disc > (termShort ? 12 : termLong ? 7 : 10)){
+    level = 'red';
+    msg = `🔴 Недвижимость с такой скидкой${termLabel} — крупные чеки, потери ощутимы. Снизьте до 7-8% или уберите категорию.`;
+  } else if (disc > maxGreen && count >= (termLong ? 4 : 5)){
+    level = 'red';
+    msg = `🔴 Широкий охват + высокий процент${termLabel}. Абонемент теряет привлекательность.`;
+  } else if (termLong && disc > 10){
+    level = 'yellow';
+    msg = `🟡 Скидка ${disc}% на ${months} мес. — за длинный срок накапливаются потери. Рассмотрите снижение до ${maxGreen}%.`;
+  } else if (hasMedium && disc > (termShort ? 12 : 10)){
+    level = 'yellow';
+    msg = `🟡 Судебные/корпоративные с такой скидкой${termLabel} — допустимо, но следите за маржой.`;
+  } else if (disc >= 10 && disc <= maxYellow){
+    level = 'yellow';
+    msg = `🟡 Зона Easy-абонемента${termLabel}. Клиент может не почувствовать разницу — имеет смысл если категории узкие.`;
+  } else {
+    level = 'green';
+    msg = `🟢 Хороший баланс${termLabel}. Оффер привлекательный, но абонемент заметно выгоднее.`;
+  }
+
+  ind.className = 'disc-indicator ' + level;
+  ind.textContent = msg;
+}
+
+function toggleCatStyle(cb){
+  cb.closest('.cat-check').classList.toggle('checked', cb.checked);
+}
+
+function autoFillFromUrl(url){
+  try {
+    const m = url.match(/[?&]offer=([^&]+)/);
+    if (!m) return;
+    const decoded = JSON.parse(decodeURIComponent(atob(m[1])));
+    if (decoded.for) document.getElementById('manualName').value = decoded.for;
+    if (decoded.disc) document.getElementById('manualDisc').value = decoded.disc;
+    if (decoded.exp){
+      const d = new Date(decoded.exp);
+      document.getElementById('manualExp').value =
+        String(d.getDate()).padStart(2,'0') + '.' +
+        String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
+    }
+    // cats stored but used by renderSentOffers from offer object
+    autoFillFromUrl._cats = decoded.cats || [];
+  } catch(e){}
+}
+
+function preview(){
+  const disc = parseFloat(document.getElementById('disc').value);
+  const expRaw = document.getElementById('exp').value.trim();
+  const forWhom = document.getElementById('forWhom').value.trim();
+  const cats = [...document.querySelectorAll('.cat-cb:checked')].map(c => c.value);
+
+  if (!disc || disc < 0.5 || disc > 50){ alert('Укажите скидку от 0.5 до 50%'); return; }
+  if (cats.length === 0){ alert('Выберите хотя бы одну категорию'); return; }
+
+  const expDate = parseDate(expRaw);
+  const fallback = new Date(Date.now() + 30*24*60*60*1000);
+  const d = expDate && !isNaN(expDate) ? expDate : fallback;
+  const exp = d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+
+  const payload = JSON.stringify({ disc, exp, for: forWhom, cats });
+  const token = btoa(encodeURIComponent(payload));
+  window.open(BASE_URL + '?offer=' + encodeURIComponent(token), '_blank');
+}
+
+function parseDate(str){
+  if (!str) return null;
+  // DD.MM.YYYY
+  const ru = str.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (ru) return new Date(ru[3], ru[2]-1, ru[1]);
+  // YYYY-MM-DD
+  const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return new Date(iso[1], iso[2]-1, iso[3]);
+  return null;
+}
+
+function generate(){
+  const disc = parseFloat(document.getElementById('disc').value);
+  const expRaw = document.getElementById('exp').value.trim();
+  const forWhom = document.getElementById('forWhom').value.trim();
+  const cats = [...document.querySelectorAll('.cat-cb:checked')].map(c => c.value);
+
+  if (!disc || disc < 0.5 || disc > 50){ alert('Укажите скидку от 0.5 до 50%'); return; }
+  if (!expRaw){ alert('Укажите дату окончания'); return; }
+  const expDate = parseDate(expRaw);
+  if (!expDate || isNaN(expDate)){ alert('Укажите дату в формате ДД.ММ.ГГГГ'); return; }
+  const exp = expDate.getFullYear() + '-' +
+    String(expDate.getMonth()+1).padStart(2,'0') + '-' +
+    String(expDate.getDate()).padStart(2,'0');
+  if (cats.length === 0){ alert('Выберите хотя бы одну категорию услуг'); return; }
+
+  const payload = JSON.stringify({ disc, exp, for: forWhom, cats });
+  const token = btoa(encodeURIComponent(payload));
+  const url = BASE_URL + '?offer=' + encodeURIComponent(token);
+
+  document.getElementById('resultUrl').textContent = url;
+  document.getElementById('result').style.display = 'block';
+
+  const d = new Date(exp);
+  const dateStr = d.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
+  const whoStr = forWhom ? ` · Для: ${forWhom}` : '';
+  const catsStr = cats.length + ' кат.';
+  document.getElementById('hint').textContent =
+    `Скидка ${disc}% · ${catsStr}${whoStr} · Действует до ${dateStr}`;
+
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.textContent = 'Скопировать ссылку';
+  copyBtn.classList.remove('copied');
+}
+
+function copyLink(){
+  const url = document.getElementById('resultUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Скопировано ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Скопировать ссылку'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function saveOffer(){
+  const url = document.getElementById('resultUrl').textContent;
+  const forWhom = document.getElementById('forWhom').value.trim();
+  const disc = document.getElementById('disc').value;
+  const exp = document.getElementById('exp').value;
+  const cats = [...document.querySelectorAll('.cat-cb:checked')].map(c => c.value);
+  if (!url) return;
+
+  try {
+    const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
+    offers.unshift({ id: Date.now(), forWhom, disc, exp, cats, url, saved: new Date().toLocaleDateString('ru-RU') });
+    localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
+    saveOffersToGitHub(offers);
+    renderSentOffers();
+    const msg = document.getElementById('savedMsg');
+    msg.textContent = 'Сохранено ✓';
+    setTimeout(() => msg.textContent = '', 2000);
+  } catch(e) { alert('Не удалось сохранить'); }
+}
+
+function deleteOffer(id){
+  try {
+    const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
+    const updated = offers.filter(o => o.id !== id);
+    localStorage.setItem(OFFERS_KEY, JSON.stringify(updated));
+    saveOffersToGitHub(updated);
+    renderSentOffers();
+  } catch(e){}
+}
+
+async function ghHeaders(){
+  const token = localStorage.getItem(TOKEN_KEY);
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+}
+
+async function loadOffersFromGitHub(){
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, { headers: await ghHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+    const offers = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))));
+    localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
+    localStorage.setItem('raleksiz_gh_sha', data.sha);
+  } catch(e){}
+}
+
+async function saveOffersToGitHub(offers){
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(offers, null, 2))));
+    const sha = localStorage.getItem('raleksiz_gh_sha');
+    const body = { message: 'Update offers', content };
+    if (sha) body.sha = sha;
+    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, {
+      method: 'PUT',
+      headers: { ...await ghHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (res.ok){
+      const data = await res.json();
+      localStorage.setItem('raleksiz_gh_sha', data.content.sha);
+    }
+  } catch(e){}
+}
+
+function renderSentOffers(){
+  try {
+    const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
+    const card = document.getElementById('sentOffersSection');
+    const list = document.getElementById('sentOffersList');
+    card.style.display = 'block';
+    if (!offers.length){
+      list.innerHTML = '<div class="sent-empty">Список пуст</div>';
+      return;
+    }
+    const catNames = {'consult':'Консультации','contracts':'Договоры','realestate':'Недвижимость',
+      'corporate':'Корпоративные','pretrial':'Досудебное','litigation_single':'Суд: разовые','full_repr':'Суд: под ключ'};
+    const now = new Date(); now.setHours(0,0,0,0);
+    const twoWeeks = new Date(now); twoWeeks.setDate(twoWeeks.getDate()+14);
+    list.innerHTML = offers.map(o => {
+      const expParsed = o.exp ? (parseDate(o.exp) || new Date(o.exp)) : null;
+    const d = expParsed && !isNaN(expParsed) ? expParsed.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) : (o.exp || '—');
+      const catsStr = (o.cats||[]).map(k => catNames[k]||k).join(', ');
+      const shortUrl = o.url ? o.url.slice(0,55)+(o.url.length>55?'…':'') : '';
+      const expParsed2 = o.exp ? (parseDate(o.exp) || new Date(o.exp)) : null;
+      if (expParsed2) expParsed2.setHours(0,0,0,0);
+      const isExpired = expParsed2 && expParsed2 < now;
+      const isExpiring = expParsed2 && !isExpired && expParsed2 <= twoWeeks;
+      const cardClass = isExpired ? 'sent-item expired' : isExpiring ? 'sent-item expiring' : 'sent-item';
+      const dateClass = isExpired ? 'date-expired' : isExpiring ? 'date-expiring' : '';
+      const datePrefix = isExpiring ? '⚠️ ' : isExpired ? '' : '';
+      return `<div class="${cardClass}">
+        <div class="sent-item-body">
+          <div class="sent-item-name">${o.forWhom ? 'Для ' + o.forWhom : 'Без имени'}</div>
+          <div class="sent-item-meta">
+            <span style="color:#E65100;font-weight:700;">-${o.disc||'?'}%</span>
+            &nbsp;·&nbsp;действует до <span class="${dateClass}">${datePrefix}<b>${d}</b></span>
+          </div>
+          <div class="sent-item-meta" style="color:#999;">сохранено ${o.saved}</div>
+          ${catsStr ? `<div class="sent-item-meta">${catsStr}</div>` : ''}
+          ${shortUrl ? `<div class="sent-item-link"><a href="${o.url}" target="_blank">${shortUrl}</a></div>` : ''}
+        </div>
+        <button class="sent-del" onclick="deleteOffer(${o.id})" title="Удалить">✕</button>
+      </div>`;
+    }).join('');
+  } catch(e){}
+}
+
+function addManualOffer(){
+  const forWhom = document.getElementById('manualName').value.trim();
+  const disc = document.getElementById('manualDisc').value.trim();
+  const exp = document.getElementById('manualExp').value;
+  const url = document.getElementById('manualUrl').value.trim();
+  if (!exp){ alert('Укажите дату окончания оффера'); return; }
+  if (!forWhom && !url){ alert('Заполните хотя бы получателя или ссылку'); return; }
+  try {
+    const offers = JSON.parse(localStorage.getItem(OFFERS_KEY) || '[]');
+    const cats = autoFillFromUrl._cats || [];
+    autoFillFromUrl._cats = [];
+    offers.unshift({ id: Date.now(), forWhom, disc, exp, cats, url, saved: new Date().toLocaleDateString('ru-RU') });
+    localStorage.setItem(OFFERS_KEY, JSON.stringify(offers));
+    saveOffersToGitHub(offers);
+    document.getElementById('manualName').value = '';
+    document.getElementById('manualDisc').value = '';
+    document.getElementById('manualExp').value = '';
+    document.getElementById('manualUrl').value = '';
+    renderSentOffers();
+  } catch(e){ alert('Не удалось сохранить'); }
+}
+</script>
+</body>
+</html>
