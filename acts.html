@@ -33,6 +33,7 @@ input,select,textarea{width:100%;border:1.5px solid #DDD;border-radius:10px;padd
 input:focus,select:focus,textarea:focus{border-color:var(--violet);}
 input:disabled,select:disabled,textarea:disabled{background:#F6F6F8;color:#999;cursor:not-allowed;}
 textarea{min-height:64px;resize:vertical;}
+textarea.autogrow{resize:none;overflow:hidden;}
 .btn{background:linear-gradient(135deg,var(--violet),var(--violet-d));color:#fff;border:none;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:opacity .15s;}
 .btn:hover{opacity:.9;}
 .btn.full{width:100%;}
@@ -2105,7 +2106,7 @@ function openServiceForm(clientId, contractId, svcId){
     const raw = (cur.custom||{})[f.id];
     const v = raw && typeof raw==='object' ? (raw.value??'') : (raw??'');
     const pub = !!(raw && typeof raw==='object' && raw.public);
-    if(f.type==='longtext' || f.type==='bulleted') return `<div class="cf-row"><label>${esc(f.name)}</label><textarea data-cf="${f.id}" data-cf-type="${f.type}">${esc(v)}</textarea><label class="cf-public"><input type="checkbox" data-cf-public="${f.id}" ${pub?'checked':''}> Показывать заказчику в акте и PDF</label></div>`;
+    if(f.type==='longtext' || f.type==='bulleted') return `<div class="cf-row"><label>${esc(f.name)}</label><textarea class="autogrow" data-cf="${f.id}" data-cf-type="${f.type}" oninput="autoGrowTextarea(this)">${esc(v)}</textarea><label class="cf-public"><input type="checkbox" data-cf-public="${f.id}" ${pub?'checked':''}> Показывать заказчику в акте и PDF</label></div>`;
     const t = f.type==='number' ? 'number' : (f.type==='date' ? 'date' : 'text');
     return `<div class="cf-row"><label>${esc(f.name)}</label><input type="${t}" data-cf="${f.id}" value="${esc(v)}"><label class="cf-public"><input type="checkbox" data-cf-public="${f.id}" ${pub?'checked':''}> Показывать заказчику в акте и PDF</label></div>`;
   }).join('');
@@ -2118,7 +2119,7 @@ function openServiceForm(clientId, contractId, svcId){
     </div>
     <div class="field hidden" id="sideField"><label>Сторона</label>
       <select id="svcSide" onchange="onSideChange()"><option value="1">—</option><option value="2">—</option></select></div>
-    <div class="field"><label>Расшифровка услуги</label><textarea id="svcDesc" placeholder="Заполнится автоматически по коду, текст можно менять">${esc(cur.desc||'')}</textarea></div>
+    <div class="field"><label>Расшифровка услуги</label><textarea class="autogrow" id="svcDesc" placeholder="Заполнится автоматически по коду, текст можно менять" oninput="autoGrowTextarea(this)">${esc(cur.desc||'')}</textarea></div>
     <div id="baseContractFields" class="hidden"></div>
     <div id="surBox"></div>
     <div class="field"><label>Стоимость, ₽</label><input type="number" id="svcPrice" step="1" value="${Number(cur.price)||0}" oninput="onManualPrice()">
@@ -2158,6 +2159,11 @@ function openServiceForm(clientId, contractId, svcId){
   renderBaseContractFieldsIfNeeded();
   recalc(true);
   onPayChange();
+  document.querySelectorAll('#modalRoot textarea.autogrow').forEach(autoGrowTextarea);
+}
+function autoGrowTextarea(el){
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
 }
 function ctxClient(){ return getClient(window.__ctx.clientId); }
 function ctxContract(){ const c = ctxClient(); return c ? getContract(c, window.__ctx.contractId) : null; }
@@ -2254,7 +2260,7 @@ function onCodeChange(){
   const code = document.getElementById('svcCode').value;
   const item = priceItem(code);
   const desc = document.getElementById('svcDesc');
-  if(item && !desc.value.trim()) desc.value = item.name;
+  if(item && !desc.value.trim()){ desc.value = item.name; autoGrowTextarea(desc); }
   if(item && String(item.code) === '4.3'){
     recalc();
     return;
