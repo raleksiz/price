@@ -67,6 +67,13 @@ tr.locked td{background:#FAFAFC;}
 .pill.pre{background:#EDE9FE;color:#5B21B6;}
 .pill.lock{background:#EEE;color:#666;}
 .clients{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.clients-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:14px;}
+.clients-toolbar .tot{margin:0;padding:6px 10px;min-width:0;}
+.clients-toolbar .tot .v{font-size:15px;margin-top:0;white-space:nowrap;}
+.icon-btn-toggle{background:#fff;border:1.5px solid var(--line);border-radius:8px;width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;color:#666;flex-shrink:0;}
+.icon-btn-toggle:hover{border-color:var(--violet);color:var(--violet);}
+.icon-btn-toggle.active{border-color:var(--violet);background:var(--soft);color:var(--violet);}
+.clients-toolbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;}
 .contracts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
 .contracts-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;} .contracts-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
 .contract-card{margin:0;}
@@ -612,16 +619,13 @@ details[open] summary::before{content:"▾ ";}
   <!-- ВИД: ЗАКАЗЧИКИ -->
   <div id="view-clients">
     <div class="card">
-      <div class="toolbar">
-        <h2 style="margin:0">Заказчики</h2>
-        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
-          <label style="display:flex;align-items:center;gap:6px;text-transform:none;font-size:12.5px;font-weight:600;color:#555;margin:0">
-            <input type="checkbox" id="showHidden" style="width:16px;height:16px;accent-color:var(--violet)" onchange="renderClients()"> Показывать скрытых
-          </label>
+      <div class="clients-toolbar">
+        <div id="globalTotals"></div>
+        <div class="clients-toolbar-actions">
+          <button type="button" class="icon-btn-toggle" id="showHiddenBtn" onclick="toggleShowHiddenClients()" title="Показывать скрытых" aria-pressed="false">👁</button>
           <button class="btn sm" onclick="openClientForm(null)">+ Заказчик</button>
         </div>
       </div>
-      <div class="totals" id="globalTotals"></div>
       <div class="clients" id="clientsList"></div>
     </div>
   </div>
@@ -1505,7 +1509,8 @@ function sortedClients(){
   });
 }
 function renderClients(){
-  const showHidden = document.getElementById('showHidden').checked;
+  const showHiddenBtn = document.getElementById('showHiddenBtn');
+  const showHidden = showHiddenBtn && showHiddenBtn.classList.contains('active');
   const list = sortedClients().filter(c=>showHidden || !c.hidden);
   const box = document.getElementById('clientsList');
   if(!list.length){
@@ -1515,7 +1520,7 @@ function renderClients(){
       const t = clientAllTotals(c);
       return `<div class="cl-card ${c.pinned?'pinned':''} ${c.hidden?'hiddenc':''}" onclick="openClientInTab('${c.id}', event)">
         <div class="cl-top">
-          <div class="cl-name">${esc(c.name)||'Без наименования'} ${c.pinned?'<span class="pill pre">закреплён</span>':''}</div>
+          <div class="cl-name">${esc(c.name)||'Без наименования'}</div>
           <div class="cl-actions" onclick="event.stopPropagation()">
             <button class="icon-emoji" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}">${c.pinned?'📌':'📍'}</button>
             <button class="icon-emoji" onclick="toggleHide('${c.id}')" title="${c.hidden?'Показать':'Скрыть'}">${c.hidden?'🙈':'👁'}</button>
@@ -1528,9 +1533,18 @@ function renderClients(){
       </div>`;
     }).join('');
   }
-  let sum=0,paid=0,debt=0;
-  DB.clients.forEach(c=>{ const t=clientAllTotals(c); sum+=t.sum; paid+=t.paid; debt+=t.debt; });
-  document.getElementById('globalTotals').innerHTML = totInline('Не оплачено', money(debt), debt ? '#dc2626' : '#16a34a');
+  let debt=0;
+  DB.clients.forEach(c=>{ debt+=clientAllTotals(c).debt; });
+  document.getElementById('globalTotals').innerHTML =
+    `<div class="tot"><span class="v" style="font-size:15px;margin-top:0;color:${debt?'#dc2626':'#16a34a'}">${money(debt)}</span></div>`;
+}
+function toggleShowHiddenClients(){
+  const btn = document.getElementById('showHiddenBtn');
+  if(!btn) return;
+  const active = btn.classList.toggle('active');
+  btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  btn.title = active ? 'Скрыть скрытых' : 'Показывать скрытых';
+  renderClients();
 }
 function tot(l,v){ return `<div class="tot"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
 function totSm(l,v){ return `<div class="tot tot-sm"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
