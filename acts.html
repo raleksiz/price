@@ -783,6 +783,7 @@ let OFFERS = [];
 let currentView = 'clients';
 let currentClientId = null;
 let currentContractId = null;
+let showHiddenClients = false;
 
 /* ====================== УТИЛИТЫ ====================== */
 function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
@@ -1509,8 +1510,14 @@ function sortedClients(){
   });
 }
 function renderClients(){
+  const showHidden = showHiddenClients;
   const showHiddenBtn = document.getElementById('showHiddenBtn');
-  const showHidden = showHiddenBtn && showHiddenBtn.classList.contains('active');
+  if(showHiddenBtn){
+    showHiddenBtn.classList.toggle('active', showHidden);
+    showHiddenBtn.setAttribute('aria-pressed', showHidden ? 'true' : 'false');
+    showHiddenBtn.title = showHidden ? 'Скрыть скрытых' : 'Показывать скрытых';
+    showHiddenBtn.textContent = showHidden ? '🙈' : '👁';
+  }
   const list = sortedClients().filter(c=>showHidden || !c.hidden);
   const box = document.getElementById('clientsList');
   if(!list.length){
@@ -1539,12 +1546,10 @@ function renderClients(){
     `<div class="tot"><span class="v" style="font-size:15px;margin-top:0;color:${debt?'#dc2626':'#16a34a'}">${money(debt)}</span></div>`;
 }
 function toggleShowHiddenClients(){
-  const btn = document.getElementById('showHiddenBtn');
-  if(!btn) return;
-  const active = btn.classList.toggle('active');
-  btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-  btn.title = active ? 'Скрыть скрытых' : 'Показывать скрытых';
+  showHiddenClients = !showHiddenClients;
   renderClients();
+  const btn = document.getElementById('showHiddenBtn');
+  if(btn) btn.blur();
 }
 function tot(l,v){ return `<div class="tot"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
 function totSm(l,v){ return `<div class="tot tot-sm"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
