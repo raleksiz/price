@@ -87,6 +87,8 @@ tr.locked td{background:#FAFAFC;}
 .contract-card .cl-meta{display:flex;align-items:center;justify-content:flex-start;gap:12px;flex-wrap:wrap;}
 .cl-act-flag{display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;}
 .cl-act-flag span{font-size:11px;color:#777;font-weight:700;white-space:nowrap;}
+.cl-act-flag-compact{width:18px;justify-content:center;gap:0;}
+.cl-act-flag-compact span{display:none;}
 .cl-actions{display:flex;gap:4px;flex-shrink:0;}
 .contract-card .cl-actions{width:auto;justify-content:flex-end;gap:2px;}
 .contract-card .icon-emoji{
@@ -105,17 +107,17 @@ tr.locked td{background:#FAFAFC;}
 .icon-emoji:hover{opacity:1;}
 
 /* ===== Аккордеон (заказчики / договоры) ===== */
-.clients-toolbar-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:nowrap;}
+.clients-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.clients-toolbar-info{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.clients-toolbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;flex-shrink:0;}
 .icon-btn-toggle{background:#fff;border:1.5px solid var(--line);border-radius:8px;width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;color:#666;flex-shrink:0;transition:border-color .15s,color .15s,background-color .15s;}
 .icon-btn-toggle:hover{border-color:var(--violet);color:var(--violet);}
 .icon-btn-toggle.active{border-color:var(--violet);background:var(--soft);color:var(--violet);}
 @media (max-width:640px){
-  .clients-toolbar-actions{gap:6px;}
+  .clients-toolbar{gap:12px;}
+  .clients-toolbar-info{gap:10px;width:100%;justify-content:space-between;}
+  .clients-toolbar-actions{gap:6px;width:100%;justify-content:flex-end;}
 }
-.clients-controls-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
-.clients-sort-row{display:flex;align-items:center;gap:8px;}
-.clients-sort-row label{margin:0;text-transform:none;font-weight:600;color:#555;font-size:12.5px;}
-.clients-sort-row select{width:auto;min-width:180px;}
 .acc-list{display:flex;flex-direction:column;}
 .acc-item{background:#fff;border:1.5px solid var(--line);border-radius:14px;margin-top:12px;overflow:hidden;transition:border-radius .15s ease;}
 .acc-list .acc-item:first-child{margin-top:0;}
@@ -127,37 +129,30 @@ tr.locked td{background:#FAFAFC;}
 .acc-header{padding:14px 16px;cursor:pointer;user-select:none;background:#fff;transition:background-color .15s;}
 .acc-header:hover{background:#FBF9FF;}
 .acc-header-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.acc-header-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 auto;overflow-wrap:anywhere;}
+.acc-header-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 240px;overflow-wrap:anywhere;}
 .acc-title{font-weight:700;font-size:14.5px;color:var(--ink);overflow-wrap:anywhere;}
-.acc-header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto;}
-.acc-meta{font-size:12px;color:#666;white-space:nowrap;}
+.acc-header-right{display:flex;align-items:center;gap:6px;flex:0 0 auto;flex-wrap:nowrap;}
+.acc-meta{font-size:12px;color:#666;white-space:nowrap;flex-shrink:0;width:66px;text-align:right;}
 .acc-chevron{flex-shrink:0;color:#9B8BC4;transition:transform .25s ease;}
 .acc-item.open>.acc-header .acc-chevron{transform:rotate(180deg);}
 .acc-body{max-height:0;overflow:hidden;transition:max-height .35s ease;}
 .acc-item.open .acc-body{max-height:6000px;overflow:visible;}
 .acc-body-inner{padding:14px 16px 16px;border-top:1px solid var(--line);}
-.acc-contracts-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
 .contract-subrows{display:flex;flex-direction:column;}
 .contract-subrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 4px;border-top:1px solid #F0F0F3;cursor:pointer;transition:background-color .15s;border-radius:8px;}
 .contract-subrows .contract-subrow:first-child{border-top:none;}
 .contract-subrow:hover{background:#FAFAFD;}
 .contract-subrow.hiddenc{opacity:.55;}
-.contract-subrow-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;flex:1 1 auto;overflow-wrap:anywhere;}
-.contract-subrow-title{font-weight:700;font-size:13.5px;color:var(--ink);overflow-wrap:anywhere;}
-.contract-subrow-debt{font-size:12px;color:#666;white-space:nowrap;}
-.contract-subrow-actions{display:flex;align-items:center;gap:2px;flex-shrink:0;}
-.acc-item-actions{display:flex;align-items:center;gap:2px;flex-shrink:0;}
-.acc-icon-btn{background:none;border:none;padding:0;width:30px;height:30px;min-width:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;opacity:.7;border-radius:8px;transition:opacity .15s ease,background-color .15s ease;}
+.contract-subrow-main{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0;flex:1 1 auto;}
+.contract-subrow-title{font-weight:700;font-size:13.5px;color:var(--ink);min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.contract-subrow-debt{font-size:12px;color:#666;white-space:nowrap;flex-shrink:0;}
+.contract-subrow-actions{display:flex;align-items:center;gap:2px;flex-shrink:0;flex-wrap:nowrap;}
+.acc-item-actions{display:flex;align-items:center;gap:1px;flex-shrink:0;}
+.acc-icon-btn{background:none;border:none;padding:0;width:30px;height:30px;min-width:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;opacity:.7;border-radius:8px;transition:opacity .15s ease,background-color .15s ease,box-shadow .15s ease;}
 .acc-icon-btn:hover{opacity:1;background:var(--soft);}
+.acc-icon-btn.active{opacity:1;background:var(--soft);box-shadow:inset 0 0 0 1.5px var(--violet);}
 #cContractDetailHolder{display:none;}
 #contractsAccordion .acc-body-inner{padding-top:16px;}
-@media (max-width:640px){
-  .acc-icon-btn{width:34px;height:34px;min-width:34px;font-size:16px;}
-  .acc-meta-label{display:none;}
-  .acc-header-left{width:100%;}
-  .acc-header-right{width:100%;justify-content:space-between;margin-left:0;}
-  .contract-subrow-debt{width:100%;}
-}
 .totals{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 16px;}
 .tot{background:var(--soft);border-radius:10px;padding:10px 14px;min-width:150px;}
 .tot .l{font-size:10.5px;text-transform:uppercase;color:#6E3B8C;font-weight:700;letter-spacing:.3px;}
@@ -667,22 +662,14 @@ details[open] summary::before{content:"▾ ";}
   <!-- ВИД: ЗАКАЗЧИКИ -->
   <div id="view-clients">
     <div class="card">
-      <div class="toolbar">
-        <h2 style="margin:0">Заказчики</h2>
+      <div class="clients-toolbar">
+        <div class="clients-toolbar-info">
+          <div class="totals" id="globalTotals"></div>
+        </div>
         <div class="clients-toolbar-actions">
           <button class="btn sm" onclick="openClientForm(null)">+ Заказчик</button>
           <button type="button" class="btn sm ghost" id="clientsToggleAllBtn" onclick="toggleAllClients()">Развернуть все</button>
           <button type="button" class="icon-btn-toggle" id="showHiddenBtn" onclick="toggleShowHiddenClients()" title="Показывать скрытых" aria-pressed="false">👁</button>
-        </div>
-      </div>
-      <div class="clients-controls-row">
-        <div class="totals" id="globalTotals"></div>
-        <div class="clients-sort-row">
-          <label for="clientSortSelect">Сортировка:</label>
-          <select id="clientSortSelect" onchange="onClientSortChange()">
-            <option value="name">По названию</option>
-            <option value="created">По дате добавления</option>
-          </select>
         </div>
       </div>
       <div class="acc-list" id="clientsList"></div>
@@ -846,10 +833,6 @@ let currentClientId = null;
 let currentContractId = null;
 /* ====================== АККОРДЕОН: UI-СОСТОЯНИЕ (не хранится в acts.json) ====================== */
 let openClientIds = new Set();
-let showHiddenContractsClients = new Set();
-let clientSortMode = (function(){
-  try{ return localStorage.getItem('raleksiz_client_sort_mode') || 'name'; }catch(e){ return 'name'; }
-})();
 function updateAccGroups(container, itemSelector){
   if(!container) return;
   const items = [...container.querySelectorAll(itemSelector)];
@@ -1603,36 +1586,24 @@ function setView(v, id, keepContract){
 function sortedClients(){
   return DB.clients.slice().sort((a,b)=>{
     if(!!b.pinned !== !!a.pinned) return b.pinned?1:-1;
-    if(clientSortMode==='created'){
-      const byDate = String(b.createdAt||'').localeCompare(String(a.createdAt||''));
-      if(byDate) return byDate;
-    }
     return String(a.name||'').localeCompare(String(b.name||''), 'ru');
   });
-}
-function onClientSortChange(){
-  const sel = document.getElementById('clientSortSelect');
-  clientSortMode = sel ? sel.value : 'name';
-  try{ localStorage.setItem('raleksiz_client_sort_mode', clientSortMode); }catch(e){}
-  renderClients();
 }
 function clientAccordionItemHtml(c){
   const t = clientAllTotals(c);
   const isOpen = openClientIds.has(c.id);
-  const showHiddenCts = showHiddenContractsClients.has(c.id);
-  const contracts = sortedContracts(c).filter(ct=>showHiddenCts || !ct.hidden);
+  const contracts = sortedContracts(c).filter(ct=>!ct.hidden);
   return `<div class="acc-item ${isOpen?'open':''} ${c.pinned?'pinned':''} ${c.hidden?'hiddenc':''}" data-client-id="${c.id}">
     <div class="acc-header" onclick="toggleClientAccordion('${c.id}')">
       <div class="acc-header-row">
         <div class="acc-header-left">
           <span class="acc-title">${esc(c.name)||'Без наименования'}</span>
-          ${c.pinned?'<span class="pill pre">закреплён</span>':''}
           ${c.hidden?'<span class="pill no">скрыт</span>':''}
         </div>
         <div class="acc-header-right">
-          <span class="acc-meta"><span class="acc-meta-label">Предстоящие оплаты: </span><b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b></span>
+          <span class="acc-meta"><b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b></span>
           <div class="acc-item-actions" onclick="event.stopPropagation()">
-            <button type="button" class="acc-icon-btn" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}">📌</button>
+            <button type="button" class="acc-icon-btn ${c.pinned?'active':''}" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}">📌</button>
             <button type="button" class="acc-icon-btn" onclick="toggleHide('${c.id}')" title="${c.hidden?'Показать':'Скрыть'}">👁</button>
             <button type="button" class="acc-icon-btn" onclick="openClientInTab('${c.id}')" title="Открыть карточку заказчика">↗</button>
             <button type="button" class="acc-icon-btn" onclick="deleteClient('${c.id}')" title="Удалить">🗑</button>
@@ -1642,10 +1613,6 @@ function clientAccordionItemHtml(c){
       </div>
     </div>
     <div class="acc-body"><div class="acc-body-inner">
-      <div class="acc-contracts-toolbar">
-        <button type="button" class="btn sm ghost" onclick="event.stopPropagation();openContractForm('${c.id}',null)">+ Договор</button>
-        <button type="button" class="btn sm ghost" onclick="event.stopPropagation();toggleClientHiddenContracts('${c.id}')">${showHiddenCts?'Скрыть скрытые':'Показать скрытые'}</button>
-      </div>
       <div class="contract-subrows">
         ${contracts.length ? contracts.map(ct=>contractSubrowHtml(c,ct)).join('') : '<div class="muted" style="padding:8px 4px">Договоров пока нет</div>'}
       </div>
@@ -1657,9 +1624,8 @@ function contractSubrowHtml(c, ct){
   return `<div class="contract-subrow ${ct.hidden?'hiddenc':''}" onclick="openContractInTab('${c.id}','${ct.id}',event)">
     <div class="contract-subrow-main">
       <span class="contract-subrow-title">${esc(contractLabel(ct))}</span>
-      ${ct.pinned?'<span class="pill pre">закреплён</span>':''}
       ${ct.hidden?'<span class="pill no">скрыт</span>':''}
-      <span class="contract-subrow-debt">Предстоящие оплаты: <b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b></span>
+      <span class="contract-subrow-debt"><b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b></span>
     </div>
     <div class="contract-subrow-actions" onclick="event.stopPropagation()">
       <label class="cl-act-flag" title="Показывать этот договор в акте для заказчика">
@@ -1667,7 +1633,7 @@ function contractSubrowHtml(c, ct){
         <span>акт</span>
       </label>
       <div class="acc-item-actions">
-        <button type="button" class="acc-icon-btn" onclick="toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}">📌</button>
+        <button type="button" class="acc-icon-btn ${ct.pinned?'active':''}" onclick="toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}">📌</button>
         <button type="button" class="acc-icon-btn" onclick="toggleContractHide('${c.id}','${ct.id}')" title="${ct.hidden?'Показать':'Скрыть'}">👁</button>
         <button type="button" class="acc-icon-btn" onclick="openContractForm('${c.id}','${ct.id}')" title="Редактировать">✏️</button>
         <button type="button" class="acc-icon-btn" onclick="deleteContract('${c.id}','${ct.id}')" title="Удалить">🗑</button>
@@ -1676,8 +1642,6 @@ function contractSubrowHtml(c, ct){
   </div>`;
 }
 function renderClients(){
-  const sortSelect = document.getElementById('clientSortSelect');
-  if(sortSelect && sortSelect.value !== clientSortMode) sortSelect.value = clientSortMode;
   const showHidden = document.getElementById('showHiddenBtn').classList.contains('active');
   const list = sortedClients().filter(c=>showHidden || !c.hidden);
   const box = document.getElementById('clientsList');
@@ -1690,7 +1654,7 @@ function renderClients(){
   updateClientsToggleAllBtn();
   let sum=0,paid=0,debt=0;
   DB.clients.forEach(c=>{ const t=clientAllTotals(c); sum+=t.sum; paid+=t.paid; debt+=t.debt; });
-  document.getElementById('globalTotals').innerHTML = totInline('Не оплачено', money(debt), debt ? '#dc2626' : '#16a34a');
+  document.getElementById('globalTotals').innerHTML = totInline(money(debt), debt ? '#dc2626' : '#16a34a');
 }
 function toggleShowHiddenClients(){
   const btn = document.getElementById('showHiddenBtn');
@@ -1702,7 +1666,7 @@ function toggleShowHiddenClients(){
 }
 function tot(l,v){ return `<div class="tot"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
 function totSm(l,v){ return `<div class="tot tot-sm"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
-function totInline(l,v,color){ return `<div class="tot" style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;"><span class="l" style="font-size:11px">${l}</span><span class="v" style="font-size:15px;margin-top:0;color:${color||'inherit'}">${v}</span></div>`; }
+function totInline(v,color){ return `<div class="tot" style="display:inline-flex;align-items:center;padding:7px 14px;"><span class="v" style="font-size:15px;margin-top:0;color:${color||'inherit'}">${v}</span></div>`; }
 function toggleClientAccordion(clientId, ev){
   if(ev) ev.stopPropagation();
   const container = document.getElementById('clientsList');
@@ -1736,11 +1700,6 @@ function toggleAllClients(){
   updateAccGroups(container, '.acc-item');
   updateClientsToggleAllBtn();
 }
-function toggleClientHiddenContracts(clientId){
-  if(showHiddenContractsClients.has(clientId)) showHiddenContractsClients.delete(clientId);
-  else showHiddenContractsClients.add(clientId);
-  renderClients();
-}
 function togglePin(id){ const c=getClient(id); c.pinned=!c.pinned; save(); renderClients(); }
 function toggleHide(id){ const c=getClient(id); c.hidden=!c.hidden; save(); renderClients(); }
 function deleteClient(id){
@@ -1748,7 +1707,6 @@ function deleteClient(id){
   if(!confirm(`Удалить заказчика «${c.name}»? Действие необратимо.`)) return;
   DB.clients = DB.clients.filter(x=>x.id!==id);
   openClientIds.delete(id);
-  showHiddenContractsClients.delete(id);
   save(); renderAllViews();
   if(currentClientId===id) setView('clients', null);
 }
@@ -3004,7 +2962,7 @@ function renderClientCard(){
     `<a href="${esc(link)}" target="_blank" style="color:var(--violet);word-break:break-all">Ссылка для заказчика</a>`;
 
   const t = clientAllTotals(c);
-  document.getElementById('cDebtChip').innerHTML = 'Предстоящие оплаты: <b style="color:' + (t.debt ? '#dc2626' : '#16a34a') + '">' + money(t.debt) + '</b>';
+  document.getElementById('cDebtChip').innerHTML = '<b style="color:' + (t.debt ? '#dc2626' : '#16a34a') + '">' + money(t.debt) + '</b>';
 
   renderContractsList(c);
 }
@@ -3050,17 +3008,16 @@ function contractAccordionItemHtml(c, ct){
       <div class="acc-header-row">
         <div class="acc-header-left">
           <span class="acc-title">${esc(contractLabel(ct))}</span>
-          ${ct.pinned?'<span class="pill pre">закреплён</span>':''}
           ${ct.hidden?'<span class="pill no">скрыт</span>':''}
         </div>
         <div class="acc-header-right">
-          <span class="acc-meta"><span class="acc-meta-label">Предстоящие оплаты: </span><b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b></span>
-          <label class="cl-act-flag" title="Показывать этот договор в акте для заказчика" onclick="event.stopPropagation()">
+          <span class="acc-meta"><b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b></span>
+          <label class="cl-act-flag cl-act-flag-compact" title="Показывать этот договор в акте для заказчика" onclick="event.stopPropagation()">
             <input type="checkbox" ${ct.showInAct!==false?'checked':''} onclick="event.stopPropagation()" onchange="toggleContractShowInAct('${c.id}','${ct.id}')">
             <span>акт</span>
           </label>
           <div class="acc-item-actions" onclick="event.stopPropagation()">
-            <button type="button" class="acc-icon-btn" onclick="toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}">📌</button>
+            <button type="button" class="acc-icon-btn ${ct.pinned?'active':''}" onclick="toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}">📌</button>
             <button type="button" class="acc-icon-btn" onclick="toggleContractHide('${c.id}','${ct.id}')" title="${ct.hidden?'Показать':'Скрыть'}">👁</button>
             <button type="button" class="acc-icon-btn" onclick="openContractForm('${c.id}','${ct.id}')" title="Редактировать">✏️</button>
             <button type="button" class="acc-icon-btn" onclick="deleteContract('${c.id}','${ct.id}')" title="Удалить">🗑</button>
