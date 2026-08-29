@@ -87,8 +87,6 @@ tr.locked td{background:#FAFAFC;}
 .contract-card .cl-meta{display:flex;align-items:center;justify-content:flex-start;gap:12px;flex-wrap:wrap;}
 .cl-act-flag{display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;}
 .cl-act-flag span{font-size:11px;color:#777;font-weight:700;white-space:nowrap;}
-.cl-act-flag-compact{width:18px;justify-content:center;gap:0;}
-.cl-act-flag-compact span{display:none;}
 .cl-actions{display:flex;gap:4px;flex-shrink:0;}
 .contract-card .cl-actions{width:auto;justify-content:flex-end;gap:2px;}
 .contract-card .icon-emoji{
@@ -105,54 +103,6 @@ tr.locked td{background:#FAFAFC;}
 .icon-btn:hover{border-color:var(--violet);color:var(--violet);}
 .icon-emoji{background:none;border:none;padding:2px 3px;font-size:14px;line-height:1;cursor:pointer;opacity:.75;transition:opacity .15s;}
 .icon-emoji:hover{opacity:1;}
-
-/* ===== Аккордеон (заказчики / договоры) ===== */
-.clients-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
-.clients-toolbar-info{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
-.clients-toolbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;flex-shrink:0;}
-.icon-btn-toggle{background:#fff;border:1.5px solid var(--line);border-radius:8px;width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;color:#666;flex-shrink:0;transition:border-color .15s,color .15s,background-color .15s;}
-.icon-btn-toggle:hover{border-color:var(--violet);color:var(--violet);}
-.icon-btn-toggle.active{border-color:var(--violet);background:var(--soft);color:var(--violet);}
-@media (max-width:640px){
-  .clients-toolbar{gap:12px;}
-  .clients-toolbar-info{gap:10px;width:100%;justify-content:space-between;}
-  .clients-toolbar-actions{gap:6px;width:100%;justify-content:flex-end;}
-}
-.acc-list{display:flex;flex-direction:column;}
-.acc-item{background:#fff;border:1.5px solid var(--line);border-radius:14px;margin-top:12px;overflow:hidden;transition:border-radius .15s ease;}
-.acc-list .acc-item:first-child{margin-top:0;}
-.acc-item.grp-first{border-radius:14px 14px 0 0;}
-.acc-item.grp-mid{border-radius:0;margin-top:0;border-top:none;}
-.acc-item.grp-last{border-radius:0 0 14px 14px;margin-top:0;}
-.acc-item.pinned{border-color:#C4B5FD;}
-.acc-item.hiddenc{opacity:.6;}
-.acc-header{padding:14px 16px;cursor:pointer;user-select:none;background:#fff;transition:background-color .15s;}
-.acc-header:hover{background:#FBF9FF;}
-.acc-header-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.acc-header-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 240px;overflow-wrap:anywhere;}
-.acc-title{font-weight:700;font-size:14.5px;color:var(--ink);overflow-wrap:anywhere;}
-.acc-header-right{display:flex;align-items:center;gap:6px;flex:0 0 auto;flex-wrap:nowrap;}
-.acc-meta{font-size:12px;color:#666;white-space:nowrap;flex-shrink:0;width:66px;text-align:right;}
-.acc-chevron{flex-shrink:0;color:#9B8BC4;transition:transform .25s ease;}
-.acc-item.open>.acc-header .acc-chevron{transform:rotate(180deg);}
-.acc-body{max-height:0;overflow:hidden;transition:max-height .35s ease;}
-.acc-item.open .acc-body{max-height:6000px;overflow:visible;}
-.acc-body-inner{padding:14px 16px 16px;border-top:1px solid var(--line);}
-.contract-subrows{display:flex;flex-direction:column;}
-.contract-subrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 4px;border-top:1px solid #F0F0F3;cursor:pointer;transition:background-color .15s;border-radius:8px;}
-.contract-subrows .contract-subrow:first-child{border-top:none;}
-.contract-subrow:hover{background:#FAFAFD;}
-.contract-subrow.hiddenc{opacity:.55;}
-.contract-subrow-main{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0;flex:1 1 auto;}
-.contract-subrow-title{font-weight:700;font-size:13.5px;color:var(--ink);min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.contract-subrow-debt{font-size:12px;color:#666;white-space:nowrap;flex-shrink:0;}
-.contract-subrow-actions{display:flex;align-items:center;gap:2px;flex-shrink:0;flex-wrap:nowrap;}
-.acc-item-actions{display:flex;align-items:center;gap:1px;flex-shrink:0;}
-.acc-icon-btn{background:none;border:none;padding:0;width:30px;height:30px;min-width:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;opacity:.7;border-radius:8px;transition:opacity .15s ease,background-color .15s ease,box-shadow .15s ease;}
-.acc-icon-btn:hover{opacity:1;background:var(--soft);}
-.acc-icon-btn.active{opacity:1;background:var(--soft);box-shadow:inset 0 0 0 1.5px var(--violet);}
-#cContractDetailHolder{display:none;}
-#contractsAccordion .acc-body-inner{padding-top:16px;}
 .totals{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 16px;}
 .tot{background:var(--soft);border-radius:10px;padding:10px 14px;min-width:150px;}
 .tot .l{font-size:10.5px;text-transform:uppercase;color:#6E3B8C;font-weight:700;letter-spacing:.3px;}
@@ -662,17 +612,17 @@ details[open] summary::before{content:"▾ ";}
   <!-- ВИД: ЗАКАЗЧИКИ -->
   <div id="view-clients">
     <div class="card">
-      <div class="clients-toolbar">
-        <div class="clients-toolbar-info">
-          <div class="totals" id="globalTotals"></div>
-        </div>
-        <div class="clients-toolbar-actions">
+      <div class="toolbar">
+        <h2 style="margin:0">Заказчики</h2>
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;text-transform:none;font-size:12.5px;font-weight:600;color:#555;margin:0">
+            <input type="checkbox" id="showHidden" style="width:16px;height:16px;accent-color:var(--violet)" onchange="renderClients()"> Показывать скрытых
+          </label>
           <button class="btn sm" onclick="openClientForm(null)">+ Заказчик</button>
-          <button type="button" class="btn sm ghost" id="clientsToggleAllBtn" onclick="toggleAllClients()">Развернуть все</button>
-          <button type="button" class="icon-btn-toggle" id="showHiddenBtn" onclick="toggleShowHiddenClients()" title="Показывать скрытых" aria-pressed="false">👁</button>
         </div>
       </div>
-      <div class="acc-list" id="clientsList"></div>
+      <div class="totals" id="globalTotals"></div>
+      <div class="clients" id="clientsList"></div>
     </div>
   </div>
 
@@ -765,10 +715,9 @@ details[open] summary::before{content:"▾ ";}
         <span class="muted" id="sentDates" style="font-size:12px;"></span>
       </div>
 
-      <div id="cContractsList"></div>
+      <div id="cContractsList" class="hidden"></div>
 
-      <div id="cContractDetailHolder">
-      <div id="cContractDetail">
+      <div id="cContractDetail" class="hidden">
         <div class="toolbar">
           <h3 id="ctName" style="margin:0"></h3>
           <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
@@ -789,7 +738,6 @@ details[open] summary::before{content:"▾ ";}
             <div id="cTable" class="svc-list"></div>
           </div>
         </div>
-      </div>
       </div>
     </div>
   </div>
@@ -831,35 +779,7 @@ let OFFERS = [];
 let currentView = 'clients';
 let currentClientId = null;
 let currentContractId = null;
-/* ====================== АККОРДЕОН: UI-СОСТОЯНИЕ (не хранится в acts.json) ====================== */
-let openClientIds = new Set();
-function updateAccGroups(container, itemSelector){
-  if(!container) return;
-  const items = [...container.querySelectorAll(itemSelector)];
-  items.forEach((el,i)=>{
-    el.classList.remove('grp-first','grp-mid','grp-last','grp-solo');
-    if(!el.classList.contains('open')){
-      const prevClosed = i>0 && !items[i-1].classList.contains('open');
-      const nextClosed = i<items.length-1 && !items[i+1].classList.contains('open');
-      if(!prevClosed && !nextClosed) el.classList.add('grp-solo');
-      else if(!prevClosed) el.classList.add('grp-first');
-      else if(!nextClosed) el.classList.add('grp-last');
-      else el.classList.add('grp-mid');
-    }
-  });
-}
-function openAccItemVisual(el){
-  if(!el || el.classList.contains('open')) return;
-  el.classList.add('open');
-}
-function closeAccItemVisual(el){
-  if(!el || !el.classList.contains('open')) return;
-  const bodyEl = el.querySelector('.acc-body');
-  const bodyH = bodyEl ? bodyEl.scrollHeight : 0;
-  const top = el.getBoundingClientRect().top + window.scrollY;
-  el.classList.remove('open');
-  if(top < window.scrollY) window.scrollBy(0, -bodyH);
-}
+
 /* ====================== УТИЛИТЫ ====================== */
 function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 function tokenGen(){ return [...crypto.getRandomValues(new Uint8Array(12))].map(n=>Number(n).toString(16).padStart(2,'0')).join(''); }
@@ -934,7 +854,6 @@ function normalizeDB(db){
     c.custom   = c.custom || {};
     c.sentDates= Array.isArray(c.sentDates) ? c.sentDates : [];
     if(!c.token) c.token = tokenGen();
-    if(!c.createdAt) c.createdAt = new Date().toISOString();
     c.services.forEach(s=>{
       s.custom = s.custom || {};
       s.surcharges = Array.isArray(s.surcharges)?s.surcharges:[];
@@ -1533,10 +1452,6 @@ function openClientInTab(id, ev){
   if(ev){ ev.preventDefault(); ev.stopPropagation(); }
   window.open(location.pathname + location.search + '#client/' + encodeURIComponent(id), '_blank');
 }
-function openContractInTab(clientId, contractId, ev){
-  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
-  window.open(location.pathname + location.search + '#client/' + encodeURIComponent(clientId) + '/contract/' + encodeURIComponent(contractId), '_blank');
-}
 function bindSwipeNav(){
   if(window.__swipeBound) return;
   window.__swipeBound = true;
@@ -1582,131 +1497,50 @@ function setView(v, id, keepContract){
   window.scrollTo(0,0);
 }
 
-/* ====================== ЗАКАЗЧИКИ (СПИСОК / АККОРДЕОН) ====================== */
+/* ====================== ЗАКАЗЧИКИ (СПИСОК) ====================== */
 function sortedClients(){
   return DB.clients.slice().sort((a,b)=>{
     if(!!b.pinned !== !!a.pinned) return b.pinned?1:-1;
-    return String(a.name||'').localeCompare(String(b.name||''), 'ru');
+    return String(a.name).localeCompare(String(b.name), 'ru');
   });
 }
-function clientAccordionItemHtml(c){
-  const t = clientAllTotals(c);
-  const isOpen = openClientIds.has(c.id);
-  const contracts = sortedContracts(c).filter(ct=>!ct.hidden);
-  return `<div class="acc-item ${isOpen?'open':''} ${c.pinned?'pinned':''} ${c.hidden?'hiddenc':''}" data-client-id="${c.id}">
-    <div class="acc-header" onclick="toggleClientAccordion('${c.id}')">
-      <div class="acc-header-row">
-        <div class="acc-header-left">
-          <span class="acc-title">${esc(c.name)||'Без наименования'}</span>
-          ${c.hidden?'<span class="pill no">скрыт</span>':''}
-        </div>
-        <div class="acc-header-right">
-          <span class="acc-meta"><b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b></span>
-          <div class="acc-item-actions" onclick="event.stopPropagation()">
-            <button type="button" class="acc-icon-btn ${c.pinned?'active':''}" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}">📌</button>
-            <button type="button" class="acc-icon-btn" onclick="toggleHide('${c.id}')" title="${c.hidden?'Показать':'Скрыть'}">👁</button>
-            <button type="button" class="acc-icon-btn" onclick="openClientInTab('${c.id}')" title="Открыть карточку заказчика">↗</button>
-            <button type="button" class="acc-icon-btn" onclick="deleteClient('${c.id}')" title="Удалить">🗑</button>
-          </div>
-          <svg class="acc-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-      </div>
-    </div>
-    <div class="acc-body"><div class="acc-body-inner">
-      <div class="contract-subrows">
-        ${contracts.length ? contracts.map(ct=>contractSubrowHtml(c,ct)).join('') : '<div class="muted" style="padding:8px 4px">Договоров пока нет</div>'}
-      </div>
-    </div></div>
-  </div>`;
-}
-function contractSubrowHtml(c, ct){
-  const t = contractTotals(c, ct.id);
-  return `<div class="contract-subrow ${ct.hidden?'hiddenc':''}" onclick="openContractInTab('${c.id}','${ct.id}',event)">
-    <div class="contract-subrow-main">
-      <span class="contract-subrow-title">${esc(contractLabel(ct))}</span>
-      ${ct.hidden?'<span class="pill no">скрыт</span>':''}
-      <span class="contract-subrow-debt"><b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b></span>
-    </div>
-    <div class="contract-subrow-actions" onclick="event.stopPropagation()">
-      <label class="cl-act-flag" title="Показывать этот договор в акте для заказчика">
-        <input type="checkbox" ${ct.showInAct!==false?'checked':''} onchange="toggleContractShowInAct('${c.id}','${ct.id}')">
-        <span>акт</span>
-      </label>
-      <div class="acc-item-actions">
-        <button type="button" class="acc-icon-btn ${ct.pinned?'active':''}" onclick="toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}">📌</button>
-        <button type="button" class="acc-icon-btn" onclick="toggleContractHide('${c.id}','${ct.id}')" title="${ct.hidden?'Показать':'Скрыть'}">👁</button>
-        <button type="button" class="acc-icon-btn" onclick="openContractForm('${c.id}','${ct.id}')" title="Редактировать">✏️</button>
-        <button type="button" class="acc-icon-btn" onclick="deleteContract('${c.id}','${ct.id}')" title="Удалить">🗑</button>
-      </div>
-    </div>
-  </div>`;
-}
 function renderClients(){
-  const showHidden = document.getElementById('showHiddenBtn').classList.contains('active');
+  const showHidden = document.getElementById('showHidden').checked;
   const list = sortedClients().filter(c=>showHidden || !c.hidden);
   const box = document.getElementById('clientsList');
   if(!list.length){
     box.innerHTML = '<div class="muted">Заказчиков пока нет. Нажми «+ Заказчик».</div>';
   } else {
-    box.innerHTML = list.map(c=>clientAccordionItemHtml(c)).join('');
+    box.innerHTML = list.map(c=>{
+      const t = clientAllTotals(c);
+      return `<div class="cl-card ${c.pinned?'pinned':''} ${c.hidden?'hiddenc':''}" onclick="openClientInTab('${c.id}', event)">
+        <div class="cl-top">
+          <div class="cl-name">${esc(c.name)||'Без наименования'} ${c.pinned?'<span class="pill pre">закреплён</span>':''}</div>
+          <div class="cl-actions" onclick="event.stopPropagation()">
+            <button class="icon-emoji" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}">${c.pinned?'📌':'📍'}</button>
+            <button class="icon-emoji" onclick="toggleHide('${c.id}')" title="${c.hidden?'Показать':'Скрыть'}">${c.hidden?'🙈':'👁'}</button>
+            <button class="icon-emoji" onclick="deleteClient('${c.id}')" title="Удалить">🗑</button>
+          </div>
+        </div>
+        <div class="cl-meta">
+          Предстоящие оплаты: <b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b>
+        </div>
+      </div>`;
+    }).join('');
   }
-  updateAccGroups(box, '.acc-item');
-  updateClientsToggleAllBtn();
   let sum=0,paid=0,debt=0;
   DB.clients.forEach(c=>{ const t=clientAllTotals(c); sum+=t.sum; paid+=t.paid; debt+=t.debt; });
-  document.getElementById('globalTotals').innerHTML = totInline(money(debt), debt ? '#dc2626' : '#16a34a');
-}
-function toggleShowHiddenClients(){
-  const btn = document.getElementById('showHiddenBtn');
-  if(!btn) return;
-  const active = btn.classList.toggle('active');
-  btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-  btn.title = active ? 'Скрыть скрытых' : 'Показывать скрытых';
-  renderClients();
+  document.getElementById('globalTotals').innerHTML = totInline('Не оплачено', money(debt), debt ? '#dc2626' : '#16a34a');
 }
 function tot(l,v){ return `<div class="tot"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
 function totSm(l,v){ return `<div class="tot tot-sm"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
-function totInline(v,color){ return `<div class="tot" style="display:inline-flex;align-items:center;padding:7px 14px;"><span class="v" style="font-size:15px;margin-top:0;color:${color||'inherit'}">${v}</span></div>`; }
-function toggleClientAccordion(clientId, ev){
-  if(ev) ev.stopPropagation();
-  const container = document.getElementById('clientsList');
-  const itemEl = container && container.querySelector('.acc-item[data-client-id="'+clientId+'"]');
-  if(!itemEl) return;
-  const opening = !itemEl.classList.contains('open');
-  if(opening){
-    openClientIds.add(clientId);
-    openAccItemVisual(itemEl);
-  } else {
-    openClientIds.delete(clientId);
-    closeAccItemVisual(itemEl);
-  }
-  updateAccGroups(container, '.acc-item');
-  updateClientsToggleAllBtn();
-}
-function anyClientOpen(){ return openClientIds.size>0; }
-function updateClientsToggleAllBtn(){
-  const btn = document.getElementById('clientsToggleAllBtn');
-  if(btn) btn.textContent = anyClientOpen() ? 'Свернуть все' : 'Развернуть все';
-}
-function toggleAllClients(){
-  const container = document.getElementById('clientsList');
-  if(!container) return;
-  const items = [...container.querySelectorAll('.acc-item')];
-  if(anyClientOpen()){
-    items.forEach(el=>{ if(el.classList.contains('open')){ el.classList.remove('open'); openClientIds.delete(el.dataset.clientId); } });
-  } else {
-    items.forEach(el=>{ el.classList.add('open'); openClientIds.add(el.dataset.clientId); });
-  }
-  updateAccGroups(container, '.acc-item');
-  updateClientsToggleAllBtn();
-}
+function totInline(l,v,color){ return `<div class="tot" style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;"><span class="l" style="font-size:11px">${l}</span><span class="v" style="font-size:15px;margin-top:0;color:${color||'inherit'}">${v}</span></div>`; }
 function togglePin(id){ const c=getClient(id); c.pinned=!c.pinned; save(); renderClients(); }
 function toggleHide(id){ const c=getClient(id); c.hidden=!c.hidden; save(); renderClients(); }
 function deleteClient(id){
   const c = getClient(id);
   if(!confirm(`Удалить заказчика «${c.name}»? Действие необратимо.`)) return;
   DB.clients = DB.clients.filter(x=>x.id!==id);
-  openClientIds.delete(id);
   save(); renderAllViews();
   if(currentClientId===id) setView('clients', null);
 }
@@ -2229,8 +2063,7 @@ function deleteContract(clientId, contractId){
   // Вместе с договором удаляем привязанные услуги, иначе акт/список услуг
   // останутся ссылаться на несуществующую сущность.
   c.services = (c.services || []).filter(s=>s.contractId!==contractId);
-  if(currentContractId===contractId) currentContractId = null;
-  save(); closeModal(); refreshAfterContractMutation();
+  save(); closeModal(); renderClientCard();
 }
 function saveClient(id){
   const name = document.getElementById('clName').value.trim();
@@ -2239,7 +2072,7 @@ function saveClient(id){
   else {
     DB.clients.push({
       id: uid(), name, token: tokenGen(), pinned:false, hidden:false, sent:false,
-      sentDates: [], services: [], contracts: [], custom: {}, createdAt: new Date().toISOString()
+      sentDates: [], services: [], contracts: [], custom: {}
     });
   }
   save(); closeModal(); renderAllViews();
@@ -2962,13 +2795,19 @@ function renderClientCard(){
     `<a href="${esc(link)}" target="_blank" style="color:var(--violet);word-break:break-all">Ссылка для заказчика</a>`;
 
   const t = clientAllTotals(c);
-  document.getElementById('cDebtChip').innerHTML = '<b style="color:' + (t.debt ? '#dc2626' : '#16a34a') + '">' + money(t.debt) + '</b>';
+  document.getElementById('cDebtChip').innerHTML = 'Предстоящие оплаты: <b style="color:' + (t.debt ? '#dc2626' : '#16a34a') + '">' + money(t.debt) + '</b>';
 
-  renderContractsList(c);
-}
-function refreshAfterContractMutation(){
-  if(currentView==='clients') renderClients();
-  else if(currentView==='client') renderClientCard();
+  if(!currentContractId){
+    document.getElementById('cContractsList').classList.remove('hidden');
+    document.getElementById('cContractDetail').classList.add('hidden');
+    renderContractsList(c);
+  } else {
+    const ct = getContract(c, currentContractId);
+    if(!ct){ currentContractId = null; renderClientCard(); return; }
+    document.getElementById('cContractsList').classList.add('hidden');
+    document.getElementById('cContractDetail').classList.remove('hidden');
+    renderContractDetail(c, ct);
+  }
 }
 function toggleContractPin(clientId, contractId){
   const c = getClient(clientId);
@@ -2976,7 +2815,7 @@ function toggleContractPin(clientId, contractId){
   if(!ct) return;
   ct.pinned = !ct.pinned;
   save();
-  refreshAfterContractMutation();
+  renderContractsList(c);
 }
 function toggleContractHide(clientId, contractId){
   const c = getClient(clientId);
@@ -2984,7 +2823,7 @@ function toggleContractHide(clientId, contractId){
   if(!ct) return;
   ct.hidden = !ct.hidden;
   save();
-  refreshAfterContractMutation();
+  renderContractsList(c);
 }
 function toggleContractShowInAct(clientId, contractId){
   const c = getClient(clientId);
@@ -2992,7 +2831,7 @@ function toggleContractShowInAct(clientId, contractId){
   if(!ct) return;
   ct.showInAct = ct.showInAct === false ? true : false;
   save();
-  refreshAfterContractMutation();
+  renderContractsList(c);
 }
 function sortedContracts(c){
   return (c.contracts || []).slice().sort((a,b)=>{
@@ -3000,68 +2839,13 @@ function sortedContracts(c){
     return String(a.title || contractLabel(a)).localeCompare(String(b.title || contractLabel(b)), 'ru');
   });
 }
-function contractAccordionItemHtml(c, ct){
-  const t = contractTotals(c, ct.id);
-  const isOpen = ct.id === currentContractId;
-  return `<div class="acc-item ${isOpen?'open':''} ${ct.pinned?'pinned':''} ${ct.hidden?'hiddenc':''}" data-contract-id="${ct.id}">
-    <div class="acc-header" onclick="toggleContractDetail('${ct.id}')">
-      <div class="acc-header-row">
-        <div class="acc-header-left">
-          <span class="acc-title">${esc(contractLabel(ct))}</span>
-          ${ct.hidden?'<span class="pill no">скрыт</span>':''}
-        </div>
-        <div class="acc-header-right">
-          <span class="acc-meta"><b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b></span>
-          <label class="cl-act-flag cl-act-flag-compact" title="Показывать этот договор в акте для заказчика" onclick="event.stopPropagation()">
-            <input type="checkbox" ${ct.showInAct!==false?'checked':''} onclick="event.stopPropagation()" onchange="toggleContractShowInAct('${c.id}','${ct.id}')">
-            <span>акт</span>
-          </label>
-          <div class="acc-item-actions" onclick="event.stopPropagation()">
-            <button type="button" class="acc-icon-btn ${ct.pinned?'active':''}" onclick="toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}">📌</button>
-            <button type="button" class="acc-icon-btn" onclick="toggleContractHide('${c.id}','${ct.id}')" title="${ct.hidden?'Показать':'Скрыть'}">👁</button>
-            <button type="button" class="acc-icon-btn" onclick="openContractForm('${c.id}','${ct.id}')" title="Редактировать">✏️</button>
-            <button type="button" class="acc-icon-btn" onclick="deleteContract('${c.id}','${ct.id}')" title="Удалить">🗑</button>
-          </div>
-          <svg class="acc-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-      </div>
-    </div>
-    <div class="acc-body"><div class="acc-body-inner"></div></div>
-  </div>`;
-}
-function toggleContractDetail(ctId, ev){
-  if(ev) ev.stopPropagation();
-  const container = document.getElementById('contractsAccordion');
-  const itemEl = container && container.querySelector('.acc-item[data-contract-id="'+ctId+'"]');
-  if(!itemEl) return;
-  const opening = !itemEl.classList.contains('open');
-  const detailNode = document.getElementById('cContractDetail');
-  const holder = document.getElementById('cContractDetailHolder');
-  container.querySelectorAll('.acc-item.open').forEach(el=>{ if(el!==itemEl) closeAccItemVisual(el); });
-  if(holder && detailNode.parentElement!==holder) holder.appendChild(detailNode);
-  if(opening){
-    currentContractId = ctId;
-    openAccItemVisual(itemEl);
-    itemEl.querySelector('.acc-body-inner').appendChild(detailNode);
-    renderContractDetail(getClient(currentClientId), getContract(getClient(currentClientId), ctId));
-  } else {
-    currentContractId = null;
-    closeAccItemVisual(itemEl);
-  }
-  updateAccGroups(container, '.acc-item');
-  persistNav();
-}
 function renderContractsList(c){
   const box = document.getElementById('cContractsList');
-  const holder = document.getElementById('cContractDetailHolder');
-  const detailNode = document.getElementById('cContractDetail');
-  if(holder && detailNode && detailNode.parentElement!==holder) holder.appendChild(detailNode);
   const all = sortedContracts(c);
   const showHidden = !!box.dataset.showHidden;
   const list = all.filter(ct => showHidden || !ct.hidden);
   if(!all.length){
     box.innerHTML = '<div class="muted" style="padding:12px 0">Договоров пока нет</div><button class="btn sm" onclick="openContractForm(currentClientId,null)">+ Договор</button>';
-    currentContractId = null;
     return;
   }
   box.innerHTML = `
@@ -3071,20 +2855,29 @@ function renderContractsList(c){
         <button class="btn sm" style="width:100%" onclick="document.getElementById('cContractsList').dataset.showHidden='${showHidden?'':'1'}';renderContractsList(getClient(currentClientId))">${showHidden?'Скрыть скрытые':'Показать скрытые'}</button>
       </div>
     </div>
-    <div class="acc-list" id="contractsAccordion">
-      ${list.map(ct=>contractAccordionItemHtml(c, ct)).join('') || '<div class="muted">Скрытых договоров нет.</div>'}
+    <div class="contracts-grid">
+      ${list.map(ct=>{
+        const t = contractTotals(c, ct.id);
+        return `<div class="cl-card contract-card ${ct.pinned?'pinned':''} ${ct.hidden?'hiddenc':''}" onclick="openContract('${ct.id}')">
+          <div class="cl-top">
+            <div class="cl-name">${esc(contractLabel(ct))}${ct.pinned?'<span class="pill pre">закреплён</span>':''}</div>
+            <div class="cl-actions" onclick="event.stopPropagation()">
+              <button class="icon-emoji" onclick="toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}">${ct.pinned?'📌':'📍'}</button>
+              <button class="icon-emoji" onclick="toggleContractHide('${c.id}','${ct.id}')" title="${ct.hidden?'Показать':'Скрыть'}">${ct.hidden?'🙈':'👁'}</button>
+              <button class="icon-emoji" onclick="openContractForm('${c.id}','${ct.id}')" title="Редактировать">✏️</button>
+              <button class="icon-emoji" onclick="deleteContract('${c.id}','${ct.id}')" title="Удалить">🗑</button>
+            </div>
+          </div>
+          <div class="cl-meta">
+            <span>Предстоящие оплаты: <b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b></span>
+            <label class="cl-act-flag" title="Показывать этот договор в акте для заказчика" onclick="event.stopPropagation()">
+              <input type="checkbox" ${ct.showInAct!==false?'checked':''} onclick="event.stopPropagation()" onchange="toggleContractShowInAct('${c.id}','${ct.id}')">
+              <span>акт</span>
+            </label>
+          </div>
+        </div>`;
+      }).join('') || '<div class="muted">Скрытых договоров нет.</div>'}
     </div>`;
-  updateAccGroups(document.getElementById('contractsAccordion'), '.acc-item');
-  if(currentContractId){
-    const ct = list.find(x=>x.id===currentContractId);
-    const slot = document.querySelector('#contractsAccordion .acc-item[data-contract-id="'+currentContractId+'"] .acc-body-inner');
-    if(ct && slot){
-      slot.appendChild(detailNode);
-      renderContractDetail(c, ct);
-    } else {
-      currentContractId = null;
-    }
-  }
 }
 
 function renderContractDetail(c, ct){
