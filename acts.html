@@ -2874,7 +2874,7 @@ function renderContractsList(c){
         const t = contractTotals(c, ct.id);
         return `<div class="cl-card contract-card ${ct.pinned?'pinned':''} ${ct.hidden?'hiddenc':''}" onclick="openContract('${ct.id}')">
           <div class="cl-top">
-            <div class="cl-name">${esc(contractLabel(ct))}${ct.pinned?'<span class="pill pre">закреплён</span>':''}</div>
+            <div class="cl-name">${esc(contractLabel(ct))}</div>
             <div class="cl-actions" onclick="event.stopPropagation()">
               <button class="icon-emoji" onclick="toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}">${ct.pinned?'📌':'📍'}</button>
               <button class="icon-emoji" onclick="toggleContractHide('${c.id}','${ct.id}')" title="${ct.hidden?'Показать':'Скрыть'}">${ct.hidden?'🙈':'👁'}</button>
