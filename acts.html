@@ -47,11 +47,6 @@ textarea.autogrow{resize:none;overflow:hidden;}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 @media (max-width:720px){.grid2,.grid3{grid-template-columns:1fr;}}
 .grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
-.price-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-top:4px;}
-.calc-details{font-size:11.5px;}
-.calc-details summary{cursor:pointer;color:var(--violet);font-weight:600;list-style:none;}
-.calc-details summary::-webkit-details-marker{display:none;}
-.calc-details[open] summary{margin-bottom:4px;}
 .payment-block{margin-bottom:14px;}
 .payment-hint{margin-top:6px;}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
@@ -2387,11 +2382,9 @@ function openServiceForm(clientId, contractId, svcId){
     <div id="baseContractFields" class="hidden"></div>
     <div id="surBox"></div>
     <div class="field"><label>Стоимость, ₽</label><input type="number" id="svcPrice" step="1" value="${Number(cur.price)||0}" oninput="onManualPrice()">
-      <div class="muted price-meta">
-        <span id="priceNote"></span>
-        <details id="calcDetails" class="calc-details hidden"><summary>Подробнее</summary><div id="calcLine" class="calc-line" style="margin:4px 0 0"></div></details>
-      </div>
+      <div class="muted" id="priceNote"></div>
     </div>
+    <div id="calcLine" class="calc-line hidden"></div>
     <div class="field payment-block">
       <div class="grid-auto payment-grid">
         <div class="field" style="margin-bottom:0"><label>Оплата</label>
@@ -2779,16 +2772,15 @@ function recalc(keepPrice){
   }
 
   const cl = document.getElementById('calcLine');
-  const clWrap = document.getElementById('calcDetails');
   if(item){
     const parts = [`база ${money(r.base)}`];
     r.applied.forEach(a=>{
-      const suffix = a.count > 1 ? ` × ${a.count}` : '';
-      parts.push(`${esc(a.name)} (${money(a.amount)}${suffix})`);
+      const suffix = a.count > 1 ? ' × ' + Number(a.count) : '';
+      parts.push(esc(a.name) + ' (' + money(a.amount) + suffix + ')');
     });
-    cl.innerHTML = parts.join(' → ') + ` = <b>${money(r.price)}</b>`;
-    if(clWrap) clWrap.classList.remove('hidden');
-  } else if(clWrap) clWrap.classList.add('hidden');
+    cl.innerHTML = parts.join(' → ') + ' = <b>' + money(r.price) + '</b>';
+    cl.classList.remove('hidden');
+  } else if(cl) cl.classList.add('hidden');
   onPayChange(true);
 }
 function onActualPrepayInput(){
@@ -3197,7 +3189,8 @@ function appliedHtml(s){
   return `<details class="applied-details"><summary>Примененные надбавки/скидки</summary><ul style="margin:5px 0 0 18px;padding:0">${applied.map(a=>{
     const comment=String(a.comment||'').trim();
     const extra=Number(a.extraAmount)||0;
-    return `<li>${esc(a.name||'')}${a.amount?' ('+esc(a.amount)+')':''}${Number(a.count)>1?' × '+Number(a.count):''}${comment?' — '+esc(comment):''}${extra?' — фактические расходы: '+money(extra):''}</li>`;
+    const amountText = a.amount ? ' ('+money(a.amount)+')' : '';
+    return `<li>${esc(a.name||'')}${amountText}${Number(a.count)>1?' × '+Number(a.count):''}${comment?' — '+esc(comment):''}${extra?' — фактические расходы: '+money(extra):''}</li>`;
   }).join('')}</ul></details>`;
 }
 

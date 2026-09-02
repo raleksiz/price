@@ -17,8 +17,8 @@
   var tariffs = [
     { name: 'Base', from: 0, to: 24999, dmin: 0, dmax: 0 },
     { name: 'Easy', from: 25000, to: 49999, dmin: 0.10, dmax: 0.15 },
-    { name: 'Must have', from: 50000, to: 69999, dmin: 0.1501, dmax: 0.20 },
-    { name: 'Power', from: 70000, to: 100000, dmin: 0.2001, dmax: 0.25 }
+    { name: 'Must have', from: 50000, to: 69999, dmin: 0.15, dmax: 0.20 },
+    { name: 'Power', from: 70000, to: 100000, dmin: 0.20, dmax: 0.25 }
   ];
 
   var tariffParams = {
@@ -238,8 +238,11 @@
   function formatAppliedLabel(item) {
     var name = text(item && item.name).trim();
     if (!name) return '';
-    // Для "Скидка по тарифу" показываем только название.
-    if (/скидка по тарифу/i.test(name)) return name;
+    // Для "Скидка по тарифу" тоже показываем целую сумму корректировки.
+    if (/скидка по тарифу/i.test(name)) {
+      var tariffAmount = Math.round(n(item && item.amount));
+      return tariffAmount ? name + ' (' + tariffAmount.toLocaleString('ru-RU') + ')' : name;
+    }
 
     var comment = formatAppliedComment(item);
     if (comment) return name + ' (' + comment + ')';
