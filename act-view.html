@@ -216,18 +216,27 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
   </div>
 </div>
 
+<script src="crm-core.js"></script>
 <script src="calculator.js"></script>
 <script>
 const ACT_API  = 'https://act.raleksiz-law.workers.dev/';
 const BASE_URL = 'https://raleksiz.github.io/price/';
 const MONTHS = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+const {
+  escapeHtml: esc,
+  safeHttpUrl,
+  paidOf,
+  prepayOf,
+  cashPaidOf,
+  paidForAbonementMonth
+} = RaleksizCRMCore;
 
-function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function money(n){ return Math.round(Number(n)||0).toLocaleString('ru-RU') + ' ₽'; }
 function fmtDate(iso){ if(!iso) return ''; const p=String(iso).split('-'); return p.length===3?`${p[2]}.${p[1]}.${p[0]}`:String(iso); }
 function monthKey(iso){ return iso?String(iso).slice(0,7):''; }
 function monthTitle(mk){ if(!mk) return ''; const [y,m]=mk.split('-'); return (MONTHS[Number(m)-1]||'')+' '+y; }
 function isComplete(s){ return !!(s&&s.date&&String(s.desc||'').trim()); }
+function isProvided(s,today){ return isComplete(s) && String(s.date).slice(0,10)<=(today||todayISO()); }
 function isPayFull(s){ return !!(s&&(s.pay==='full'||s.pay==='full_prepay')); }
 function todayISO(){
   const d=new Date();
@@ -255,7 +264,7 @@ function contractPriceForMonth(ct, month){
 function servicesInReportingMonth(c, ct, month, today){
   const p = reportingPeriod(month, today);
   if(p.empty) return [];
-  return contractServices(c, ct.id).filter(s=>isComplete(s) && s.date>=p.start && s.date<=p.end);
+  return contractServices(c, ct.id).filter(s=>isProvided(s, today) && s.date>=p.start && s.date<=p.end);
 }
 function isAbonementSpecialMonth(c, ct, month, today){
   if(!ct || ct.status!=='Абонемент') return false;
@@ -266,44 +275,23 @@ function isAbonementSpecialMonth(c, ct, month, today){
   const actual = servicesInReportingMonth(c, ct, month, today).reduce((a,s)=>a+(Number(s.price)||0),0);
   return actual < budget;
 }
-/** Константа фактической предоплаты за месяц (из услуг с зачётом). */
-function monthActualPrepayFromServices(services, ct, month){
-  let best = 0;
-  (services||[]).forEach(s=>{
-    if(!s || (s.pay!=='full_prepay' && s.pay!=='part_prepay')) return;
-    const v = Number(s.actualPrepay)||0;
-    if(v>best) best = v;
-  });
-  if(best>0) return best;
-  const hasPrepaySvc = (services||[]).some(s=>s && (s.pay==='full_prepay'||s.pay==='part_prepay'));
-  if(hasPrepaySvc && ct){
-    const m = String(month||'').slice(0,7);
-    if(m && ct.prepaySnapshots && ct.prepaySnapshots[m]!=null) return Number(ct.prepaySnapshots[m])||0;
-    return Number(ct.prepay)||0;
-  }
-  return 0;
-}
-/** Оплаты не из предоплаты (наличные / перевод). */
-function cashPaidOf(s){
-  if(!s) return 0;
-  if(s.pay==='full') return Number(s.price)||0;
-  if(s.pay==='part') return Math.min(Number(s.payAmount)||0, Number(s.price)||0);
-  return 0;
-}
-/**
- * Отображаемое «Оплачено» за месяц.
- * В спецрежиме: фактически внесённая предоплата (константа месяца) + иные платежи по услугам.
- * Без ограничения ценой абонемента (могут быть разовые доплаты).
- */
 function displayPaidForMonth(ct, month, services, special){
-  if(!special) return (services||[]).reduce((a,s)=>a+paidOf(s),0);
-  const actualPrepay = monthActualPrepayFromServices(services, ct, month);
-  const cash = (services||[]).reduce((a,s)=>a+cashPaidOf(s),0);
-  return actualPrepay + cash;
+  const list=(services||[]).filter(s=>monthKey(s&&s.date)===month);
+  if(!special || !ct || ct.status!=='Абонемент') return list.reduce((sum,s)=>sum+paidOf(s),0);
+
+  const paid=paidForAbonementMonth(list, month);
+  const prepayServices=list.filter(s=>s&&(s.pay==='full_prepay'||s.pay==='part_prepay'));
+  const hasActualPrepay=prepayServices.some(s=>s.actualPrepay!=null&&s.actualPrepay!=='');
+  if(!prepayServices.length||hasActualPrepay) return paid;
+
+  const legacyPrepay=ct.prepaySnapshots&&ct.prepaySnapshots[month]!=null
+    ? Number(ct.prepaySnapshots[month])||0
+    : Number(ct.prepay)||0;
+  return legacyPrepay+list.reduce((sum,s)=>sum+cashPaidOf(s),0);
 }
 function displayContractTotals(c, ct, today){
   today = today || todayISO();
-  const all = contractServices(c, ct.id).filter(isComplete);
+  const all = contractServices(c, ct.id).filter(s=>isProvided(s,today));
   if(!ct || ct.status!=='Абонемент') return contractTotals(c, ct.id, all);
   const months = [...new Set(all.map(s=>monthKey(s.date)).filter(Boolean))];
   let sum=0, paid=0;
@@ -315,17 +303,18 @@ function displayContractTotals(c, ct, today){
   });
   return {sum, paid, debt:Math.max(0,sum-paid), count:all.length};
 }
-function paidOf(s){
-  if(!s) return 0;
-  if(s.pay==='full'||s.pay==='full_prepay') return Number(s.price)||0;
-  if(s.pay==='part'||s.pay==='part_prepay') return Math.min(Number(s.payAmount)||0,Number(s.price)||0);
-  return 0;
-}
-function prepayOf(s){
-  if(!s) return 0;
-  if(s.pay==='full_prepay') return Number(s.price)||0;
-  if(s.pay==='part_prepay') return Math.min(Number(s.payAmount)||0,Number(s.price)||0);
-  return 0;
+function displayVisibleTotals(c,ct,list,today){
+  if(!ct || ct.status!=='Абонемент') return contractTotals(c,ct&&ct.id,list);
+  const months=[...new Set((list||[]).map(s=>monthKey(s.date)).filter(Boolean))];
+  let sum=0,paid=0;
+  months.forEach(month=>{
+    const visible=(list||[]).filter(s=>monthKey(s.date)===month);
+    const completeMonth=servicesInReportingMonth(c,ct,month,today).length===visible.length;
+    const special=completeMonth&&isAbonementSpecialMonth(c,ct,month,today);
+    sum+=special?contractPriceForMonth(ct,month):visible.reduce((total,s)=>total+(Number(s.price)||0),0);
+    paid+=completeMonth?displayPaidForMonth(ct,month,visible,special):visible.reduce((total,s)=>total+paidOf(s),0);
+  });
+  return {sum,paid,debt:Math.max(0,sum-paid),count:(list||[]).length};
 }
 function sortServices(list){
   return list.slice().sort((a,b)=>{
@@ -372,15 +361,16 @@ function contractBasisLabel(ct){
 }
 function offerLinkHtml(ct){
   if(!ct || ct.basisType!=='offer' || !ct.basisUrl) return '';
+  const url = safeHttpUrl(ct.basisUrl);
+  if(!url) return '';
   const d = offerBasisDate(ct);
   const label = d ? 'Оффер от '+fmtDate(d) : 'Оффер';
-  return `<a class="offer-link" href="${esc(ct.basisUrl)}" target="_blank" rel="noopener">${esc(label)}</a>`;
+  return `<a class="offer-link" href="${esc(url)}" target="_blank" rel="noopener">${esc(label)}</a>`;
 }
 function basisBlockHtml(ct){
   if(!ct) return '';
-  if(ct.basisType==='offer' && ct.basisUrl){
-    return `<div>Основание: ${offerLinkHtml(ct)}</div>`;
-  }
+  const offerLink = offerLinkHtml(ct);
+  if(offerLink) return `<div>Основание: ${offerLink}</div>`;
   const b = contractBasisLabel(ct);
   return b ? `<div>Основание: ${esc(b)}</div>` : '';
 }
@@ -399,7 +389,7 @@ function clientPayLabel(s){
   return 'Оплачено частично';
 }
 function contractTotals(c,id,listOverride){
-  const list=(listOverride||contractServices(c,id)).filter(isComplete);
+  const list=(listOverride||contractServices(c,id)).filter(s=>isProvided(s));
   const sum=list.reduce((a,s)=>a+(Number(s.price)||0),0);
   const paid=list.reduce((a,s)=>a+paidOf(s),0);
   return {sum,paid,debt:Math.max(0,sum-paid),count:list.length};
@@ -422,16 +412,6 @@ function appliedHtml(s,expanded=false){
   const items=arr.map(a=>`<li>${esc(formatAppliedLabel(a))}</li>`).join('');
   return `<details class="applied-box" ${expanded?'open':''}><summary>Применённые надбавки/скидки</summary><ul class="applied-list">${items}</ul></details>`;
 }
-function appliedText(s){
-  const arr=appliedItems(s);
-  if(!arr.length) return '';
-  return 'Применены: '+arr.map(a=>{
-    let t=String(a.name||'');
-    if(a.amount) t+=' '+a.amount;
-    if(a.comment) t+=' ('+a.comment+')';
-    return t;
-  }).join(', ')+'.';
-}
 function customFieldValue(raw){
   if(raw&&typeof raw==='object'&&!Array.isArray(raw)) return {value:String(raw.value??''),public:!!raw.public};
   return {value:String(raw??''),public:false};
@@ -447,7 +427,7 @@ function renderCustomFields(s,db){
       const items=x.value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
       out.push(`<div class="cf-public-item"><b>${esc(f.name)}:</b><ul>${items.map(v=>`<li>${esc(v)}</li>`).join('')}</ul></div>`);
     }else{
-      const value=String(x.value).replace(/\r?\n/g,'<br>');
+      const value=esc(x.value).replace(/\r\n?|\n/g,'<br>');
       out.push(`<div class="cf-public-item"><b>${esc(f.name)}:</b> ${value}</div>`);
     }
   });
@@ -466,14 +446,16 @@ function contractMeta(ct){
 function filtersTemplate(id, f){
   f = f || {};
   const openClass = FILTER_OPEN[id] ? 'open' : '';
+  const idAttr=esc(String(id));
+  const idArg=esc(JSON.stringify(String(id)));
   return `<div class="filter-box">
-    <button class="filter-toggle" type="button" onclick="toggleFilters('${id}')">Фильтровать</button>
-    <div class="filter-form ${openClass}" id="filters-${id}">
-      <div><label>Дата с</label><input type="date" data-filter="from" value="${esc(f.from||'')}" onchange="renderContractById('${id}')"></div>
-      <div><label>Дата по</label><input type="date" data-filter="to" value="${esc(f.to||'')}" onchange="renderContractById('${id}')"></div>
-      <div><label>Код услуги</label><input type="text" data-filter="code" value="${esc(f.code||'')}" placeholder="Например, 3.8" oninput="renderContractById('${id}')"></div>
-      <div><label>Статус оплаты</label><select data-filter="pay" onchange="renderContractById('${id}')"><option value="" ${!f.pay?'selected':''}>Любой</option><option value="none" ${f.pay==='none'?'selected':''}>Не оплачено</option><option value="paid" ${f.pay==='paid'?'selected':''}>Оплачено</option><option value="partial" ${f.pay==='partial'?'selected':''}>Оплачено частично</option><option value="prepay" ${f.pay==='prepay'?'selected':''}>С предоплатой</option></select></div>
-      <div class="filter-actions"><button class="filter-reset" type="button" onclick="resetFilters('${id}')">Сбросить</button></div>
+    <button class="filter-toggle" type="button" onclick="toggleFilters(${idArg})">Фильтровать</button>
+    <div class="filter-form ${openClass}" id="filters-${idAttr}">
+      <div><label for="filter-from-${idAttr}">Дата с</label><input id="filter-from-${idAttr}" type="date" data-filter="from" value="${esc(f.from||'')}" onchange="renderContractById(${idArg})"></div>
+      <div><label for="filter-to-${idAttr}">Дата по</label><input id="filter-to-${idAttr}" type="date" data-filter="to" value="${esc(f.to||'')}" onchange="renderContractById(${idArg})"></div>
+      <div><label for="filter-code-${idAttr}">Код услуги</label><input id="filter-code-${idAttr}" type="text" data-filter="code" value="${esc(f.code||'')}" placeholder="Например, 3.8" oninput="renderContractById(${idArg})"></div>
+      <div><label for="filter-pay-${idAttr}">Статус оплаты</label><select id="filter-pay-${idAttr}" data-filter="pay" onchange="renderContractById(${idArg})"><option value="" ${!f.pay?'selected':''}>Любой</option><option value="none" ${f.pay==='none'?'selected':''}>Не оплачено</option><option value="paid" ${f.pay==='paid'?'selected':''}>Оплачено</option><option value="partial" ${f.pay==='partial'?'selected':''}>Оплачено частично</option><option value="prepay" ${f.pay==='prepay'?'selected':''}>С предоплатой</option></select></div>
+      <div class="filter-actions"><button class="filter-reset" type="button" onclick="resetFilters(${idArg})">Сбросить</button></div>
     </div>
   </div>`;
 }
@@ -540,30 +522,30 @@ function renderTable(list, special){
 function renderContract(c,ct,presetFilters){
   const id=ct.id;
   const today=todayISO();
-  const all=sortServices(contractServices(c,id).filter(isComplete));
+  const all=sortServices(contractServices(c,id).filter(s=>isProvided(s,today)));
   const f=presetFilters || getFilters(id);
   const list=filterServices(all,f);
   const t=displayContractTotals(c,ct,today);
-  const filteredTotals=contractTotals(c,id,list);
+  const filteredTotals=displayVisibleTotals(c,ct,list,today);
+  const monthIsComplete=k=>servicesInReportingMonth(c,ct,k,today).length===list.filter(s=>monthKey(s.date)===k).length;
   let body='';
   if(!list.length){ body='<div class="empty-filter">Нет услуг, соответствующих выбранным фильтрам.</div>'; }
   else if(ct.actMode==='monthly'){
     const groups={}; list.forEach(s=>(groups[monthKey(s.date)]??=[]).push(s));
     body=Object.keys(groups).sort().reverse().map(k=>{
       const g=sortServices(groups[k]);
-      const special=isAbonementSpecialMonth(c, ct, k, today);
-      const monthAll=contractServices(c,id).filter(s=>isComplete(s)&&monthKey(s.date)===k);
+      const special=monthIsComplete(k)&&isAbonementSpecialMonth(c, ct, k, today);
       const gs=special ? contractPriceForMonth(ct, k) : g.reduce((a,s)=>a+(Number(s.price)||0),0);
-      const gp=displayPaidForMonth(ct, k, monthAll, special);
+      const gp=monthIsComplete(k)?displayPaidForMonth(ct, k, g, special):g.reduce((total,s)=>total+paidOf(s),0);
       return `<h3>${esc(monthTitle(k))}</h3>${renderTable(g, special)}<div class="mtot">За ${esc(monthTitle(k))} года: оказано на ${money(gs)}, оплачено ${money(gp)}, к оплате ${money(Math.max(0,gs-gp))}</div>`;
     }).join('');
   }else{
     const months=[...new Set(list.map(s=>monthKey(s.date)))];
-    const allSpecial=ct.status==='Абонемент' && months.length>0 && months.every(m=>isAbonementSpecialMonth(c,ct,m,today));
+    const allSpecial=ct.status==='Абонемент' && months.length>0 && months.every(m=>monthIsComplete(m)&&isAbonementSpecialMonth(c,ct,m,today));
     if(allSpecial) body=renderTable(list, true);
     else if(ct.status==='Абонемент'){
       const ordered=sortServices(list);
-      body=`<div class="svc-head"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div></div><div class="svc-list">${ordered.map((s,i)=>renderServiceRow(s,ordered.length-i,isAbonementSpecialMonth(c,ct,monthKey(s.date),today))).join('')}</div>`;
+      body=`<div class="svc-head"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div></div><div class="svc-list">${ordered.map((s,i)=>renderServiceRow(s,ordered.length-i,monthIsComplete(monthKey(s.date))&&isAbonementSpecialMonth(c,ct,monthKey(s.date),today))).join('')}</div>`;
     } else body=renderTable(list, false);
   }
   return `<div class="contract-block" id="contract-${esc(id)}">
@@ -572,7 +554,7 @@ function renderContract(c,ct,presetFilters){
     </div></div>
     ${filtersTemplate(id, f)}
     ${body}
-    <div class="totals">${tot('Общая стоимость услуг',money(t.sum))}${tot('Оплачено',money(t.paid))}${tot('К оплате',money(t.debt))}</div>
+    <div class="totals">${tot('Общая стоимость услуг',money(filteredTotals.sum))}${tot('Оплачено',money(filteredTotals.paid))}${tot('К оплате',money(filteredTotals.debt))}</div>
     ${list.length!==all.length?`<div class="muted" style="margin-top:7px">Показано ${filteredTotals.count} из ${t.count} услуг.</div>`:''}
     ${(ct.sentDates||[]).length?`<div class="muted" style="margin-top:8px">Даты направления актов: ${ct.sentDates.map(fmtDate).join(', ')}</div>`:''}
   </div>`;

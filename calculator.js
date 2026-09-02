@@ -65,7 +65,7 @@
 
   function getContractTariff(budget, prepay, term) {
     var result = calcDiscount(budget, prepay, term);
-    var isAbonement = n(term) >= tariffParams.minTerm;
+    var isAbonement = n(term) >= tariffParams.minTerm && n(budget) > 0;
     if (!isAbonement) return { tariff: 'Base', discount: 0, status: 'Разовая услуга' };
     return {
       tariff: result.tariff,
@@ -464,13 +464,7 @@
   }
 
   function compareMonthEntries(a, b) {
-    var byDate = dateKey(a.date).localeCompare(dateKey(b.date));
-    if (byDate) return byDate;
-    var byPrice = n(b.price) - n(a.price);
-    if (byPrice) return byPrice;
-    var byCreated = createdKey(a).localeCompare(createdKey(b));
-    if (byCreated) return byCreated;
-    return idKey(a).localeCompare(idKey(b));
+    return compareServices(a, b);
   }
 
   function buildMonthEntries(services, contract, month, options) {
@@ -533,31 +527,6 @@
 
   function getContractPriceBalance(contract, services, date, priceGuess, options) {
     return contractRemainderBefore(services, contract, date, priceGuess, options || {});
-  }
-
-  function getPrepayBalance(contract, services, date, priceGuess, options) {
-    var month = monthKey(date);
-    var base = getMonthPrepay(contract, month);
-    var entries = buildMonthEntries(services, contract, month, {
-      currentServiceId: options && options.currentServiceId,
-      currentDate: date,
-      currentPrice: priceGuess,
-      currentCreatedAt: options && options.currentCreatedAt
-    });
-    var currentId = (options && options.currentServiceId) || '__current__';
-    var sumBefore = 0;
-    var found = false;
-
-    entries.forEach(function (entry) {
-      if (found) return;
-      if (entry.isCurrent || entry.id === currentId) {
-        found = true;
-        return;
-      }
-      sumBefore += n(entry.price);
-    });
-
-    return Math.max(0, round(base - sumBefore));
   }
 
   function calculateService(service, contract, definitions, contractRemainder) {
@@ -677,11 +646,16 @@
         service.prepayBalance = round(entry.contractRemainder);
         service.monthOrder = entry.monthOrder;
         service.contractRemainderUpdatedAt = new Date().toISOString();
-        if (!service.priceManual && !service.locked) {
+        if (!service.locked) {
+          var beforePrice = round(service.price);
+          var beforeApplied = JSON.stringify(service.applied || []);
           service.price = round(entry.price);
           service.applied = entry.result.applied || [];
           service.basePrice = entry.result.basePrice != null ? entry.result.basePrice : service.basePrice;
           service.discountPrice = entry.result.discountPrice != null ? entry.result.discountPrice : service.discountPrice;
+          if (beforePrice !== service.price || beforeApplied !== JSON.stringify(service.applied)) {
+            service.updatedAt = new Date().toISOString();
+          }
         }
       }
     });
@@ -705,7 +679,6 @@
     getStage1Price: getStage1Price,
     applySurcharges: applySurcharges,
     getContractPriceBalance: getContractPriceBalance,
-    getPrepayBalance: getPrepayBalance,
     compareServices: compareServices,
     sortMonthServices: sortMonthServices,
     calculateMonthHistory: calculateMonthHistory,
@@ -738,13 +711,14 @@
     rebuildMonthFrom: rebuildMonthFrom,
     recalculateContractMonth: recalculateContractMonth,
     getContractPriceBalance: getContractPriceBalance,
-    getPrepayBalance: getPrepayBalance,
     getFrozenContractRemainder: getFrozenContractRemainder,
-    getFrozenPrepayBalance: getFrozenContractRemainder,
     monthKey: monthKey,
     round: round,
     formatAppliedComment: formatAppliedComment,
     formatAppliedLabel: formatAppliedLabel,
     formatAppliedList: formatAppliedList
   };
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { Calculator: Calculator, RaleksizCalculator: global.RaleksizCalculator };
+  }
 }(typeof window !== 'undefined' ? window : globalThis));
