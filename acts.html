@@ -1288,10 +1288,9 @@ function getContract(c, contractId){
 function contractServices(c, contractId){
   return (c.services||[]).filter(s=>s.contractId===contractId);
 }
-function prepayLimit(c, contractId, dateISO){
-  const ct = getContract(c, contractId);
-  const amount = Number(ct && ct.prepay)||0;
-  return amount;
+function prepayLimit(c, contractId, dateISO, overrideActual){
+  if(overrideActual!=null && overrideActual!=='') return Math.max(0, Number(overrideActual)||0);
+  return monthActualPrepay(c, contractId, monthKey(dateISO));
 }
 function prepayUsed(c, contractId, dateISO, exceptServiceId){
   const ct = getContract(c, contractId);
@@ -1303,8 +1302,59 @@ function prepayUsed(c, contractId, dateISO, exceptServiceId){
     return sum + prepayOf(s);
   },0);
 }
-function prepayAvailable(c, contractId, dateISO, exceptServiceId){
-  return Math.max(0, prepayLimit(c, contractId, dateISO) - prepayUsed(c, contractId, dateISO, exceptServiceId));
+function prepayAvailable(c, contractId, dateISO, exceptServiceId, overrideActual){
+  return Math.max(0, prepayLimit(c, contractId, dateISO, overrideActual) - prepayUsed(c, contractId, dateISO, exceptServiceId));
+}
+/** Фактическая предоплата-константа месяца (из услуг с зачётом из предоплаты). */
+function monthActualPrepay(c, contractId, month){
+  month = String(month||'').slice(0,7);
+  if(!month) return 0;
+  let best = 0;
+  contractServices(c, contractId).forEach(s=>{
+    if(monthKey(s.date)!==month) return;
+    if(s.pay!=='full_prepay' && s.pay!=='part_prepay') return;
+    const v = Number(s.actualPrepay)||0;
+    if(v>best) best = v;
+  });
+  return best;
+}
+/** Значение по умолчанию для поля «фактически внесено» в форме услуги. */
+function defaultActualPrepayForForm(c, contractId, dateISO, priceGuess, exceptServiceId){
+  const month = monthKey(dateISO);
+  const existing = monthActualPrepay(c, contractId, month);
+  if(existing>0) return existing;
+  // Нет константы месяца — ищем опорную услугу раньше по порядку расчёта (дата, затем дороже).
+  const ct = getContract(c, contractId);
+  const price = Number(priceGuess)||0;
+  const candidates = contractServices(c, contractId).filter(s=>{
+    if(exceptServiceId && s.id===exceptServiceId) return false;
+    if(monthKey(s.date)!==month) return false;
+    if(s.pay!=='full_prepay' && s.pay!=='part_prepay') return false;
+    return (Number(s.actualPrepay)||0)>0;
+  });
+  if(!candidates.length) return 0;
+  if(typeof RaleksizCalculator!=='undefined' && RaleksizCalculator.compareServices){
+    const probe = { date: dateISO, price, createdAt: (window.__ctx && window.__ctx.createdAt) || '', id: exceptServiceId || '__new__' };
+    candidates.sort((a,b)=>RaleksizCalculator.compareServices(a,b));
+    // Берём последнюю по порядку среди тех, что «до» текущей, иначе любую константу.
+    let pick = 0;
+    candidates.forEach(s=>{
+      if(RaleksizCalculator.compareServices(s, probe) < 0) pick = Number(s.actualPrepay)||0;
+    });
+    if(pick>0) return pick;
+  }
+  return Number(candidates[0].actualPrepay)||0;
+}
+/** Проставить одну константу фактической предоплаты всем услугам месяца с зачётом из предоплаты. */
+function syncMonthActualPrepay(c, contractId, month, amount){
+  month = String(month||'').slice(0,7);
+  const v = Math.max(0, Number(amount)||0);
+  if(!month) return;
+  contractServices(c, contractId).forEach(s=>{
+    if(monthKey(s.date)!==month) return;
+    if(s.pay!=='full_prepay' && s.pay!=='part_prepay') return;
+    s.actualPrepay = v;
+  });
 }
 
 /* ====================== ИТОГИ ====================== */
@@ -2133,7 +2183,7 @@ function openServiceForm(clientId, contractId, svcId){
   openModal(`
     <h1>${s?'Услуга':'Новая услуга'} · ${esc(c.name)}</h1>
     <div class="grid2">
-      <div class="field"><label>Дата оказания услуги</label><input type="date" id="svcDate" value="${esc(cur.date||'')}" onchange="recalc()"></div>
+      <div class="field"><label>Дата оказания услуги</label><input type="date" id="svcDate" value="${esc(cur.date||'')}" onchange="onSvcDateChange()"></div>
       <div class="field"><label>Код услуги</label><select id="svcCode" onchange="onCodeChange()">${codeOpts}</select></div>
     </div>
     <div class="field hidden" id="sideField"><label>Сторона</label>
@@ -2153,6 +2203,11 @@ function openServiceForm(clientId, contractId, svcId){
         <input type="number" id="svcPayAmt" step="1" min="0" value="${Number(cur.payAmount)||0}" oninput="onPayChange(true)">
         <div class="muted" id="prepayInfo"></div></div>
     </div>
+    <div class="field" id="actualPrepayField" style="display:none">
+      <label>Фактически внесено предоплаты, ₽</label>
+      <input type="number" id="svcActualPrepay" step="1" min="0" value="${Number(cur.actualPrepay)||0}" oninput="onActualPrepayInput()">
+      <div class="muted" id="actualPrepayHint"></div>
+    </div>
     ${cf}
     <div class="row" style="margin-top:8px">
       <button class="btn ghost" onclick="closeModal()">Отмена</button>
@@ -2171,7 +2226,8 @@ function openServiceForm(clientId, contractId, svcId){
     surMeta: JSON.parse(JSON.stringify((s&&s.surchargeMeta)||{})),
     baseContractCode: resolveBaseContractCode((s && (s.baseContractCode || s.baseContractId)) || ''),
     baseContractPrice: Number((s && s.baseContractPrice) || 0),
-    basePriceManual: false
+    basePriceManual: false,
+    actualPrepayManual: !!(s && (s.pay==='full_prepay'||s.pay==='part_prepay') && Number(s.actualPrepay)>0)
   };
   renderSurcharges();
   applySideField();
@@ -2446,6 +2502,14 @@ function recalc(keepPrice){
   } else cl.classList.add('hidden');
   onPayChange(true);
 }
+function onActualPrepayInput(){
+  if(window.__ctx) window.__ctx.actualPrepayManual = true;
+  onPayChange(true);
+}
+function onSvcDateChange(){
+  if(window.__ctx) window.__ctx.actualPrepayManual = false;
+  recalc();
+}
 function onPayChange(silent){
   const pay = document.getElementById('svcPay').value;
   const needAmt = pay==='part' || pay==='part_prepay';
@@ -2453,15 +2517,41 @@ function onPayChange(silent){
   const c = ctxClient();
   const ct = ctxContract();
   const date = document.getElementById('svcDate').value;
+  const price = Number(document.getElementById('svcPrice').value)||0;
   const info = document.getElementById('prepayInfo');
-  const avail = prepayAvailable(c, window.__ctx.contractId, date, window.__ctx.svcId);
-  if(pay==='full_prepay' || pay==='part_prepay'){
-    const need = pay==='full_prepay' ? (Number(document.getElementById('svcPrice').value)||0)
-                                     : (Number(document.getElementById('svcPayAmt').value)||0);
+  const actualBox = document.getElementById('actualPrepayField');
+  const actualInp = document.getElementById('svcActualPrepay');
+  const actualHint = document.getElementById('actualPrepayHint');
+  const fromPrepay = pay==='full_prepay' || pay==='part_prepay';
+
+  if(actualBox){
+    actualBox.style.display = fromPrepay ? 'block' : 'none';
+  }
+  if(fromPrepay && actualInp){
+    if(!silent && !window.__ctx.actualPrepayManual){
+      const def = defaultActualPrepayForForm(c, window.__ctx.contractId, date, price, window.__ctx.svcId);
+      actualInp.value = def > 0 ? def : '';
+    } else if(!silent && !(Number(actualInp.value)>0)){
+      const def = defaultActualPrepayForForm(c, window.__ctx.contractId, date, price, window.__ctx.svcId);
+      if(def>0) actualInp.value = def;
+    }
+    const planned = Number(ct && ct.prepay)||0;
+    if(actualHint){
+      actualHint.textContent = planned
+        ? ('Предусмотрено по договору: ' + money(planned) + (ct && ct.status==='Абонемент' ? ' в месяц' : ''))
+        : 'Укажите сумму, фактически полученную на дату этой услуги';
+    }
+  }
+
+  const formActual = fromPrepay ? (Number(actualInp && actualInp.value)||0) : null;
+  const avail = prepayAvailable(c, window.__ctx.contractId, date, window.__ctx.svcId, formActual);
+  if(fromPrepay){
+    const need = pay==='full_prepay' ? price : (Number(document.getElementById('svcPayAmt').value)||0);
     let txt = 'Доступно из предоплаты' + (ct && ct.status==='Абонемент' ? ' за ' + monthTitle(monthKey(date)) : '') + ': ' + money(avail);
-    if(need > avail) txt += ' — превышение на ' + money(need-avail) + ', сверх лимита услуга оказывается на условиях разовой услуги';
+    if(!(formActual>0)) txt = 'Сначала укажите фактически внесённую предоплату';
+    else if(need > avail) txt += ' — превышение на ' + money(need-avail) + ', сверх лимита услуга оказывается на условиях разовой услуги';
     info.textContent = txt;
-    info.style.color = need>avail ? '#E65100' : '#888';
+    info.style.color = (!(formActual>0) || need>avail) ? '#E65100' : '#888';
     info.parentElement.style.display = 'block';
     document.getElementById('payAmtField').style.display = 'block';
     if(pay==='full_prepay') document.getElementById('payAmtField').querySelector('input').style.display='none';
@@ -2469,6 +2559,7 @@ function onPayChange(silent){
     info.textContent='';
     const inp = document.getElementById('payAmtField').querySelector('input');
     if(inp) inp.style.display='block';
+    if(window.__ctx) window.__ctx.actualPrepayManual = false;
   }
 }
 function saveService(clientId, svcId){
@@ -2500,6 +2591,13 @@ function saveService(clientId, svcId){
   if((pay==='part'||pay==='part_prepay') && payAmt > price){
     alert('Сумма оплаты не может превышать стоимость услуги'); return;
   }
+  let actualPrepay = 0;
+  if(pay==='full_prepay' || pay==='part_prepay'){
+    actualPrepay = Number(document.getElementById('svcActualPrepay')?.value)||0;
+    if(!(actualPrepay>0)){
+      alert('Укажите фактически внесённую предоплату'); return;
+    }
+  }
   const custom = {};
   document.querySelectorAll('[data-cf]').forEach(el=>{
     const id=el.dataset.cf;
@@ -2509,7 +2607,7 @@ function saveService(clientId, svcId){
 
   if(pay==='full_prepay' || pay==='part_prepay'){
     const need = pay==='full_prepay' ? price : payAmt;
-    const avail = prepayAvailable(c, contractId, date, svcId);
+    const avail = prepayAvailable(c, contractId, date, svcId, actualPrepay);
     if(need > avail && !confirm('Сумма превышает остаток предоплаты ('+money(avail)+'). Сохранить всё равно? Часть сверх лимита будет учтена как обычная оплата.')) return;
   }
 
@@ -2521,6 +2619,7 @@ function saveService(clientId, svcId){
 
   const data = {
     contractId, date, code, side: window.__ctx.side, desc, price, pay, payAmount: payAmt,
+    actualPrepay: (pay==='full_prepay'||pay==='part_prepay') ? actualPrepay : 0,
     surcharges: window.__ctx.surSel.slice(),
     surchargeMeta: JSON.parse(JSON.stringify(window.__ctx.surMeta||{})),
     applied: r.applied.map(a=>({name:a.name, amount:a.amount, delta:a.delta, count:a.count||1, comment:a.comment||'', extraAmount:Number(a.extraAmount)||0})),
@@ -2538,8 +2637,13 @@ function saveService(clientId, svcId){
     c.services.push(Object.assign({id: uid(), createdAt: new Date().toISOString(), locked:false}, data));
     if(c.sent && isComplete(data)){ c.sent = false; }
   }
+  if(pay==='full_prepay' || pay==='part_prepay'){
+    syncMonthActualPrepay(c, contractId, monthKey(date), actualPrepay);
+  }
   if(ct && ct.status==='Абонемент' && date){
-    recalculateContractMonthServices(c, contractId, monthKey(date), date);
+    // При смене фактической предоплаты пересчитываем весь месяц.
+    const from = (pay==='full_prepay' || pay==='part_prepay') ? '' : date;
+    recalculateContractMonthServices(c, contractId, monthKey(date), from);
   }
   save(); closeModal(); renderAllViews();
 }

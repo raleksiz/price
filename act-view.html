@@ -252,11 +252,6 @@ function contractPriceForMonth(ct, month){
   if(ct && ct.contractPriceSnapshots && ct.contractPriceSnapshots[month]!=null) return Number(ct.contractPriceSnapshots[month])||0;
   return Number(ct && ct.contractPrice)||0;
 }
-function prepayForMonth(ct, month){
-  month = String(month||'').slice(0,7);
-  if(ct && ct.prepaySnapshots && ct.prepaySnapshots[month]!=null) return Number(ct.prepaySnapshots[month])||0;
-  return Number(ct && ct.prepay)||0;
-}
 function servicesInReportingMonth(c, ct, month, today){
   const p = reportingPeriod(month, today);
   if(p.empty) return [];
@@ -271,23 +266,25 @@ function isAbonementSpecialMonth(c, ct, month, today){
   const actual = servicesInReportingMonth(c, ct, month, today).reduce((a,s)=>a+(Number(s.price)||0),0);
   return actual < budget;
 }
-/** Обычные денежные оплаты (не зачёт из предоплаты). */
-function cashPaidOf(s){
-  if(!s) return 0;
-  if(s.pay==='full') return Number(s.price)||0;
-  if(s.pay==='part') return Math.min(Number(s.payAmount)||0, Number(s.price)||0);
-  return 0;
+/** Константа фактической предоплаты за месяц (из услуг с зачётом). */
+function monthActualPrepayFromServices(services){
+  let best = 0;
+  (services||[]).forEach(s=>{
+    if(!s || (s.pay!=='full_prepay' && s.pay!=='part_prepay')) return;
+    const v = Number(s.actualPrepay)||0;
+    if(v>best) best = v;
+  });
+  return best;
 }
 /**
  * Отображаемое «Оплачено» за месяц.
- * В спецрежиме абонемента: наличные оплаты + размер внесённой предоплаты за месяц (один раз),
- * а не сумма фактических стоимостей услуг, отмеченных «из предоплаты».
+ * В спецрежиме: фактически внесённая предоплата (константа месяца), ≤ цены абонемента.
  */
 function displayPaidForMonth(ct, month, services, special){
   if(!special) return (services||[]).reduce((a,s)=>a+paidOf(s),0);
-  const cash = (services||[]).reduce((a,s)=>a+cashPaidOf(s),0);
-  const usedPrepay = (services||[]).some(s=>s && (s.pay==='full_prepay'||s.pay==='part_prepay'));
-  return cash + (usedPrepay ? prepayForMonth(ct, month) : 0);
+  const budget = contractPriceForMonth(ct, month);
+  const actual = monthActualPrepayFromServices(services);
+  return Math.min(actual, budget > 0 ? budget : actual);
 }
 function displayContractTotals(c, ct, today){
   today = today || todayISO();
@@ -298,9 +295,7 @@ function displayContractTotals(c, ct, today){
   months.forEach(m=>{
     const monthAll = all.filter(s=>monthKey(s.date)===m);
     const special = isAbonementSpecialMonth(c, ct, m, today);
-    const modeList = servicesInReportingMonth(c, ct, m, today);
-    const paidSrc = special ? modeList : monthAll;
-    paid += displayPaidForMonth(ct, m, paidSrc, special);
+    paid += displayPaidForMonth(ct, m, monthAll, special);
     sum += special ? contractPriceForMonth(ct, m) : monthAll.reduce((a,s)=>a+(Number(s.price)||0),0);
   });
   return {sum, paid, debt:Math.max(0,sum-paid), count:all.length};
@@ -542,9 +537,9 @@ function renderContract(c,ct,presetFilters){
     body=Object.keys(groups).sort().reverse().map(k=>{
       const g=sortServices(groups[k]);
       const special=isAbonementSpecialMonth(c, ct, k, today);
-      const modeList=servicesInReportingMonth(c, ct, k, today);
+      const monthAll=contractServices(c,id).filter(s=>isComplete(s)&&monthKey(s.date)===k);
       const gs=special ? contractPriceForMonth(ct, k) : g.reduce((a,s)=>a+(Number(s.price)||0),0);
-      const gp=displayPaidForMonth(ct, k, special ? modeList : g, special);
+      const gp=displayPaidForMonth(ct, k, monthAll, special);
       return `<h3>${esc(monthTitle(k))}</h3>${renderTable(g, special)}<div class="mtot">За ${esc(monthTitle(k))} года: оказано на ${money(gs)}, оплачено ${money(gp)}, к оплате ${money(Math.max(0,gs-gp))}</div>`;
     }).join('');
   }else{
