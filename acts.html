@@ -1321,11 +1321,12 @@ function makeServicePriceFn(client, ct){
         }
       }
     }
+    const skipTariffDiscount = String(service.code) === '4.3';
     const r = Calculator.calculate(buildCalculatorInput(
       item,
       service.side || 1,
       service.surcharges || [],
-      Number(ct.discount)||0,
+      skipTariffDiscount ? 0 : (Number(ct.discount)||0),
       service.surchargeMeta || {},
       ct,
       service.date,
