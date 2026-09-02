@@ -267,6 +267,27 @@ details summary::-webkit-details-marker{display:none;}
 details summary::before{content:"▸ ";}
 details[open] summary::before{content:"▾ ";}
 .calc-line{font-size:12px;color:#6E3B8C;background:var(--soft);border-radius:8px;padding:8px 10px;margin-bottom:12px;line-height:1.6;overflow-wrap:anywhere;word-break:break-word;}
+.modal .card.comp-wide{max-width:1080px;}
+.comp-mode{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.comp-mode label{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;}
+.comp-mode label.active{border-color:var(--ink);background:var(--soft);}
+.comp-month-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.comp-month-table th,.comp-month-table td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;}
+.comp-month-table th{font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:#6E3B8C;}
+.comp-month-table .num,.comp-svc .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.comp-month-table input{width:110px;max-width:100%;}
+.comp-svc{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+.comp-svc th,.comp-svc td{padding:5px 7px;border-bottom:1px solid var(--line);}
+.comp-svc th{font-size:10.5px;text-transform:uppercase;color:#6E3B8C;}
+.comp-up{color:#b42318;font-weight:700;}
+.comp-down{color:#167c3a;font-weight:700;}
+.comp-same{color:#777;}
+.comp-month{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;}
+.comp-month h3{margin:0 0 6px;font-size:14px;}
+.comp-formula{font-size:12.5px;line-height:1.6;}
+.comp-formula b{font-variant-numeric:tabular-nums;}
+.comp-result-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:8px 0 4px;}
+.comp-result-head .big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
 .toolbar .grow{flex:1;min-width:160px;}
 
@@ -747,6 +768,7 @@ details[open] summary::before{content:"▾ ";}
           <h3 id="ctName" class="contract-title">Договор</h3>
           <div class="contract-toolbar-actions">
             <button type="button" class="btn sm dark" onclick="openPdfDialog()">PDF</button>
+            <button type="button" class="btn sm ghost" onclick="openCompensationDialog()">Компенсация</button>
             <button type="button" class="btn sm" onclick="openServiceForm(currentClientId,currentContractId,null)">+ Услуга</button>
           </div>
         </div>
@@ -1317,6 +1339,55 @@ function makeServicePriceFn(client, ct){
         if(baseR.final > 0){
           item = Object.assign({}, item, { price: Math.round(baseR.final * 0.5) });
         }
+      }
+    }
+    const skipTariffDiscount = String(service.code) === '4.3';
+    const r = Calculator.calculate(buildCalculatorInput(
+      item,
+      service.side || 1,
+      service.surcharges || [],
+      skipTariffDiscount ? 0 : (Number(ct.discount)||0),
+      service.surchargeMeta || {},
+      ct,
+      service.date,
+      contractRemainder
+    ));
+    return {
+      price:Math.round(r.final),
+      basePrice:Number(r.base)||0,
+      discountPrice:Math.round(r.priceWithDiscount),
+      applied:r.applied||[],
+      baseContractCost
+    };
+  };
+}
+function makeCompensationPriceFn(){
+  return function(service, contractRemainder, extra){
+    const ct = extra && extra.contract;
+    if(!ct || !service) return {price:Number(service && service.price)||0};
+    let item = priceItem(service.code);
+    if(!item){
+      const basePrice = Number(service.basePrice != null ? service.basePrice : service.price)||0;
+      const r = (typeof RaleksizCalculator!=='undefined' && RaleksizCalculator.calculateService)
+        ? RaleksizCalculator.calculateService(service, ct, [], contractRemainder)
+        : {price:basePrice, basePrice:basePrice, discountPrice:basePrice, applied:[]};
+      return {
+        price:Math.round(r.price||0),
+        basePrice:Number(r.basePrice)||basePrice,
+        discountPrice:Math.round(r.discountPrice||r.price||0),
+        applied:r.applied||[]
+      };
+    }
+    let baseContractCost = 0;
+    if(String(service.code) === '4.3'){
+      const baseCode = service.baseContractCode || service.baseContractId || '';
+      const baseItem = priceItem(baseCode);
+      if(baseItem){
+        const baseR = Calculator.calculate(buildCalculatorInput(
+          baseItem, service.side || 1, [], Number(ct.discount)||0, {}, ct, service.date, contractRemainder
+        ));
+        baseContractCost = Math.round(baseR.final);
+        if(baseR.final > 0) item = Object.assign({}, item, { price: Math.round(baseR.final * 0.5) });
       }
     }
     const skipTariffDiscount = String(service.code) === '4.3';
@@ -3340,6 +3411,11 @@ function renderContractDetail(c, ct){
   document.getElementById('sentHint').textContent = ct.sent
     ? 'Заполненные услуги зафиксированы: изменения прайса на них не влияют.'
     : 'Поставь отметку после отправки акта — заполненные услуги будут зафиксированы.';
+  if(ct.compensation && ct.compensation.result){
+    const shown = ct.compensation.showInAct ? 'показана заказчику' : 'только в CRM';
+    document.getElementById('sentHint').textContent +=
+      ' Компенсация ' + money(ct.compensation.result.compensation) + ' по п. ' + (ct.compensation.result.clause||'') + ' (' + shown + ').';
+  }
 
   const services = contractServices(c, ct.id);
   const usedCF = DB.customFields.filter(f=>services.some(s=>String(((s.custom||{})[f.id] && typeof (s.custom||{})[f.id]==='object' ? (s.custom||{})[f.id].value : (s.custom||{})[f.id])||'').trim()));
@@ -3494,13 +3570,249 @@ function clientViewHtml(c, ct){
     <div class="muted" style="margin-top:6px">За месяц: ${money(gs)} · оплачено ${money(gp)} · остаток ${money(Math.max(0,gs-gp))}</div>`;
   }).join('')}
   <div class="totals" style="margin-top:16px">${tot('Общая стоимость услуг', money(t.sum))+tot('Оплачено', money(t.paid))+tot('К оплате', money(t.debt))}</div>
-  ${(ct.sentDates||[]).length?`<div class="muted">Даты направления актов: ${ct.sentDates.map(fmtDate).join(', ')}</div>`:''}`;
+  ${(ct.sentDates||[]).length?`<div class="muted">Даты направления актов: ${ct.sentDates.map(fmtDate).join(', ')}</div>`:''}
+  ${ct.compensation && ct.compensation.showInAct ? compensationResultHtml(ct.compensation.result) : ''}`;
 }
 function clientPayPill(s){
   const price = Number(s.price)||0, paid = paidOf(s);
   if(isPayFull(s) || (price>0 && paid>=price)) return '<span class="pill ok">Оплачено</span>';
   if(paid<=0) return '<span class="pill no">Не оплачено</span>';
   return '<span class="pill part">Оплачено ' + money(paid) + '</span>';
+}
+
+/* ====================== КОМПЕНСАЦИЯ 9.3.1 / 10.3.1 ====================== */
+function compensationDeltaClass(delta){
+  const n = Math.round(Number(delta)||0);
+  if(n>0) return 'comp-up';
+  if(n<0) return 'comp-down';
+  return 'comp-same';
+}
+function compensationDeltaText(delta){
+  const n = Math.round(Number(delta)||0);
+  if(n>0) return '+' + money(n);
+  if(n<0) return money(n);
+  return 'без изменения';
+}
+function compensationResultHtml(result){
+  if(!result) return '<div class="muted">Заполни период и платежи — расчёт появится здесь.</div>';
+  const clause = result.clause === '9.3.1'
+    ? 'п. 9.3.1 — изменение условий, из‑за которого падает скидка'
+    : 'п. 10.3.1 — односторонний отказ от договора';
+  const months = (result.months||[]).map(month=>{
+    const t = month.tariff || {};
+    const lever = t.lever === 'prepay'
+      ? `аванс для скидки ${money(t.tariffPrepay)} из договорных ${money(t.agreedPrepay)}`
+      : `бюджет для скидки ${money(t.tariffBudget)} из внесённых ${money(t.paid)}`;
+    const rows = (month.services||[]).map(s=>`<tr>
+      <td>${fmtDate(s.date)}</td>
+      <td>${esc(s.code||'—')}</td>
+      <td>${esc(s.desc||'')}</td>
+      <td class="num">${money(s.actPrice)}</td>
+      <td class="num">${money(s.newPrice)}</td>
+      <td class="num ${compensationDeltaClass(s.delta)}">${compensationDeltaText(s.delta)}</td>
+    </tr>`).join('');
+    return `<section class="comp-month">
+      <h3>${esc(monthTitle(month.month))}</h3>
+      <div class="muted">${lever}. Срок в формуле ${t.term} мес. → тариф ${esc(t.tariff)}, скидка ${t.discountPct}%. Потолок бюджета из договора: ${money(t.agreedBudget)}. Неоплата бюджета: ${money(month.unpaidBudget)}.</div>
+      ${rows?`<table class="comp-svc"><thead><tr><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">В акте</th><th class="num">Как если бы</th><th class="num">Разница</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="muted" style="margin-top:6px">Услуг в этом месяце нет — начисляется только абонентская плата.</div>'}
+      <div class="muted" style="margin-top:8px">Услуги в акте ${money(month.actSum)} → после пересчёта ${money(month.servicesSum)}. Сверх договора ${money(month.overage)}. Абонентка ${money(month.subscriptionDue)} + сверх ${money(month.overage)} = начислено ${money(month.accrued)}. Внесено ${money(month.paid)}.</div>
+    </section>`;
+  }).join('');
+  const tot = result.totals || {};
+  return `<div class="comp-result-head">
+      <div>
+        <div class="muted">${esc(clause)}</div>
+        <div class="comp-formula">Начислено <b>${money(tot.accrued)}</b> = абонентка <b>${money(tot.subscriptionDue)}</b> + сверх бюджета <b>${money(tot.overage)}</b><br>
+        Внесено <b>${money(tot.paid)}</b>. Не закрыто из бюджета <b>${money(tot.unpaidBudget)}</b>. Разрыв <b>${money(result.gap)}</b>.</div>
+      </div>
+      <div class="big">${money(result.compensation)}</div>
+    </div>
+    <div class="muted" style="margin-bottom:8px">Компенсация = max(${money(result.minCompensation)}, начислено − внесено). Цены в акте не меняются — колонка «как если бы» только для проверки.</div>
+    ${months}`;
+}
+function defaultCompensationPaidByMonth(c, ct, months){
+  const services = contractServices(c, ct.id);
+  const paidByMonth = {};
+  months.forEach(month=>{
+    const inMonth = services.filter(s=>monthKey(s.date)===month);
+    const paid = typeof RaleksizCRMCore!=='undefined'
+      ? RaleksizCRMCore.paidForAbonementMonth(inMonth, month)
+      : inMonth.reduce((sum,s)=>sum+paidOf(s),0);
+    const prepayPaid = typeof RaleksizCRMCore!=='undefined'
+      ? RaleksizCRMCore.actualPrepayForMonth(inMonth, month)
+      : 0;
+    paidByMonth[month] = { paid: Math.round(paid), prepayPaid: Math.round(prepayPaid) };
+  });
+  return paidByMonth;
+}
+function readCompensationForm(){
+  const ctx = window.__compCtx;
+  if(!ctx) return null;
+  const mode = document.querySelector('input[name="compMode"]:checked')?.value || 'termination';
+  const startMonth = document.getElementById('compFrom')?.value || '';
+  const endMonth = document.getElementById('compTo')?.value || '';
+  const months = (typeof RaleksizCalculator!=='undefined' && RaleksizCalculator.listMonthKeys)
+    ? RaleksizCalculator.listMonthKeys(startMonth, endMonth)
+    : [];
+  const paidByMonth = {};
+  months.forEach(month=>{
+    paidByMonth[month] = {
+      paid: Number(document.getElementById('compPaid-'+month)?.value)||0,
+      prepayPaid: Number(document.getElementById('compPrepay-'+month)?.value)||0
+    };
+  });
+  return {
+    mode,
+    startMonth,
+    endMonth,
+    actualTerm: Number(document.getElementById('compTerm')?.value)||months.length,
+    proposedBudget: Number(document.getElementById('compNewBudget')?.value)||0,
+    proposedPrepay: Number(document.getElementById('compNewPrepay')?.value)||0,
+    proposedTerm: Number(document.getElementById('compNewTerm')?.value)||0,
+    paidByMonth
+  };
+}
+function runCompensationPreview(){
+  const ctx = window.__compCtx;
+  const box = document.getElementById('compResult');
+  if(!ctx || !box || typeof RaleksizCalculator==='undefined') return;
+  const form = readCompensationForm();
+  if(!form || !form.startMonth || !form.endMonth){
+    box.innerHTML = '<div class="muted">Укажи первый и последний месяц расчёта.</div>';
+    return;
+  }
+  const result = RaleksizCalculator.calculateCompensation({
+    mode: form.mode,
+    contract: ctx.contract,
+    services: ctx.services,
+    startMonth: form.startMonth,
+    endMonth: form.endMonth,
+    actualTerm: form.actualTerm,
+    proposedBudget: form.proposedBudget,
+    proposedPrepay: form.proposedPrepay,
+    proposedTerm: form.proposedTerm,
+    paidByMonth: form.paidByMonth,
+    priceFn: makeCompensationPriceFn()
+  });
+  window.__compCtx.result = result;
+  window.__compCtx.form = form;
+  box.innerHTML = compensationResultHtml(result);
+}
+function renderCompensationPaidRows(){
+  const ctx = window.__compCtx;
+  const wrap = document.getElementById('compPaidBox');
+  if(!ctx || !wrap) return;
+  const startMonth = document.getElementById('compFrom')?.value || '';
+  const endMonth = document.getElementById('compTo')?.value || '';
+  const months = (typeof RaleksizCalculator!=='undefined' && RaleksizCalculator.listMonthKeys)
+    ? RaleksizCalculator.listMonthKeys(startMonth, endMonth)
+    : [];
+  const saved = (ctx.form && ctx.form.paidByMonth) || ctx.paidByMonth || {};
+  wrap.innerHTML = months.length
+    ? `<table class="comp-month-table"><thead><tr><th>Месяц</th><th>Получено всего, ₽</th><th>Из них аванс, ₽</th></tr></thead><tbody>${
+      months.map(month=>{
+        const row = saved[month] || {paid:0, prepayPaid:0};
+        return `<tr>
+          <td>${esc(monthTitle(month))}</td>
+          <td><input type="number" min="0" step="1" id="compPaid-${month}" value="${row.paid||0}" oninput="runCompensationPreview()"></td>
+          <td><input type="number" min="0" step="1" id="compPrepay-${month}" value="${row.prepayPaid||0}" oninput="runCompensationPreview()"></td>
+        </tr>`;
+      }).join('')
+    }</tbody></table>`
+    : '<div class="muted">Нет месяцев в выбранном периоде.</div>';
+  runCompensationPreview();
+}
+function onCompensationModeChange(){
+  const mode = document.querySelector('input[name="compMode"]:checked')?.value || 'termination';
+  document.querySelectorAll('.comp-mode label').forEach(label=>{
+    const input = label.querySelector('input');
+    label.classList.toggle('active', !!(input && input.checked));
+  });
+  document.getElementById('compChangeFields')?.classList.toggle('hidden', mode!=='change');
+  document.getElementById('compTermField')?.classList.toggle('hidden', mode==='change');
+  runCompensationPreview();
+}
+function openCompensationDialog(){
+  const c = getClient(currentClientId);
+  const ct = getContract(c, currentContractId);
+  if(!c || !ct) return;
+  if(typeof RaleksizCalculator==='undefined' || !RaleksizCalculator.calculateCompensation){
+    alert('Модуль расчёта не загружен. Обнови страницу.');
+    return;
+  }
+  const services = contractServices(c, ct.id).filter(s=>s && s.date);
+  const saved = ct.compensation && typeof ct.compensation==='object' ? ct.compensation : null;
+  const range = RaleksizCalculator.inferCompensationRange
+    ? RaleksizCalculator.inferCompensationRange(ct, services, saved && saved.inputs || {})
+    : { startMonth: (ct.basisDate||'').slice(0,7), endMonth: '' };
+  const startMonth = (saved && saved.inputs && saved.inputs.startMonth) || range.startMonth;
+  const endMonth = (saved && saved.inputs && saved.inputs.endMonth) || range.endMonth;
+  const months = RaleksizCalculator.listMonthKeys(startMonth, endMonth);
+  const paidByMonth = (saved && saved.inputs && saved.inputs.paidByMonth) || defaultCompensationPaidByMonth(c, ct, months);
+  const mode = (saved && saved.inputs && saved.inputs.mode) || 'termination';
+  window.__compCtx = {
+    clientId: c.id,
+    contractId: ct.id,
+    contract: ct,
+    services,
+    paidByMonth,
+    form: saved && saved.inputs || null,
+    result: saved && saved.result || null
+  };
+  const shown = !!(saved && saved.showInAct);
+  openModal(`<h1>Компенсация</h1>
+    <div class="muted" style="margin-bottom:10px">Пересчёт «как если бы» по п. 9.3.1 или 10.3.1. Цены уже отправленного акта не меняются. Заказчик видит тот же разбор, если сохранить его в акт.</div>
+    <div class="calc-line">Сейчас в договоре: бюджет ${money(ct.contractPrice)}, аванс ${money(ct.prepay)}, срок ${Number(ct.term)||0} мес., тариф ${esc(ct.tariff||'Base')}, скидка ${Number(ct.discount)||0}%.</div>
+    <div class="comp-mode">
+      <label class="${mode!=='change'?'active':''}"><input type="radio" name="compMode" value="termination" ${mode!=='change'?'checked':''} onchange="onCompensationModeChange()"> Отказ · п. 10.3.1</label>
+      <label class="${mode==='change'?'active':''}"><input type="radio" name="compMode" value="change" ${mode==='change'?'checked':''} onchange="onCompensationModeChange()"> Изменение · п. 9.3.1</label>
+    </div>
+    <div class="grid3">
+      <div class="field"><label>Первый месяц</label><input type="month" id="compFrom" value="${esc(startMonth||'')}" onchange="renderCompensationPaidRows()"></div>
+      <div class="field"><label>Последний месяц</label><input type="month" id="compTo" value="${esc(endMonth||'')}" onchange="renderCompensationPaidRows()"></div>
+      <div class="field" id="compTermField"><label>Фактический срок, мес.</label><input type="number" min="1" step="1" id="compTerm" value="${Number(saved&&saved.inputs&&saved.inputs.actualTerm)||months.length||3}" oninput="runCompensationPreview()"></div>
+    </div>
+    <div id="compChangeFields" class="grid3 ${mode==='change'?'':'hidden'}">
+      <div class="field"><label>Новый бюджет, ₽</label><input type="number" min="0" step="1" id="compNewBudget" value="${Number(saved&&saved.inputs&&saved.inputs.proposedBudget)||Number(ct.contractPrice)||0}" oninput="runCompensationPreview()"></div>
+      <div class="field"><label>Новый аванс, ₽</label><input type="number" min="0" step="1" id="compNewPrepay" value="${Number(saved&&saved.inputs&&saved.inputs.proposedPrepay)||0}" oninput="runCompensationPreview()"></div>
+      <div class="field"><label>Новый срок, мес.</label><input type="number" min="3" step="1" id="compNewTerm" value="${Number(saved&&saved.inputs&&saved.inputs.proposedTerm)||3}" oninput="runCompensationPreview()"></div>
+    </div>
+    <h3 style="margin:16px 0 8px;font-size:15px">Что реально получено</h3>
+    <div class="muted" style="margin-bottom:8px">Цифры подставлены из оплат в CRM. Их можно поправить, если абонентку проводили иначе.</div>
+    <div id="compPaidBox"></div>
+    <h3 style="margin:16px 0 8px;font-size:15px">Проверка расчёта</h3>
+    <div id="compResult"></div>
+    <div class="row" style="margin-top:14px">
+      <button type="button" class="btn ghost" onclick="closeModal()">Закрыть</button>
+      ${shown?'<button type="button" class="btn ghost" onclick="saveCompensation(false)">Убрать с акта заказчика</button>':''}
+      <button type="button" class="btn" onclick="saveCompensation(true)">Показать заказчику</button>
+    </div>`, true, 'comp-wide');
+  renderCompensationPaidRows();
+  onCompensationModeChange();
+}
+function saveCompensation(showInAct){
+  const ctx = window.__compCtx;
+  const c = ctx ? getClient(ctx.clientId) : null;
+  const ct = c ? getContract(c, ctx.contractId) : null;
+  if(!ct){ alert('Договор не найден.'); return; }
+  runCompensationPreview();
+  const result = window.__compCtx && window.__compCtx.result;
+  const form = window.__compCtx && window.__compCtx.form;
+  if(!result || !form){ alert('Сначала получи расчёт.'); return; }
+  ct.compensation = {
+    updatedAt: new Date().toISOString(),
+    showInAct: !!showInAct,
+    inputs: form,
+    result
+  };
+  touchContract(ct);
+  touchClient(c);
+  save({immediate:true});
+  closeModal();
+  renderClientCard();
+  alert(showInAct
+    ? 'Разбор сохранён. Заказчик увидит его на ссылке акта после обновления.'
+    : 'Разбор скрыт с акта заказчика. Расчёт в договоре сохранён.');
 }
 
 /* ====================== PDF ====================== */

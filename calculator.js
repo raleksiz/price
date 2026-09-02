@@ -818,6 +818,241 @@
     return service && service.prepayBalance != null ? n(service.prepayBalance) : null;
   }
 
+  function addMonthKey(month, delta) {
+    month = monthKey(month);
+    var year = Number(month.slice(0, 4));
+    var monthNum = Number(month.slice(5, 7)) + n(delta);
+    var date = new Date(year, monthNum - 1, 1);
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+  }
+
+  function listMonthKeys(fromMonth, toMonth) {
+    var start = monthKey(fromMonth);
+    var end = monthKey(toMonth);
+    if (!start || !end || start > end) return [];
+    var out = [];
+    var current = start;
+    while (current <= end) {
+      out.push(current);
+      current = addMonthKey(current, 1);
+      if (out.length > 120) break;
+    }
+    return out;
+  }
+
+  function inferCompensationRange(contract, services, params) {
+    params = params || {};
+    var first = '';
+    var last = '';
+    (services || []).forEach(function (service) {
+      var month = monthKey(service && service.date);
+      if (!month) return;
+      if (!first || month < first) first = month;
+      if (!last || month > last) last = month;
+    });
+    var start = monthKey(params.startMonth) ||
+      monthKey(contract && contract.basisDate) ||
+      monthKey(contract && contract.createdAt) ||
+      first;
+    var end = monthKey(params.endMonth) || last || start;
+    return { startMonth: start, endMonth: end };
+  }
+
+  function resolveCompensationTariff(input) {
+    input = input || {};
+    var mode = text(input.mode) === 'change' ? 'change' : 'termination';
+    var contract = input.contract || {};
+    var month = monthKey(input.month);
+    var agreedBudget = mode === 'change'
+      ? Math.max(0, n(input.proposedBudget))
+      : getMonthBudget(contract, month);
+    var agreedPrepay = mode === 'change'
+      ? Math.max(0, n(input.proposedPrepay))
+      : getMonthPrepay(contract, month);
+    var term = mode === 'change'
+      ? Math.max(0, n(input.proposedTerm))
+      : Math.max(0, n(input.actualTerm));
+    var paid = Math.max(0, n(input.paid));
+    var prepayPaid = Math.max(0, n(input.prepayPaid));
+    var lever = agreedPrepay > 0 ? 'prepay' : 'budget';
+    var tariffBudget = lever === 'prepay' ? agreedBudget : Math.min(paid, agreedBudget);
+    var tariffPrepay = lever === 'prepay' ? prepayPaid : 0;
+    var computed = getContractTariff(tariffBudget, tariffPrepay, term);
+    var discountPct = Number((computed.discount * 100).toFixed(1));
+    return {
+      mode: mode,
+      month: month,
+      agreedBudget: agreedBudget,
+      agreedPrepay: agreedPrepay,
+      tariffBudget: tariffBudget,
+      tariffPrepay: tariffPrepay,
+      term: term,
+      lever: lever,
+      tariff: computed.tariff,
+      discount: computed.discount,
+      discountPct: discountPct,
+      status: computed.status,
+      paid: paid,
+      prepayPaid: prepayPaid,
+      unpaidBudget: Math.max(0, round(agreedBudget - Math.min(paid, agreedBudget)))
+    };
+  }
+
+  function calculateCompensation(params) {
+    params = params || {};
+    var contract = params.contract || {};
+    var services = (params.services || []).filter(function (service) {
+      return service && monthKey(service.date);
+    });
+    var mode = text(params.mode) === 'change' ? 'change' : 'termination';
+    var minCompensation = params.minCompensation == null ? 5000 : Math.max(0, n(params.minCompensation));
+    var range = inferCompensationRange(contract, services, params);
+    var months = listMonthKeys(range.startMonth, range.endMonth);
+    var actualTerm = n(params.actualTerm) || months.length;
+    var paidByMonth = params.paidByMonth || {};
+    var proposedBudget = n(params.proposedBudget);
+    var proposedPrepay = n(params.proposedPrepay);
+    var proposedTerm = n(params.proposedTerm);
+
+    var monthResults = months.map(function (month) {
+      var paidInfo = paidByMonth[month] || {};
+      var tariff = resolveCompensationTariff({
+        mode: mode,
+        contract: contract,
+        month: month,
+        paid: paidInfo.paid,
+        prepayPaid: paidInfo.prepayPaid,
+        proposedBudget: proposedBudget,
+        proposedPrepay: proposedPrepay,
+        proposedTerm: proposedTerm,
+        actualTerm: actualTerm
+      });
+      var hypo = {
+        id: contract.id,
+        status: 'Абонемент',
+        tariff: tariff.tariff,
+        discount: tariff.discountPct,
+        contractPrice: tariff.agreedBudget,
+        prepay: tariff.agreedPrepay,
+        offerCats: contract.offerCats || [],
+        contractPriceSnapshots: {}
+      };
+      hypo.contractPriceSnapshots[month] = tariff.agreedBudget;
+
+      var copies = services.filter(function (service) {
+        return monthKey(service.date) === month;
+      }).map(function (service) {
+        return {
+          id: service.id,
+          date: service.date,
+          createdAt: service.createdAt,
+          code: service.code,
+          desc: service.desc,
+          catKey: service.catKey,
+          side: service.side,
+          basePrice: service.basePrice != null ? service.basePrice : service.price,
+          price: service.price,
+          surcharges: service.surcharges,
+          surchargeMeta: service.surchargeMeta,
+          baseContractCode: service.baseContractCode,
+          baseContractPrice: service.baseContractPrice,
+          actPrice: n(service.price)
+        };
+      });
+
+      var priceFn = typeof params.priceFn === 'function'
+        ? function (service, remainder, context) {
+          return params.priceFn(service, remainder, {
+            month: month,
+            contract: hypo,
+            tariff: tariff,
+            context: context
+          });
+        }
+        : function (service, remainder) {
+          var calculated = calculateService(service, hypo, params.surchargeDefinitions || [], remainder);
+          return calculated;
+        };
+
+      var history = copies.length ? calculateMonthHistory(copies, hypo, priceFn) : { services: [] };
+      var rows = history.services.map(function (entry) {
+        var actPrice = n(entry.service.actPrice);
+        var newPrice = round(entry.price);
+        var discount = entry.result && entry.result.discount ? entry.result.discount : {};
+        return {
+          id: entry.service.id,
+          date: entry.service.date,
+          code: entry.service.code,
+          desc: entry.service.desc,
+          actPrice: actPrice,
+          newPrice: newPrice,
+          delta: round(newPrice - actPrice),
+          remainder: round(entry.contractRemainder),
+          discountApplied: !!discount.applied,
+          discountReason: text(discount.reason),
+          applied: entry.result.applied || []
+        };
+      });
+      var servicesSum = rows.reduce(function (sum, row) { return round(sum + row.newPrice); }, 0);
+      var actSum = rows.reduce(function (sum, row) { return round(sum + row.actPrice); }, 0);
+      var overage = Math.max(0, round(servicesSum - tariff.agreedBudget));
+      var subscriptionDue = tariff.agreedBudget;
+      return {
+        month: month,
+        tariff: tariff,
+        services: rows,
+        actSum: actSum,
+        servicesSum: servicesSum,
+        overage: overage,
+        subscriptionDue: subscriptionDue,
+        paid: tariff.paid,
+        prepayPaid: tariff.prepayPaid,
+        unpaidBudget: tariff.unpaidBudget,
+        accrued: round(subscriptionDue + overage)
+      };
+    });
+
+    var totals = monthResults.reduce(function (acc, month) {
+      acc.subscriptionDue = round(acc.subscriptionDue + month.subscriptionDue);
+      acc.overage = round(acc.overage + month.overage);
+      acc.paid = round(acc.paid + month.paid);
+      acc.unpaidBudget = round(acc.unpaidBudget + month.unpaidBudget);
+      acc.accrued = round(acc.accrued + month.accrued);
+      acc.actSum = round(acc.actSum + month.actSum);
+      acc.servicesSum = round(acc.servicesSum + month.servicesSum);
+      return acc;
+    }, {
+      subscriptionDue: 0,
+      overage: 0,
+      paid: 0,
+      unpaidBudget: 0,
+      accrued: 0,
+      actSum: 0,
+      servicesSum: 0
+    });
+    var gap = round(totals.accrued - totals.paid);
+    return {
+      mode: mode,
+      clause: mode === 'change' ? '9.3.1' : '10.3.1',
+      startMonth: range.startMonth,
+      endMonth: range.endMonth,
+      actualTerm: actualTerm,
+      proposedBudget: proposedBudget,
+      proposedPrepay: proposedPrepay,
+      proposedTerm: proposedTerm,
+      months: monthResults,
+      totals: totals,
+      gap: gap,
+      minCompensation: minCompensation,
+      compensation: Math.max(minCompensation, gap),
+      formula: {
+        accrued: 'абонентская плата по договору + доплата сверх договорного бюджета',
+        paid: 'фактически внесённые платежи',
+        compensation: 'max(' + minCompensation + ', начислено − оплачено)'
+      }
+    };
+  }
+
   var Calculator = {
     calculate: calculateInput,
     getStage1Price: getStage1Price,
@@ -832,7 +1067,11 @@
     round: round,
     formatAppliedComment: formatAppliedComment,
     formatAppliedLabel: formatAppliedLabel,
-    formatAppliedList: formatAppliedList
+    formatAppliedList: formatAppliedList,
+    listMonthKeys: listMonthKeys,
+    inferCompensationRange: inferCompensationRange,
+    resolveCompensationTariff: resolveCompensationTariff,
+    calculateCompensation: calculateCompensation
   };
 
   global.Calculator = Calculator;
@@ -861,7 +1100,11 @@
     round: round,
     formatAppliedComment: formatAppliedComment,
     formatAppliedLabel: formatAppliedLabel,
-    formatAppliedList: formatAppliedList
+    formatAppliedList: formatAppliedList,
+    listMonthKeys: listMonthKeys,
+    inferCompensationRange: inferCompensationRange,
+    resolveCompensationTariff: resolveCompensationTariff,
+    calculateCompensation: calculateCompensation
   };
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = { Calculator: Calculator, RaleksizCalculator: global.RaleksizCalculator };
