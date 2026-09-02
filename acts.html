@@ -1571,6 +1571,9 @@ function sortServices(list){
 async function init(){
   try{
     DB = await loadDB();
+    if(refreshAbonementDiscountsFromTariffs(DB)){
+      window.__needsCloudPush = true;
+    }
     if(window.__needsCloudPush){
       window.__needsCloudPush = false;
       await save({immediate:true});
@@ -1824,23 +1827,51 @@ function parseRuDate(value){
   const parsed = typeof RaleksizCRMCore!=='undefined' ? RaleksizCRMCore.parseDateParts(value) : null;
   return parsed ? parsed.iso : '';
 }
-function getAutoContractParams(){
-  const price = Number(document.getElementById('ctContractPrice')?.value || 0);
-  const prepay = Number(document.getElementById('clPrepay')?.value || 0);
-  const term = Number(document.getElementById('ctTerm')?.value || 0);
-
+function abonementParamsFromValues(price, prepay, term){
+  price = Number(price)||0;
+  prepay = Number(prepay)||0;
+  term = Number(term)||0;
   if (!(price > 0) || term < 3){
     return { status: 'Разовая услуга', tariff: 'Base', discount: 0 };
   }
-
   const result = window.RaleksizCalculator
-  ? window.RaleksizCalculator.calcDiscount(price, prepay, term)
-  : { tariff: 'Base', discount: 0 };
+    ? window.RaleksizCalculator.calcDiscount(price, prepay, term)
+    : { tariff: 'Base', discount: 0 };
   return {
     status: 'Абонемент',
     tariff: result.tariff,
     discount: Number((result.discount * 100).toFixed(1))
   };
+}
+function getAutoContractParams(){
+  return abonementParamsFromValues(
+    document.getElementById('ctContractPrice')?.value,
+    document.getElementById('clPrepay')?.value,
+    document.getElementById('ctTerm')?.value
+  );
+}
+function refreshAbonementDiscountsFromTariffs(db){
+  if(!db || typeof RaleksizCalculator==='undefined') return false;
+  let changed = false;
+  (db.clients||[]).forEach(client => {
+    (client.contracts||[]).forEach(ct => {
+      const basis = ct.basisType || 'contract';
+      if(basis !== 'contract' && basis !== 'addendum') return;
+      const auto = abonementParamsFromValues(ct.contractPrice, ct.prepay, ct.term);
+      if(
+        ct.status === auto.status &&
+        ct.tariff === auto.tariff &&
+        Number(ct.discount) === auto.discount
+      ) return;
+      ct.status = auto.status;
+      ct.tariff = auto.tariff;
+      ct.discount = auto.discount;
+      ct.updatedAt = new Date().toISOString();
+      changed = true;
+      recalculateContractServices(client, ct.id);
+    });
+  });
+  return changed;
 }
 
 function refreshAutoContractParams(){
