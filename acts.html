@@ -1842,20 +1842,21 @@ function parseRuDate(value){
   return parsed ? parsed.iso : '';
 }
 function abonementParamsFromValues(price, prepay, term){
+  if (window.RaleksizCalculator && typeof RaleksizCalculator.getContractTariff === 'function'){
+    const result = RaleksizCalculator.getContractTariff(price, prepay, term);
+    return {
+      status: result.status,
+      tariff: result.tariff,
+      discount: Number((result.discount * 100).toFixed(1))
+    };
+  }
   price = Number(price)||0;
   prepay = Number(prepay)||0;
   term = Number(term)||0;
-  if (price < 25000 || term < 3){
+  if (!(price > 0) || term < 3){
     return { status: 'Разовая услуга', tariff: 'Base', discount: 0 };
   }
-  const result = window.RaleksizCalculator
-    ? window.RaleksizCalculator.calcDiscount(price, prepay, term)
-    : { tariff: 'Base', discount: 0 };
-  return {
-    status: 'Абонемент',
-    tariff: result.tariff,
-    discount: Number((result.discount * 100).toFixed(1))
-  };
+  return { status: 'Абонемент', tariff: 'Base', discount: 0 };
 }
 function getAutoContractParams(){
   return abonementParamsFromValues(

@@ -766,11 +766,13 @@ function recompute(){
   const budget = rawNumber(document.getElementById('inBudget'));
   const prepay = rawNumber(document.getElementById('inPrepay'));
   const term = rawNumber(document.getElementById('inTerm'));
-  const isAbon = term >= 3 && budget >= 25000;
+  const tariffInfo = RaleksizCalculator.getContractTariff(budget, prepay, term);
+  const isAbon = tariffInfo.status === 'Абонемент';
   document.getElementById('lblBudget').textContent = isAbon ? 'Бюджет, мес.' : 'Бюджет, ₽';
   document.getElementById('lblPrepay').textContent = isAbon ? 'Аванс, мес.' : 'Предоплата, ₽';
 
-  const { tariff, discount } = calcDiscount(budget, prepay, term);
+  const tariff = tariffInfo.tariff;
+  const discount = tariffInfo.discount;
   const shownTariff = isAbon ? tariff : '—';
   const shownDiscount = isAbon ? discount : 0;
 

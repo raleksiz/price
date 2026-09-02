@@ -24,7 +24,7 @@
   var tariffParams = {
     minTerm: 3,
     maxTerm: 12,
-    minAbonementBudget: 25000,
+    minAbonementBudget: 0,
     weightBudget: 0.29,
     weightPrepay: 0.34,
     weightTerm: 0.37,
@@ -66,7 +66,7 @@
 
   function getContractTariff(budget, prepay, term) {
     var result = calcDiscount(budget, prepay, term);
-    var isAbonement = n(term) >= tariffParams.minTerm && n(budget) >= tariffParams.minAbonementBudget;
+    var isAbonement = n(term) >= tariffParams.minTerm && n(budget) > tariffParams.minAbonementBudget;
     if (!isAbonement) return { tariff: 'Base', discount: 0, status: 'Разовая услуга' };
     return {
       tariff: result.tariff,
