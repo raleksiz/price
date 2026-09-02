@@ -783,7 +783,7 @@ details[open] summary::before{content:"▾ ";}
 /* ====================== КОНСТАНТЫ ====================== */
 const PWD_HASH   = 'a8bf963cb177fcca6256c8c3bba7bcc9888f77eb0315ecd56895d957cb06974b';
 const SESSION_KEY= 'raleksiz_acts_session';
-const SESSION_TTL= 8*60*60*1000;
+const SESSION_TTL= 7*24*60*60*1000;
 const TOKEN_KEY  = 'raleksiz_gh_token';
 const DB_KEY     = 'raleksiz_acts_db';
 const SHA_KEY    = 'raleksiz_acts_sha';
@@ -1154,7 +1154,9 @@ async function pushPriceCatalog(retry){
 }
 async function loadOffers(){
   const localKey = 'raleksiz_sent_offers';
-  const mergeOffers = (local, remote)=>RaleksizCRMCore.mergeOffers(local, remote, {includeDeleted:true});
+  const mergeOffers = (local, remote)=>typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.mergeOffers
+    ? RaleksizCRMCore.mergeOffers(local, remote, {includeDeleted:true})
+    : (Array.isArray(local) && local.length ? local : (remote||[])).filter(o=>!o.deletedAt);
   try{
     let local = [];
     try{ local = JSON.parse(localStorage.getItem(localKey)||'[]'); }catch(e){}
@@ -1569,19 +1571,24 @@ function sortServices(list){
 
 /* ====================== ИНИЦИАЛИЗАЦИЯ И ВИДЫ ====================== */
 async function init(){
-  DB = await loadDB();
-  if(window.__needsCloudPush){
-    window.__needsCloudPush = false;
-    await save({immediate:true});
-  }
-  await loadOffers();
-  restoreNav();
-  renderAllViews();
-  setView(currentView, currentClientId, true);
-  bindSwipeNav();
-  if(!window.__actsHashBound){
-    window.__actsHashBound = true;
-    window.addEventListener('hashchange', onHashChange);
+  try{
+    DB = await loadDB();
+    if(window.__needsCloudPush){
+      window.__needsCloudPush = false;
+      await save({immediate:true});
+    }
+    await loadOffers();
+    restoreNav();
+    renderAllViews();
+    setView(currentView, currentClientId, true);
+    bindSwipeNav();
+    if(!window.__actsHashBound){
+      window.__actsHashBound = true;
+      window.addEventListener('hashchange', onHashChange);
+    }
+  }catch(e){
+    console.error(e);
+    setSync('Ошибка загрузки: '+(e && e.message ? e.message : e), true);
   }
 }
 function clientNavUrl(clientId, contractId){
