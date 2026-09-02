@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-20T20:45:07.352Z",
+  "updated": "2026-09-02T17:35:19.451Z",
   "priceList": [
     {
       "code": "1.1",
@@ -14,7 +14,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "1.2",
@@ -29,7 +30,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "1.3",
@@ -44,7 +46,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "1.4",
@@ -59,7 +62,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "1.5",
@@ -74,7 +78,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "1.6",
@@ -89,7 +94,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "2.1",
@@ -104,7 +110,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "2.2",
@@ -119,7 +126,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.1",
@@ -134,7 +142,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.2",
@@ -149,7 +158,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.3",
@@ -164,7 +174,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.4",
@@ -179,7 +190,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.5",
@@ -194,7 +206,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.6",
@@ -209,7 +222,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.7",
@@ -224,7 +238,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.8",
@@ -239,7 +254,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.9",
@@ -254,7 +270,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.10",
@@ -269,7 +286,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.11",
@@ -284,7 +302,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.12",
@@ -299,7 +318,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.13",
@@ -314,7 +334,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.14",
@@ -329,7 +350,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.15",
@@ -344,7 +366,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.16",
@@ -359,7 +382,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "3.17",
@@ -374,7 +398,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "4.1",
@@ -389,7 +414,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "4.2",
@@ -404,7 +430,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "4.3",
@@ -419,7 +446,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": "50% от баз. цены аналогичного договора"
+      "formula": "50% от баз. цены аналогичного договора",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "5.1",
@@ -434,7 +462,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "5.2",
@@ -449,7 +478,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "5.3",
@@ -464,7 +494,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "5.4",
@@ -479,7 +510,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "6.1",
@@ -494,7 +526,8 @@
       "label1": "Продавец, ₽",
       "label2": "Покупатель, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "6.2",
@@ -509,7 +542,8 @@
       "label1": "Продавец, ₽",
       "label2": "Покупатель, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "6.3",
@@ -524,7 +558,8 @@
       "label1": "Продавец, ₽",
       "label2": "Покупатель, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "6.4",
@@ -539,7 +574,8 @@
       "label1": "Продавец, ₽",
       "label2": "Покупатель, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "6.5",
@@ -554,7 +590,8 @@
       "label1": "Продавец, ₽",
       "label2": "Покупатель, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "6.6",
@@ -569,7 +606,8 @@
       "label1": "Продавец, ₽",
       "label2": "Покупатель, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "6.7",
@@ -584,7 +622,8 @@
       "label1": "Продавец, ₽",
       "label2": "Покупатель, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.1",
@@ -599,7 +638,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.2",
@@ -614,7 +654,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.3",
@@ -629,7 +670,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.4",
@@ -644,7 +686,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.5",
@@ -659,7 +702,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.6",
@@ -674,7 +718,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.7",
@@ -689,7 +734,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.8",
@@ -704,7 +750,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.9",
@@ -719,7 +766,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.10",
@@ -734,7 +782,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.11",
@@ -749,7 +798,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.12",
@@ -764,7 +814,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "7.13",
@@ -779,7 +830,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "8.1",
@@ -794,7 +846,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "8.2",
@@ -809,7 +862,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "8.3",
@@ -824,7 +878,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "8.4",
@@ -839,7 +894,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "До 3 раундов, телефон/мессенджер",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "9.1",
@@ -854,7 +910,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "9.2",
@@ -869,7 +926,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "10.1",
@@ -884,7 +942,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "При заказе претензии стоимость может быть снижена на 1/2 её фактической стоимости",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "10.2",
@@ -899,7 +958,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "Обжалование процессуальных действий суда и неитоговых судебных актов",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "10.3",
@@ -914,7 +974,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "10.4",
@@ -929,7 +990,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "10.5",
@@ -944,7 +1006,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "Нормативно обоснованная позиция на документ участника дела",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "10.6",
@@ -959,7 +1022,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "11.1",
@@ -974,7 +1038,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "11.2",
@@ -989,7 +1054,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "11.3",
@@ -1004,7 +1070,8 @@
       "label1": "Цена, ₽",
       "label2": "",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "12.1",
@@ -1019,7 +1086,8 @@
       "label1": "Истец, ₽",
       "label2": "Ответчик, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "12.2",
@@ -1034,7 +1102,8 @@
       "label1": "Истец, ₽",
       "label2": "Ответчик, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "12.3",
@@ -1049,7 +1118,8 @@
       "label1": "Истец, ₽",
       "label2": "Ответчик, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "12.4",
@@ -1064,7 +1134,8 @@
       "label1": "Истец, ₽",
       "label2": "Ответчик, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "12.5",
@@ -1079,7 +1150,8 @@
       "label1": "Истец, ₽",
       "label2": "Ответчик, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "12.6",
@@ -1094,7 +1166,8 @@
       "label1": "Истец, ₽",
       "label2": "Ответчик, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     },
     {
       "code": "12.7",
@@ -1109,7 +1182,8 @@
       "label1": "Истец, ₽",
       "label2": "Ответчик, ₽",
       "note": "",
-      "formula": ""
+      "formula": "",
+      "updatedAt": "2026-09-02T16:04:54.261Z"
     }
   ],
   "surcharges": {
@@ -1119,28 +1193,32 @@
         "amount": "+50%",
         "type": "pct",
         "value": 0.5,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Нерабочие дни и после 19:00 по Мск",
         "amount": "×1,7",
         "type": "mult",
         "value": 1.7,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Выезд для консультирования (Мск и МО)",
         "amount": "+10 000 ₽",
         "type": "fix",
         "value": 10000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждый выезд за пределы Мск и МО",
         "amount": "+10 000 ₽ и фактические расходы",
         "type": "fix",
         "value": 10000,
-        "extra": true
+        "extra": true,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       }
     ],
     "contracts": [
@@ -1149,49 +1227,56 @@
         "amount": "+4 000 ₽ / 10 стр.",
         "type": "fix",
         "value": 4000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Рамочный договор",
         "amount": "+3 000 ₽",
         "type": "fix",
         "value": 3000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждая итерация согласования, начиная со второй",
         "amount": "+3 000 ₽",
         "type": "fix",
         "value": 3000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждая самостоятельная сторона сверх двух",
         "amount": "+50% за сторону",
         "type": "pct",
         "value": 0.5,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Смешанный предмет договора",
         "amount": "+50% базовой цены",
         "type": "pct",
         "value": 0.5,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Внедрение Legal Design с переосмыслением архитектуры договора (паспорт сделки, таймлайн и пр.)",
         "amount": "×2,5 базовой цены",
         "type": "mult",
         "value": 2.5,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Нерабочие дни и после 19:00 по Мск",
         "amount": "×1,7",
         "type": "mult",
         "value": 1.7,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       }
     ],
     "realestate": [
@@ -1200,7 +1285,8 @@
         "amount": "+15 000 ₽",
         "type": "fix",
         "value": 15000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Многосторонняя сделка (3 и более участников): каждое физическое лицо сверх двух",
@@ -1208,7 +1294,7 @@
         "type": "fix",
         "value": 5000,
         "extra": false,
-        "group": "cheapest_realestate"
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Многосторонняя сделка (3 и более участников): каждое юридическое лицо сверх двух",
@@ -1216,7 +1302,7 @@
         "type": "fix",
         "value": 15000,
         "extra": false,
-        "group": "cheapest_realestate"
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Добровольное нотариальное удостоверение",
@@ -1224,7 +1310,7 @@
         "type": "fix",
         "value": 10000,
         "extra": false,
-        "group": "cheapest_realestate"
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждый дополнительный критерий нестандартности сделки",
@@ -1232,42 +1318,47 @@
         "type": "fix",
         "value": 10000,
         "extra": false,
-        "groupOverflowTarget": "нестандартность"
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждый выезд сверх согласованного лимита",
         "amount": "+5 000 ₽",
         "type": "fix",
         "value": 5000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждый выезд за пределы Мск и МО",
         "amount": "+5 000 ₽ и фактические расходы",
         "type": "fix",
         "value": 5000,
-        "extra": true
+        "extra": true,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Без правового заключения по сделке",
         "amount": "−10 000 ₽",
         "type": "fix",
         "value": -10000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждый выезд по Мск и МО менее трёх",
         "amount": "−5 000 ₽",
         "type": "fix",
         "value": -5000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Скидка не в Мск или МО",
         "amount": "−10 000 ₽",
         "type": "fix",
         "value": -10000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       }
     ],
     "corporate": [
@@ -1276,42 +1367,48 @@
         "amount": "+10 000 ₽",
         "type": "fix",
         "value": 10000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Два и более изменения в одном Р13014: каждое следующее",
         "amount": "+5 000 ₽",
         "type": "fix",
         "value": 5000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Устав с нестандартными положениями (особый порядок управления и т.п.)",
         "amount": "+25 000 ₽",
         "type": "fix",
         "value": 25000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Уведомление банков, контрагентов, госорганов (за пределами ФНС)",
         "amount": "+5 000 ₽",
         "type": "fix",
         "value": 5000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждый дополнительный выезд (курьер, нотариус, ФНС)",
         "amount": "+5 000 ₽",
         "type": "fix",
         "value": 5000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Нотариальное удостоверение заявления",
         "amount": "+10 000 ₽",
         "type": "fix",
         "value": 10000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       }
     ],
     "pretrial": [
@@ -1320,28 +1417,32 @@
         "amount": "−3 000 ₽",
         "type": "fix",
         "value": -3000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Встреча для обсуждения (Мск и МО)",
         "amount": "+10 000 ₽",
         "type": "fix",
         "value": 10000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Нерабочие дни и после 19:00 по Мск",
         "amount": "×1,7",
         "type": "mult",
         "value": 1.7,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждый выезд за пределы Мск и МО",
         "amount": "+10 000 ₽ и фактические расходы",
         "type": "fix",
         "value": 10000,
-        "extra": true
+        "extra": true,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       }
     ],
     "litigation_single": [
@@ -1350,28 +1451,32 @@
         "amount": "+2 800 ₽",
         "type": "fix",
         "value": 2800,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждый выезд за пределы Мск и МО",
         "amount": "+10 000 ₽ и фактические расходы",
         "type": "fix",
         "value": 10000,
-        "extra": true
+        "extra": true,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Представительство ответчика",
         "amount": "×1,2",
         "type": "mult",
         "value": 1.2,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Представительство третьего лица",
         "amount": "−20%",
         "type": "pct",
         "value": -0.2,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       }
     ],
     "full_repr": [
@@ -1380,49 +1485,56 @@
         "amount": "+12 000 ₽",
         "type": "fix",
         "value": 12000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Представительство должника в деле о банкротстве",
         "amount": "×1,5",
         "type": "mult",
         "value": 1.5,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Упрощённый порядок (до вступления в законную силу)",
         "amount": "−30%",
         "type": "pct",
         "value": -0.3,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждое дополнительное заседание сверх лимита",
         "amount": "+10 000 ₽",
         "type": "fix",
         "value": 10000,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Каждый выезд за пределы Мск и МО",
         "amount": "+10 000 ₽ и фактические расходы",
         "type": "fix",
         "value": 10000,
-        "extra": true
+        "extra": true,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Сопровождение на стороне третьего лица",
         "amount": "−40%",
         "type": "pct",
         "value": -0.4,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       },
       {
         "name": "Зачёт при заказе претензии",
         "amount": "стоимость 1-й инстанции может быть снижена на 50% стоимости претензии",
         "type": "manual",
         "value": 0,
-        "extra": false
+        "extra": false,
+        "updatedAt": "2026-09-02T16:04:54.261Z"
       }
     ]
   }
