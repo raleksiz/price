@@ -22,6 +22,64 @@
     return new Date(ms || 0).toISOString();
   }
   function monthKey(value) { return text(value).slice(0, 7); }
+  function calendarISO(value) {
+    var raw = text(value);
+    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+    var date = value ? new Date(value) : new Date();
+    if (!Number.isFinite(date.getTime())) date = new Date();
+    return date.getFullYear() + '-' +
+      String(date.getMonth() + 1).padStart(2, '0') + '-' +
+      String(date.getDate()).padStart(2, '0');
+  }
+  function monthLastISO(month) {
+    month = monthKey(month);
+    var year = Number(month.slice(0, 4));
+    var monthNum = Number(month.slice(5, 7));
+    var last = new Date(year, monthNum, 0).getDate();
+    return month + '-' + String(last).padStart(2, '0');
+  }
+  function monthEndStamp(month) {
+    return monthLastISO(month) + 'T23:59:59.000';
+  }
+  function ensureSnapshotMaps(contract) {
+    if (!contract) return contract;
+    contract.prepaySnapshots = contract.prepaySnapshots && typeof contract.prepaySnapshots === 'object'
+      ? contract.prepaySnapshots : {};
+    contract.contractPriceSnapshots = contract.contractPriceSnapshots &&
+      typeof contract.contractPriceSnapshots === 'object' ? contract.contractPriceSnapshots : {};
+    contract.prepaySnapshotUpdatedAt = contract.prepaySnapshotUpdatedAt &&
+      typeof contract.prepaySnapshotUpdatedAt === 'object' ? contract.prepaySnapshotUpdatedAt : {};
+    contract.contractPriceSnapshotUpdatedAt = contract.contractPriceSnapshotUpdatedAt &&
+      typeof contract.contractPriceSnapshotUpdatedAt === 'object' ? contract.contractPriceSnapshotUpdatedAt : {};
+    return contract;
+  }
+  function syncContractMonthSnapshots(contract, options) {
+    if (!contract) return contract;
+    options = options || {};
+    ensureSnapshotMaps(contract);
+    var currentMonth = monthKey(calendarISO(options.today));
+    var stamp = monthEndStamp(currentMonth);
+    contract.prepaySnapshots[currentMonth] = Math.max(0, n(contract.prepay));
+    contract.prepaySnapshotUpdatedAt[currentMonth] = stamp;
+    contract.contractPriceSnapshots[currentMonth] = Math.max(0, n(contract.contractPrice));
+    contract.contractPriceSnapshotUpdatedAt[currentMonth] = stamp;
+    return contract;
+  }
+  function seedCurrentMonthSnapshot(contract, options) {
+    if (!contract) return contract;
+    options = options || {};
+    ensureSnapshotMaps(contract);
+    var currentMonth = monthKey(calendarISO(options.today));
+    if (contract.prepaySnapshots[currentMonth] == null) {
+      contract.prepaySnapshots[currentMonth] = Math.max(0, n(contract.prepay));
+      contract.prepaySnapshotUpdatedAt[currentMonth] = monthEndStamp(currentMonth);
+    }
+    if (contract.contractPriceSnapshots[currentMonth] == null) {
+      contract.contractPriceSnapshots[currentMonth] = Math.max(0, n(contract.contractPrice));
+      contract.contractPriceSnapshotUpdatedAt[currentMonth] = monthEndStamp(currentMonth);
+    }
+    return contract;
+  }
   function entityTimestamp(entity, fallback) {
     return timestamp(entity && (entity.updatedAt || entity.createdAt)) || timestamp(fallback);
   }
@@ -551,6 +609,9 @@
     actualPrepayForMonth: actualPrepayForMonth,
     paidForAbonementMonth: paidForAbonementMonth,
     recalculateContractPayments: recalculateContractPayments,
+    monthLastISO: monthLastISO,
+    syncContractMonthSnapshots: syncContractMonthSnapshots,
+    seedCurrentMonthSnapshot: seedCurrentMonthSnapshot,
     ensureSyncMeta: ensureSyncMeta,
     markDeleted: markDeleted,
     migrateDB: migrateDB,

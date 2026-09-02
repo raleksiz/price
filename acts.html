@@ -939,10 +939,9 @@ function normalizeDB(db){
       c.services.forEach(s=>{ if(!s.contractId) s.contractId = firstContractId; });
       c.contracts[0].prepaySnapshots = {};
       c.contracts[0].contractPriceSnapshots = {};
-      [...new Set(c.services.filter(s=>s.contractId===firstContractId && s.date).map(s=>String(s.date).slice(0,7)))].forEach(m=>{
-        c.contracts[0].prepaySnapshots[m]=Number(c.contracts[0].prepay)||0;
-        c.contracts[0].contractPriceSnapshots[m]=Number(c.contracts[0].contractPrice)||0;
-      });
+      if(typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.syncContractMonthSnapshots){
+        RaleksizCRMCore.syncContractMonthSnapshots(c.contracts[0], { today: todayISO() });
+      }
       delete c.status; delete c.tariff; delete c.discount; delete c.prepay;
       delete c.basisType; delete c.basisDoc; delete c.basisDate; delete c.basisUrl; delete c.offerId; delete c.contractPrice; delete c.offerExpiry; delete c.offerCats; delete c.actMode;
     } else {
@@ -970,11 +969,9 @@ function normalizeDB(db){
         ct.offerDate = ct.offerDate || '';
         ct.prepaySnapshots = ct.prepaySnapshots && typeof ct.prepaySnapshots==='object' ? ct.prepaySnapshots : {};
         ct.contractPriceSnapshots = ct.contractPriceSnapshots && typeof ct.contractPriceSnapshots==='object' ? ct.contractPriceSnapshots : {};
-        const months = c.services.filter(s=>s.contractId===ct.id && s.date).map(s=>String(s.date).slice(0,7));
-        [...new Set(months)].forEach(m=>{
-          if(ct.prepaySnapshots[m]==null) ct.prepaySnapshots[m]=Number(ct.prepay)||0;
-          if(ct.contractPriceSnapshots[m]==null) ct.contractPriceSnapshots[m]=Number(ct.contractPrice)||0;
-        });
+        if(typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.seedCurrentMonthSnapshot){
+          RaleksizCRMCore.seedCurrentMonthSnapshot(ct, { today: todayISO() });
+        }
       });
       const fallbackId = c.contracts[0] ? c.contracts[0].id : null;
       c.services.forEach(s=>{ if(!s.contractId && fallbackId) s.contractId = fallbackId; });
@@ -1256,7 +1253,7 @@ function buildCalculatorInput(item, side, surKeys, discount, surMeta, ct, date, 
 }
 function calcPrice(code, side, surKeys, discount, surMeta){
   const item = priceItem(code);
-  if(!item || typeof Calculator==='undefined') return {price:0,base:0,priceWithDiscount:0,applied:[],discountApplied:false};
+  if(!item || typeof Calculator==='undefined') return {price:0,base:0,priceWithDiscount:0,applied:[],discountApplied:false,remainder:Infinity,baseContractCost:0};
   const ct = ctxContract ? ctxContract() : null;
   const c = ctxClient ? ctxClient() : null;
   const date = document.getElementById('svcDate')?.value || new Date().toISOString().slice(0,10);
@@ -1273,7 +1270,7 @@ function calcPrice(code, side, surKeys, discount, surMeta){
   };
   if(!ct || !c){
     const r = Calculator.calculate(buildCalculatorInput(item, side, surKeys, discount, surMeta, ct, date, Infinity));
-    return {price:Math.round(r.final),base:Number(r.base)||0,priceWithDiscount:Math.round(r.priceWithDiscount),applied:r.applied||[],discountApplied:!!r.discountApplied};
+    return {price:Math.round(r.final),base:Number(r.base)||0,priceWithDiscount:Math.round(r.priceWithDiscount),applied:r.applied||[],discountApplied:!!r.discountApplied,remainder:Infinity,baseContractCost:0};
   }
   const month = monthKey(date);
   const copies = (c.services||[])
@@ -1283,14 +1280,16 @@ function calcPrice(code, side, surKeys, discount, surMeta){
   const history = Calculator.calculateMonthHistory(copies, ct, makeServicePriceFn(c, ct));
   const entry = history.services.find(x=>x.service.id===draftId);
   const r = entry?.result || {price:0,basePrice:0,discountPrice:0,applied:[]};
-  return {
-    price:Math.round(r.price||0),
-    base:Number(r.basePrice)||0,
-    priceWithDiscount:Math.round(r.discountPrice||0),
-    applied:r.applied||[],
-    discountApplied:(r.applied||[]).some(a=>a && a.name==='Скидка по тарифу')
-  };
-}
+    return {
+      price:Math.round(r.price||0),
+      base:Number(r.basePrice)||0,
+      priceWithDiscount:Math.round(r.discountPrice||0),
+      applied:r.applied||[],
+      discountApplied:(r.applied||[]).some(a=>a && a.name==='Скидка по тарифу'),
+      remainder: entry && entry.contractRemainder != null ? Number(entry.contractRemainder) : Infinity,
+      baseContractCost: Number(r.baseContractCost)||0
+    };
+  }
 function makeServicePriceFn(client, ct){
   return function(service, contractRemainder){
     if(service && (service.locked || service.priceManual)){
@@ -1298,11 +1297,13 @@ function makeServicePriceFn(client, ct){
         price: Number(service.price)||0,
         basePrice: Number(service.basePrice != null ? service.basePrice : service.price)||0,
         discountPrice: Number(service.discountPrice != null ? service.discountPrice : service.price)||0,
-        applied: service.applied || []
+        applied: service.applied || [],
+        baseContractCost: Number(service.baseContractPrice)||0
       };
     }
     let item = priceItem(service.code);
     if(!item) return {price:Number(service.price)||0};
+    let baseContractCost = 0;
     if(String(service.code) === '4.3'){
       const baseCode = service.baseContractCode || service.baseContractId || '';
       const baseItem = priceItem(baseCode);
@@ -1317,6 +1318,7 @@ function makeServicePriceFn(client, ct){
           service.date,
           contractRemainder
         ));
+        baseContractCost = Math.round(baseR.final);
         if(baseR.final > 0){
           item = Object.assign({}, item, { price: Math.round(baseR.final * 0.5) });
         }
@@ -1337,7 +1339,8 @@ function makeServicePriceFn(client, ct){
       price:Math.round(r.final),
       basePrice:Number(r.base)||0,
       discountPrice:Math.round(r.priceWithDiscount),
-      applied:r.applied||[]
+      applied:r.applied||[],
+      baseContractCost
     };
   };
 }
@@ -1351,19 +1354,21 @@ function recalculateContractMonthServices(client, contractId, month, fromDate){
   if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.recalculateContractPayments(client.services, ct);
 }
 function syncContractMonthSnapshots(client, ct){
-  if(!client || !ct) return;
+  if(!ct) return;
+  if(typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.syncContractMonthSnapshots){
+    RaleksizCRMCore.syncContractMonthSnapshots(ct, { today: todayISO() });
+    return;
+  }
   ct.prepaySnapshots = ct.prepaySnapshots && typeof ct.prepaySnapshots==='object' ? ct.prepaySnapshots : {};
   ct.contractPriceSnapshots = ct.contractPriceSnapshots && typeof ct.contractPriceSnapshots==='object' ? ct.contractPriceSnapshots : {};
   ct.prepaySnapshotUpdatedAt = ct.prepaySnapshotUpdatedAt && typeof ct.prepaySnapshotUpdatedAt==='object' ? ct.prepaySnapshotUpdatedAt : {};
   ct.contractPriceSnapshotUpdatedAt = ct.contractPriceSnapshotUpdatedAt && typeof ct.contractPriceSnapshotUpdatedAt==='object' ? ct.contractPriceSnapshotUpdatedAt : {};
-  const months = [...new Set((client.services||[]).filter(s=>s.contractId===ct.id && s.date).map(s=>monthKey(s.date)))];
-  months.forEach(m=>{
-    const updatedAt=ct.updatedAt||new Date().toISOString();
-    ct.prepaySnapshots[m]=Number(ct.prepay)||0;
-    ct.prepaySnapshotUpdatedAt[m]=updatedAt;
-    ct.contractPriceSnapshots[m]=Number(ct.contractPrice)||0;
-    ct.contractPriceSnapshotUpdatedAt[m]=updatedAt;
-  });
+  const month = todayISO().slice(0,7);
+  const stamp = monthLastISO(month)+'T23:59:59.000';
+  ct.prepaySnapshots[month]=Number(ct.prepay)||0;
+  ct.prepaySnapshotUpdatedAt[month]=stamp;
+  ct.contractPriceSnapshots[month]=Number(ct.contractPrice)||0;
+  ct.contractPriceSnapshotUpdatedAt[month]=stamp;
 }
 function recalculateContractServices(client, contractId){
   const ct = getContract(client, contractId);
@@ -2459,12 +2464,40 @@ function resolveBaseContractCode(raw){
   if(priceItem(code) && priceItem(code).cat === 'contracts') return code;
   return '';
 }
-function get4_3BaseCost(baseCode){
+function get4_3Remainder(){
+  const ct = ctxContract ? ctxContract() : null;
+  const c = ctxClient ? ctxClient() : null;
+  if(!ct || !c || typeof Calculator==='undefined') return Infinity;
+  const date = document.getElementById('svcDate')?.value || todayISO();
+  const currentId = window.__ctx?.svcId || null;
+  const code = document.getElementById('svcCode')?.value || '4.3';
+  const item = priceItem(code) || priceItem('4.3');
+  if(!item) return Infinity;
+  const draftId = currentId || '__draft__';
+  const draft = {
+    id:draftId, createdAt: window.__ctx?.createdAt || new Date().toISOString(),
+    contractId:ct.id, date, code: item.code, side: window.__ctx?.side || 1,
+    surcharges:(window.__ctx?.surSel||[]).slice(),
+    surchargeMeta:JSON.parse(JSON.stringify(window.__ctx?.surMeta||{})),
+    baseContractCode:document.getElementById('baseContractSel')?.value || window.__ctx?.baseContractCode || '',
+    price:Number(document.getElementById('svcPrice')?.value)||Number(item.price)||0,
+    priceManual:false, locked:false
+  };
+  const copies = (c.services||[])
+    .filter(s=>s.contractId===ct.id && monthKey(s.date)===monthKey(date) && s.id!==currentId)
+    .map(s=>JSON.parse(JSON.stringify(s)));
+  copies.push(draft);
+  const history = Calculator.calculateMonthHistory(copies, ct, makeServicePriceFn(c, ct));
+  const entry = history.services.find(x=>x.service.id===draftId);
+  return entry && entry.contractRemainder != null ? Number(entry.contractRemainder) : Infinity;
+}
+function get4_3BaseCost(baseCode, remainder){
   const code = resolveBaseContractCode(baseCode);
   if(!code) return 0;
   const ct = ctxContract();
   const discount = ct ? Number(ct.discount)||0 : 0;
-  return calcCalculatedPriceForCode(code, window.__ctx?.side || 1, [], discount, {}, Infinity);
+  const rem = remainder != null ? remainder : get4_3Remainder();
+  return calcCalculatedPriceForCode(code, window.__ctx?.side || 1, [], discount, {}, rem);
 }
 function renderBaseContractFieldsIfNeeded(){
   const code = document.getElementById('svcCode')?.value || '';
@@ -2481,27 +2514,32 @@ function renderBaseContractFieldsIfNeeded(){
   const safeSelected = items.some(p => String(p.code) === String(rawSelected)) ? rawSelected : (items[0]?.code || '');
   window.__ctx.baseContractCode = safeSelected;
 
-  const computed = get4_3BaseCost(safeSelected);
+  const remainder = get4_3Remainder();
+  const computed = get4_3BaseCost(safeSelected, remainder);
   window.__ctx.baseContractPrice = computed;
   window.__ctx.basePriceManual = false;
 
   const options = items.map(p=>{
-    const preview = get4_3BaseCost(p.code);
+    const preview = get4_3BaseCost(p.code, remainder);
     const label = `${p.code} — ${p.name}${preview ? ' · ' + money(preview) : ''}`;
     return `<option value="${esc(p.code)}" ${String(p.code)===String(safeSelected)?'selected':''}>${esc(label)}</option>`;
   }).join('');
+
+  const remainderHint = Number.isFinite(remainder)
+    ? `Остаток бюджета месяца: ${money(remainder)}. Скидка тарифа на базовый договор учитывается только если этого остатка хватает — как в цене, которую увидит заказчик.`
+    : 'Стоимость базового договора считается по тем же правилам, что и итоговая цена 4.3.';
 
   box.classList.remove('hidden');
   box.innerHTML = `
     <div class="field">
       <label>Базовый договор для расчёта стоимости</label>
       <select id="baseContractSel" onchange="onBaseContractSelChange()">${options || '<option value="">Нет позиций категории «Договоры»</option>'}</select>
-      <div class="muted">Выберите услугу из категории «Сопровожение клиентских и входящих договоров». Стоимость берётся по правилам расчёта прайса.</div>
+      <div class="muted">Выберите услугу из категории «Сопровожение клиентских и входящих договоров». Стоимость берётся по правилам расчёта прайса. ${remainderHint}</div>
     </div>
     <div class="field">
       <label>Рассчитанная стоимость базовой услуги, ₽</label>
       <input type="number" min="0" step="100" id="baseContractPriceInput" value="${Number(computed)||0}" readonly>
-      <div class="muted">Для 4.3 используется 50% от этой суммы.</div>
+      <div class="muted">Для 4.3 используется 50% от этой суммы. Цифра совпадает с расчётом, который попадёт в акт заказчика.</div>
     </div>
   `;
 }
@@ -2715,10 +2753,11 @@ function recalc(keepPrice){
   const code = document.getElementById('svcCode').value;
   const item = priceItem(code);
   const r = calcPrice(code, window.__ctx.side, window.__ctx.surSel, discount, window.__ctx.surMeta);
-  if(code === '4.3' && !window.__ctx.basePriceManual && r.base>0){
-    window.__ctx.baseContractPrice = Math.round(r.base * 2);
+  if(code === '4.3' && !window.__ctx.basePriceManual){
+    const cost = Number(r.baseContractCost)|| get4_3BaseCost(window.__ctx.baseContractCode);
+    window.__ctx.baseContractPrice = cost;
     const input = document.getElementById('baseContractPriceInput');
-    if(input) input.value = window.__ctx.baseContractPrice;
+    if(input) input.value = Number(cost)||0;
   }
   const priceEl = document.getElementById('svcPrice');
   if(!window.__ctx.manual && !keepPrice) priceEl.value = r.price;
@@ -2727,7 +2766,10 @@ function recalc(keepPrice){
   const note = document.getElementById('priceNote');
   if(item && item.formula){
     if(String(item.code) === '4.3'){
-      note.textContent = 'Цена по формуле (4.3): 50% от рассчитанной стоимости базовой услуги из категории «Договоры»';
+      const baseCost = Number(window.__ctx.baseContractPrice)||0;
+      note.textContent = baseCost
+        ? ('Цена 4.3: 50% от стоимости базовой услуги '+money(baseCost)+' — с учётом остатка месяца, как в акте заказчика')
+        : 'Цена по формуле (4.3): 50% от рассчитанной стоимости базовой услуги из категории «Договоры»';
     }else{
       note.textContent = 'Цена по формуле: ' + item.formula + ' — введи сумму вручную';
     }
@@ -2754,6 +2796,7 @@ function onActualPrepayInput(){
 }
 function onSvcDateChange(){
   if(window.__ctx) window.__ctx.actualPrepayManual = false;
+  renderBaseContractFieldsIfNeeded();
   recalc();
 }
 function onPayChange(silent){
@@ -2814,18 +2857,9 @@ function saveService(clientId, svcId){
   const ct = getContract(c, contractId);
   const date = document.getElementById('svcDate').value;
   const month = date ? String(date).slice(0,7) : '';
-  if(ct && month){
-    ct.prepaySnapshots = ct.prepaySnapshots && typeof ct.prepaySnapshots==='object' ? ct.prepaySnapshots : {};
-    ct.contractPriceSnapshots = ct.contractPriceSnapshots && typeof ct.contractPriceSnapshots==='object' ? ct.contractPriceSnapshots : {};
-    ct.prepaySnapshotUpdatedAt = ct.prepaySnapshotUpdatedAt && typeof ct.prepaySnapshotUpdatedAt==='object' ? ct.prepaySnapshotUpdatedAt : {};
-    ct.contractPriceSnapshotUpdatedAt = ct.contractPriceSnapshotUpdatedAt && typeof ct.contractPriceSnapshotUpdatedAt==='object' ? ct.contractPriceSnapshotUpdatedAt : {};
-    if(ct.prepaySnapshots[month]==null){
-      ct.prepaySnapshots[month]=Number(ct.prepay)||0;
-      ct.prepaySnapshotUpdatedAt[month]=new Date().toISOString();
-    }
-    if(ct.contractPriceSnapshots[month]==null){
-      ct.contractPriceSnapshots[month]=Number(ct.contractPrice)||0;
-      ct.contractPriceSnapshotUpdatedAt[month]=new Date().toISOString();
+  if(ct){
+    if(typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.seedCurrentMonthSnapshot){
+      RaleksizCRMCore.seedCurrentMonthSnapshot(ct, { today: todayISO() });
     }
   }
   const code = document.getElementById('svcCode').value;
