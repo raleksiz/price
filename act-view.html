@@ -276,15 +276,23 @@ function monthActualPrepayFromServices(services){
   });
   return best;
 }
+/** Оплаты не из предоплаты (наличные / перевод). */
+function cashPaidOf(s){
+  if(!s) return 0;
+  if(s.pay==='full') return Number(s.price)||0;
+  if(s.pay==='part') return Math.min(Number(s.payAmount)||0, Number(s.price)||0);
+  return 0;
+}
 /**
  * Отображаемое «Оплачено» за месяц.
- * В спецрежиме: фактически внесённая предоплата (константа месяца), ≤ цены абонемента.
+ * В спецрежиме: фактически внесённая предоплата (константа месяца) + иные платежи по услугам.
+ * Без ограничения ценой абонемента (могут быть разовые доплаты).
  */
 function displayPaidForMonth(ct, month, services, special){
   if(!special) return (services||[]).reduce((a,s)=>a+paidOf(s),0);
-  const budget = contractPriceForMonth(ct, month);
-  const actual = monthActualPrepayFromServices(services);
-  return Math.min(actual, budget > 0 ? budget : actual);
+  const actualPrepay = monthActualPrepayFromServices(services);
+  const cash = (services||[]).reduce((a,s)=>a+cashPaidOf(s),0);
+  return actualPrepay + cash;
 }
 function displayContractTotals(c, ct, today){
   today = today || todayISO();
