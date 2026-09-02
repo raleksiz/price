@@ -168,6 +168,22 @@
     return requestedPaid(service);
   }
 
+  function remainingOf(service) {
+    return Math.max(0, round(n(service && service.price) - paidOf(service)));
+  }
+
+  function paidForList(services) {
+    return (services || []).reduce(function (sum, service) {
+      return round(sum + paidOf(service));
+    }, 0);
+  }
+
+  function remainingForList(services) {
+    return (services || []).reduce(function (sum, service) {
+      return round(sum + remainingOf(service));
+    }, 0);
+  }
+
   function prepayOf(service) {
     if (!service || (service.pay !== 'full_prepay' && service.pay !== 'part_prepay')) return 0;
     if (service.prepayAmount != null) {
@@ -526,6 +542,9 @@
     compareServices: compareServices,
     requestedPaid: requestedPaid,
     paidOf: paidOf,
+    remainingOf: remainingOf,
+    paidForList: paidForList,
+    remainingForList: remainingForList,
     prepayOf: prepayOf,
     cashPaidOf: cashPaidOf,
     groupActualPrepay: groupActualPrepay,

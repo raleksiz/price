@@ -1385,18 +1385,14 @@ function prepayOf(s){
   return typeof RaleksizCRMCore!=='undefined' ? RaleksizCRMCore.prepayOf(s) : 0;
 }
 function cashPaidOf(s){ return typeof RaleksizCRMCore!=='undefined' ? RaleksizCRMCore.cashPaidOf(s) : 0; }
-function debtOf(s){ return Math.max(0, (Number(s.price)||0) - paidOf(s)); }
+function debtOf(s){
+  return typeof RaleksizCRMCore!=='undefined' ? RaleksizCRMCore.remainingOf(s) : Math.max(0, (Number(s.price)||0) - paidOf(s));
+}
 function paidForContractList(c, contractId, list){
-  const ct = getContract(c, contractId);
-  if(!ct || ct.status!=='Абонемент' || typeof RaleksizCRMCore==='undefined'){
-    return (list||[]).reduce((sum,s)=>sum+paidOf(s),0);
-  }
-  const months = [...new Set((list||[]).map(s=>monthKey(s.date)).filter(Boolean))];
-  return months.reduce((sum,month)=>{
-    const inMonth=(list||[]).filter(s=>monthKey(s.date)===month);
-    const special=isAbonementSpecialMonth(c,ct,month,todayISO());
-    return sum+(special?RaleksizCRMCore.paidForAbonementMonth(inMonth,month):inMonth.reduce((total,s)=>total+paidOf(s),0));
-  },0);
+  // CRM «предстоящие оплаты» — остаток по услугам. Особый режим абонемента
+  // (бюджет vs предоплата) касается только акта для заказчика, не этих сумм.
+  if(typeof RaleksizCRMCore!=='undefined') return RaleksizCRMCore.paidForList(list);
+  return (list||[]).reduce((sum,s)=>sum+paidOf(s),0);
 }
 
 function getContract(c, contractId){
@@ -1487,10 +1483,12 @@ function syncMonthActualPrepay(c, contractId, month, amount){
 function clientTotals(c, from, to){
   const list = filterByPeriod(c.services, from, to).filter(isComplete);
   const sum  = list.reduce((a,s)=>a+(Number(s.price)||0),0);
-  const contractIds = [...new Set(list.map(s=>s.contractId).filter(Boolean))];
-  const paid = contractIds.reduce((total,id)=>total+paidForContractList(c,id,list.filter(s=>s.contractId===id)),0);
+  const paid = paidForContractList(c, null, list);
   const pre  = list.reduce((a,s)=>a+prepayOf(s),0);
-  return { sum, paid, pre, debt: Math.max(0, sum-paid), count: list.length };
+  const debt = typeof RaleksizCRMCore!=='undefined'
+    ? RaleksizCRMCore.remainingForList(list)
+    : list.reduce((a,s)=>a+debtOf(s),0);
+  return { sum, paid, pre, debt, count: list.length };
 }
 function isComplete(s){
   // Обязательны дата и расшифровка. Код и стоимость (в т.ч. 0) — по необходимости.
@@ -3066,16 +3064,24 @@ function appliedHtml(s){
 
 /* ====================== КАРТОЧКА ЗАКАЗЧИКА ====================== */
 function clientAllTotals(c){
-  const sum = (c.contracts||[]).reduce((a,ct)=>a+contractTotals(c,ct.id).sum,0);
-  const paid = (c.contracts||[]).reduce((a,ct)=>a+contractTotals(c,ct.id).paid,0);
-  return { sum, paid, debt: Math.max(0,sum-paid) };
+  return (c.contracts||[]).reduce((acc,ct)=>{
+    const t = contractTotals(c, ct.id);
+    acc.sum += t.sum;
+    acc.paid += t.paid;
+    acc.pre += t.pre;
+    acc.debt += t.debt;
+    return acc;
+  }, { sum:0, paid:0, pre:0, debt:0 });
 }
 function contractTotals(c, contractId, from, to){
   const list = filterByPeriod(contractServices(c, contractId), from, to).filter(isComplete);
   const sum  = list.reduce((a,s)=>a+(Number(s.price)||0),0);
   const paid = paidForContractList(c, contractId, list);
   const pre  = list.reduce((a,s)=>a+prepayOf(s),0);
-  return { sum, paid, pre, debt: Math.max(0, sum-paid), count: list.length };
+  const debt = typeof RaleksizCRMCore!=='undefined'
+    ? RaleksizCRMCore.remainingForList(list)
+    : list.reduce((a,s)=>a+debtOf(s),0);
+  return { sum, paid, pre, debt, count: list.length };
 }
 function openContract(contractId){
   currentContractId = contractId;
