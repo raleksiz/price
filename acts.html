@@ -1218,7 +1218,9 @@ function selectedSurchargesForService(item, surKeys, surMeta){
       count,
       extraAmount:Math.max(0,Number(m.extraAmount)||0),
       comment:m.comment||'',
-      basePrice: Math.max(0, Number(m.basePrice)||0)
+      basePrice: Math.max(0, Number(m.basePrice)||0),
+      group:x.group,
+      groupOverflowTarget:x.groupOverflowTarget
     } : null;
   }).filter(Boolean);
 }
