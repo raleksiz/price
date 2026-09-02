@@ -766,7 +766,7 @@ function recompute(){
   const budget = rawNumber(document.getElementById('inBudget'));
   const prepay = rawNumber(document.getElementById('inPrepay'));
   const term = rawNumber(document.getElementById('inTerm'));
-  const isAbon = term >= 3 && budget > 0;
+  const isAbon = term >= 3 && budget >= 25000;
   document.getElementById('lblBudget').textContent = isAbon ? 'Бюджет, мес.' : 'Бюджет, ₽';
   document.getElementById('lblPrepay').textContent = isAbon ? 'Аванс, мес.' : 'Предоплата, ₽';
 

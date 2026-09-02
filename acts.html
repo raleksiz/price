@@ -140,7 +140,7 @@ tr.locked td{background:#FAFAFC;}
 .sur-item span{min-width:0;overflow-wrap:break-word;word-break:break-word;}
 .sur-item .amt{margin-left:0;font-weight:700;white-space:normal;text-align:right;padding-left:4px;}
 .sur-extra{display:grid;grid-template-columns:90px 1fr;gap:6px;margin:3px 0 7px 25px;}
-.sur-extra input{font-size:12px;padding:7px 8px;border-radius:8px;}
+.sur-extra input,.sur-extra select{font-size:12px;padding:7px 8px;border-radius:8px;width:100%;box-sizing:border-box;}
 .sur-extra .sur-comment{grid-column:1 / -1;}
 .cf-row{border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-bottom:9px;background:#fff;}
 .cf-public{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:11.5px;color:#666;text-transform:none;letter-spacing:0;font-weight:500;}
@@ -293,7 +293,8 @@ details[open] summary::before{content:"▾ ";}
 .applied-details summary::-webkit-details-marker{display:none;}
 .applied-details ul{margin:5px 0 0 18px;padding:0;}
 .applied-details li{overflow-wrap:anywhere;word-break:break-word;}
-.sur-base-contract{grid-column:1 / -1;}
+.sur-base-contract{grid-column:1 / -1;display:grid;gap:6px;}
+.sur-base-contract .sur-base-price{width:100%;}
 @media (max-width:720px){
   .filters-toolbar{display:block;margin-bottom:12px;}
   .filters-toggle{display:block !important;width:100%;margin-bottom:8px;}
@@ -1292,7 +1293,7 @@ function calcPrice(code, side, surKeys, discount, surMeta){
 }
 function makeServicePriceFn(client, ct){
   return function(service, contractRemainder){
-    if(service && service.locked){
+    if(service && (service.locked || service.priceManual)){
       return {
         price: Number(service.price)||0,
         basePrice: Number(service.basePrice != null ? service.basePrice : service.price)||0,
@@ -1378,13 +1379,12 @@ function recalculateContractServices(client, contractId){
   }
   const fn = makeServicePriceFn(client, ct);
   services.forEach(s=>{
-    if(s.locked) return;
+    if(s.locked || s.priceManual) return;
     const r = fn(s, Infinity);
     s.price = r.price;
     s.applied = r.applied || [];
     s.basePrice = r.basePrice;
     s.discountPrice = r.discountPrice;
-    s.priceManual = false;
   });
 }
 function paidOf(s){
@@ -1840,7 +1840,7 @@ function abonementParamsFromValues(price, prepay, term){
   price = Number(price)||0;
   prepay = Number(prepay)||0;
   term = Number(term)||0;
-  if (!(price > 0) || term < 3){
+  if (price < 25000 || term < 3){
     return { status: 'Разовая услуга', tariff: 'Base', discount: 0 };
   }
   const result = window.RaleksizCalculator
@@ -2571,8 +2571,34 @@ function surchargeMeta(i){
 }
 function surchargeNeedsBasePrice(x){
   if(!x) return false;
-  const n = String(x.name||'').toLowerCase();
-  return /50%.*базов/i.test(n) && !/за сторон/i.test(n);
+  const blob = `${x.name||''} ${x.amount||''}`.toLowerCase();
+  return /50%.*базов/i.test(blob) && !/за сторон/i.test(blob);
+}
+function baseContractOptionsHtml(selectedCode){
+  const selected = String(selectedCode || '');
+  return ['<option value="">Выберите базовый договор</option>'].concat(
+    getBaseContractCodeCandidates().map(p=>{
+      const price = Number(p.price)||0;
+      const label = `${p.code} — ${p.name}${price ? ' · ' + money(price) : ''}`;
+      return `<option value="${esc(p.code)}" ${String(p.code)===selected?'selected':''}>${esc(label)}</option>`;
+    })
+  ).join('');
+}
+function onSurBaseCodeChange(surIndex){
+  const sel = document.querySelector(`.sur-base-code[data-sur-base-code="${surIndex}"]`);
+  const input = document.querySelector(`.sur-base-price[data-sur-base="${surIndex}"]`);
+  if(!sel) return;
+  window.__ctx.surMeta = window.__ctx.surMeta || {};
+  const meta = window.__ctx.surMeta[String(surIndex)] = window.__ctx.surMeta[String(surIndex)] || {};
+  meta.baseCode = sel.value;
+  const item = priceItem(sel.value);
+  if(item && input){
+    const price = basePrice(item, window.__ctx.side || 1);
+    input.value = price;
+    meta.basePrice = price;
+  }
+  window.__ctx.manual = false;
+  recalc();
 }
 function renderSurcharges(){
   const code = document.getElementById('svcCode').value;
@@ -2598,9 +2624,13 @@ function renderSurcharges(){
           <span class="amt">${esc(x.amount)}${needs && Number(m.count)>1 ? ' × '+Number(m.count) : ''}</span>
         </label>
         ${checked && (needs || showExtra || needsBase) ? `<div class="sur-extra">
-          ${needs?`<input type="number" min="1" step="1" class="sur-count" data-sur-index="${i}" value="${Math.max(1,Number(m.count)||1)}" placeholder="Кол-во" oninput="onSurMetaChange()" onchange="onSurMetaChange()">`: '<div></div>'}
-          ${showExtra?`<input type="number" min="0" step="1" class="sur-extra-amount" data-sur-extra="${i}" value="${Number(m.extraAmount)||0}" placeholder="${x.type==='manual'?'Сумма зачёта, ₽':'Факт. расходы'}" oninput="onSurMetaChange()">`: '<div></div>'}
-          ${needsBase?`<input type="number" min="0" step="100" class="sur-base-price" data-sur-base="${i}" value="${Number(m.basePrice)||0}" placeholder="Базовый договор, ₽" oninput="onSurMetaChange()">`: '<div></div>'}
+          ${needs?`<input type="number" min="1" step="1" class="sur-count" data-sur-index="${i}" value="${Math.max(1,Number(m.count)||1)}" placeholder="Кол-во" oninput="onSurMetaChange()" onchange="onSurMetaChange()">`: ''}
+          ${showExtra?`<input type="number" min="0" step="1" class="sur-extra-amount" data-sur-extra="${i}" value="${Number(m.extraAmount)||0}" placeholder="${x.type==='manual'?'Сумма зачёта, ₽':'Факт. расходы'}" oninput="onSurMetaChange()">`: ''}
+          ${needsBase?`<div class="sur-base-contract">
+            <div class="muted">Базовый договор — 50% считается от его цены, не от накопленной суммы</div>
+            <select class="sur-base-code" data-sur-base-code="${i}" onchange="onSurBaseCodeChange('${i}')">${baseContractOptionsHtml(m.baseCode)}</select>
+            <input type="number" min="0" step="100" class="sur-base-price" data-sur-base="${i}" value="${Number(m.basePrice)||0}" placeholder="Стоимость базового договора, ₽" oninput="onSurMetaChange()">
+          </div>`: ''}
           <input class="sur-comment" data-sur-comment="${i}" value="${esc(m.comment||'')}" placeholder="Комментарий" oninput="onSurMetaChange()">
         </div>` : ''}
       </div>`;
@@ -2646,6 +2676,12 @@ function syncSurMetaFromDom(){
     if(i == null) return;
     window.__ctx.surMeta[i] = window.__ctx.surMeta[i] || {};
     window.__ctx.surMeta[i].basePrice = Math.max(0, Number(el.value) || 0);
+  });
+  document.querySelectorAll('.sur-base-code').forEach(el=>{
+    const i = el.dataset.surBaseCode;
+    if(i == null) return;
+    window.__ctx.surMeta[i] = window.__ctx.surMeta[i] || {};
+    window.__ctx.surMeta[i].baseCode = el.value;
   });
 }
 function onSurMetaChange(){
@@ -2803,6 +2839,19 @@ function saveService(clientId, svcId){
     const baseContractPrice = Number(window.__ctx.baseContractPrice)||0;
     if(!baseContractCode || !priceItem(baseContractCode)){ alert('Для услуги 4.3 выберите базовую услугу из категории «Договоры»'); return; }
     if(baseContractPrice<=0){ alert('Не удалось рассчитать стоимость выбранной базовой услуги'); return; }
+  }
+  syncSurMetaFromDom();
+  const mixedItem = priceItem(code);
+  const mixedList = mixedItem ? catSurcharges(mixedItem.cat) : [];
+  const mixedMissing = (window.__ctx.surSel || []).some(i=>{
+    const x = mixedList[Number(i)];
+    if(!surchargeNeedsBasePrice(x)) return false;
+    const m = (window.__ctx.surMeta || {})[String(i)] || {};
+    return !(Number(m.basePrice) > 0);
+  });
+  if(mixedMissing){
+    alert('Для «Смешанный предмет договора» выберите базовый договор — 50% считается от него, а не от накопленной цены');
+    return;
   }
   const pay  = document.getElementById('svcPay').value;
   let payAmt = Number(document.getElementById('svcPayAmt').value)||0;

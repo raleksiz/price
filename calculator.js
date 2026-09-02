@@ -24,6 +24,7 @@
   var tariffParams = {
     minTerm: 3,
     maxTerm: 12,
+    minAbonementBudget: 25000,
     weightBudget: 0.29,
     weightPrepay: 0.34,
     weightTerm: 0.37,
@@ -65,7 +66,7 @@
 
   function getContractTariff(budget, prepay, term) {
     var result = calcDiscount(budget, prepay, term);
-    var isAbonement = n(term) >= tariffParams.minTerm && n(budget) > 0;
+    var isAbonement = n(term) >= tariffParams.minTerm && n(budget) >= tariffParams.minAbonementBudget;
     if (!isAbonement) return { tariff: 'Base', discount: 0, status: 'Разовая услуга' };
     return {
       tariff: result.tariff,
@@ -275,8 +276,8 @@
   }
 
   function needsBaseContractPrice(definition) {
-    var name = text(definition && definition.name).toLowerCase();
-    return /50%.*базов/i.test(name) && !/за сторон/i.test(name);
+    var blob = (text(definition && definition.name) + ' ' + text(definition && definition.amount)).toLowerCase();
+    return /50%.*базов/i.test(blob) && !/за сторон/i.test(blob);
   }
 
   function normSurchargeName(value) {
@@ -480,7 +481,7 @@
 
       if (kind === 'pct') {
         var pctBase = price;
-        if (needsBaseContractPrice(def) && item.entry.basePrice != null) {
+        if (needsBaseContractPrice(def)) {
           pctBase = Math.max(0, n(item.entry.basePrice));
         }
         amount = round(item.count * value * pctBase);
@@ -786,7 +787,7 @@
         service.prepayBalance = round(entry.contractRemainder);
         service.monthOrder = entry.monthOrder;
         service.contractRemainderUpdatedAt = new Date().toISOString();
-        if (!service.locked) {
+        if (!service.locked && !service.priceManual) {
           var beforePrice = round(service.price);
           var beforeApplied = JSON.stringify(service.applied || []);
           service.price = round(entry.price);
