@@ -781,13 +781,13 @@ function recompute(){
 
   if (offerDiscount > 0 && !isAbon){
     // Offer only mode
-    document.getElementById('valStatus').textContent = 'Одна услуга';
+    document.getElementById('valStatus').textContent = 'Разовая услуга';
     statusEl.classList.remove('status-on'); statusEl.classList.add('status-off');
     document.getElementById('valTariff').textContent = 'Offer';
     document.getElementById('valDiscount').textContent = '—';
 
   } else {
-    document.getElementById('valStatus').textContent = isAbon ? 'Абонемент' : 'Одна услуга';
+    document.getElementById('valStatus').textContent = isAbon ? 'Абонемент' : 'Разовая услуга';
     statusEl.classList.toggle('status-on', isAbon);
     statusEl.classList.toggle('status-off', !isAbon);
     document.getElementById('valTariff').textContent = shownTariff;
