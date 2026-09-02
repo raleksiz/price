@@ -267,14 +267,21 @@ function isAbonementSpecialMonth(c, ct, month, today){
   return actual < budget;
 }
 /** Константа фактической предоплаты за месяц (из услуг с зачётом). */
-function monthActualPrepayFromServices(services){
+function monthActualPrepayFromServices(services, ct, month){
   let best = 0;
   (services||[]).forEach(s=>{
     if(!s || (s.pay!=='full_prepay' && s.pay!=='part_prepay')) return;
     const v = Number(s.actualPrepay)||0;
     if(v>best) best = v;
   });
-  return best;
+  if(best>0) return best;
+  const hasPrepaySvc = (services||[]).some(s=>s && (s.pay==='full_prepay'||s.pay==='part_prepay'));
+  if(hasPrepaySvc && ct){
+    const m = String(month||'').slice(0,7);
+    if(m && ct.prepaySnapshots && ct.prepaySnapshots[m]!=null) return Number(ct.prepaySnapshots[m])||0;
+    return Number(ct.prepay)||0;
+  }
+  return 0;
 }
 /** Оплаты не из предоплаты (наличные / перевод). */
 function cashPaidOf(s){
@@ -290,7 +297,7 @@ function cashPaidOf(s){
  */
 function displayPaidForMonth(ct, month, services, special){
   if(!special) return (services||[]).reduce((a,s)=>a+paidOf(s),0);
-  const actualPrepay = monthActualPrepayFromServices(services);
+  const actualPrepay = monthActualPrepayFromServices(services, ct, month);
   const cash = (services||[]).reduce((a,s)=>a+cashPaidOf(s),0);
   return actualPrepay + cash;
 }

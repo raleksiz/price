@@ -845,6 +845,81 @@ window.addEventListener('DOMContentLoaded', checkSession);
 /* ====================== СИНХРОНИЗАЦИЯ С GITHUB ====================== */
 function ghHeaders(){ return { 'Authorization':'Bearer '+localStorage.getItem(TOKEN_KEY), 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' }; }
 
+function dbTimestamp(db){ return Date.parse((db && db.updated) || 0) || 0; }
+function serviceIsPaid(s){ return !!(s && s.pay && s.pay !== 'none'); }
+function serviceTimestamp(s){ return Date.parse((s && (s.updatedAt || s.createdAt)) || 0) || 0; }
+function cloneJSON(x){ return JSON.parse(JSON.stringify(x)); }
+
+/** При конфликте версий услуги сохраняем запись с оплатой, а не «Не оплачено». */
+function pickBetterService(a, b){
+  if(!a) return cloneJSON(b);
+  if(!b) return cloneJSON(a);
+  const aPaid = serviceIsPaid(a), bPaid = serviceIsPaid(b);
+  if(aPaid && !bPaid) return cloneJSON(a);
+  if(bPaid && !aPaid) return cloneJSON(b);
+  const aActual = Number(a.actualPrepay)||0, bActual = Number(b.actualPrepay)||0;
+  if(aActual !== bActual) return cloneJSON(aActual > bActual ? a : b);
+  const aPayAmt = Number(a.payAmount)||0, bPayAmt = Number(b.payAmount)||0;
+  if(aPayAmt !== bPayAmt) return cloneJSON(aPayAmt > bPayAmt ? a : b);
+  return cloneJSON(serviceTimestamp(a) >= serviceTimestamp(b) ? a : b);
+}
+function mergeContractSnapshots(a, b){
+  const out = Object.assign({}, a || {});
+  Object.keys(b || {}).forEach(k=>{ out[k] = Math.max(Number(out[k])||0, Number(b[k])||0); });
+  return out;
+}
+function mergeContract(a, b){
+  const pickA = serviceTimestamp(a) >= serviceTimestamp(b);
+  const out = cloneJSON(pickA ? a : b);
+  const other = pickA ? b : a;
+  out.prepaySnapshots = mergeContractSnapshots(a.prepaySnapshots, b.prepaySnapshots);
+  out.contractPriceSnapshots = mergeContractSnapshots(a.contractPriceSnapshots, b.contractPriceSnapshots);
+  if(Number(other.prepay) > Number(out.prepay)) out.prepay = Number(other.prepay);
+  if(Number(other.contractPrice) > Number(out.contractPrice)) out.contractPrice = Number(other.contractPrice);
+  return out;
+}
+function mergeClient(lc, rc){
+  const svcMap = new Map();
+  (rc.services||[]).forEach(s=> svcMap.set(s.id, s));
+  (lc.services||[]).forEach(s=>{ svcMap.set(s.id, pickBetterService(svcMap.get(s.id), s)); });
+  const ctMap = new Map();
+  (rc.contracts||[]).forEach(ct=> ctMap.set(ct.id, ct));
+  (lc.contracts||[]).forEach(ct=>{
+    const prev = ctMap.get(ct.id);
+    ctMap.set(ct.id, prev ? mergeContract(prev, ct) : cloneJSON(ct));
+  });
+  const lcPaid = (lc.services||[]).some(serviceIsPaid);
+  const rcPaid = (rc.services||[]).some(serviceIsPaid);
+  const base = (lcPaid && !rcPaid) ? lc : (rcPaid && !lcPaid) ? rc : lc;
+  const out = cloneJSON(base);
+  out.services = [...svcMap.values()];
+  out.contracts = [...ctMap.values()];
+  out.pinned = lc.pinned || rc.pinned;
+  out.hidden = !!(lc.hidden && rc.hidden);
+  if(!String(out.name||'').trim() && String(rc.name||'').trim()) out.name = rc.name;
+  if(!String(out.name||'').trim() && String(lc.name||'').trim()) out.name = lc.name;
+  out.sent = lc.sent || rc.sent;
+  out.sentDates = [...new Set([...(lc.sentDates||[]), ...(rc.sentDates||[])])];
+  return out;
+}
+function mergeActsDB(local, remote){
+  if(!local) return normalizeDB(remote);
+  if(!remote) return normalizeDB(local);
+  const newer = dbTimestamp(local) >= dbTimestamp(remote) ? local : remote;
+  const out = cloneJSON(newer);
+  out.updated = new Date(Math.max(dbTimestamp(local), dbTimestamp(remote))).toISOString();
+  out.version = Math.max(Number(local.version)||0, Number(remote.version)||0);
+  const ids = new Set([...(local.clients||[]).map(c=>c.id), ...(remote.clients||[]).map(c=>c.id)]);
+  out.clients = [...ids].map(id=>{
+    const lc = (local.clients||[]).find(c=>c.id===id);
+    const rc = (remote.clients||[]).find(c=>c.id===id);
+    if(!lc) return cloneJSON(rc);
+    if(!rc) return cloneJSON(lc);
+    return mergeClient(lc, rc);
+  });
+  return normalizeDB(out);
+}
+
 function normalizeDB(db){
   db = db && typeof db==='object' ? db : {};
   db.clients      = Array.isArray(db.clients) ? db.clients : [];
@@ -944,6 +1019,19 @@ function normalizeDB(db){
       const fallbackId = c.contracts[0] ? c.contracts[0].id : null;
       c.services.forEach(s=>{ if(!s.contractId && fallbackId) s.contractId = fallbackId; });
     }
+    const contractById = Object.fromEntries((c.contracts||[]).map(ct=>[ct.id, ct]));
+    c.services.forEach(s=>{
+      if((s.pay==='full_prepay'||s.pay==='part_prepay') && !(Number(s.actualPrepay)>0)){
+        const ct = contractById[s.contractId];
+        const m = s.date ? String(s.date).slice(0,7) : '';
+        if(ct){
+          const fallback = (m && ct.prepaySnapshots && ct.prepaySnapshots[m]!=null)
+            ? Number(ct.prepaySnapshots[m]) : Number(ct.prepay);
+          if(fallback>0) s.actualPrepay = fallback;
+        }
+      }
+      if(s.actualPrepay != null) s.actualPrepay = Number(s.actualPrepay)||0;
+    });
   });
   return db;
 }
@@ -968,12 +1056,16 @@ async function loadDB(){
     if(raw) local = normalizeDB(JSON.parse(raw));
   }catch(e){}
 
-  const ts = db => Date.parse((db && db.updated) || 0) || 0;
-  if(remote && local && ts(local) > ts(remote)){
+  if(remote && local){
+    const merged = mergeActsDB(local, remote);
     if(remoteSha) localStorage.setItem(SHA_KEY, remoteSha);
-    window.__restoreLocalNewer = true;
-    setSync('Восстановлена более новая локальная копия', true);
-    return local;
+    try{ localStorage.setItem(DB_KEY, JSON.stringify(merged)); }catch(e){}
+    const localPaid = (local.clients||[]).some(cl=>(cl.services||[]).some(serviceIsPaid));
+    const remotePaid = (remote.clients||[]).some(cl=>(cl.services||[]).some(serviceIsPaid));
+    if(localPaid && !remotePaid) window.__needsCloudPush = true;
+    else if(dbTimestamp(local) > dbTimestamp(remote)) window.__needsCloudPush = true;
+    if(window.__needsCloudPush) setSync('Восстановлены локальные оплаты — отправляю в облако…', true);
+    return merged;
   }
   if(remote){
     if(remoteSha) localStorage.setItem(SHA_KEY, remoteSha);
@@ -986,13 +1078,25 @@ async function loadDB(){
   return normalizeDB({});
 }
 let saveTimer = null;
-function save(){
+function save(opts){
+  opts = opts || {};
   DB.updated = new Date().toISOString();
   try{ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }catch(e){}
   clearTimeout(saveTimer);
+  if(opts.immediate){
+    saveTimer = null;
+    return pushDB();
+  }
   saveTimer = setTimeout(()=>pushDB(), 700);
 }
-async function pushDB(retry){
+function flushPendingSave(){
+  if(!saveTimer) return;
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  pushDB(false, true);
+}
+window.addEventListener('pagehide', flushPendingSave);
+async function pushDB(retry, keepalive){
   const token = localStorage.getItem(TOKEN_KEY);
   if(!token){ setSync('Токен не задан — сохранено локально', true); return; }
   setSync('Сохраняю…');
@@ -1001,7 +1105,10 @@ async function pushDB(retry){
     const sha = localStorage.getItem(SHA_KEY);
     if(sha) body.sha = sha;
     const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, {
-      method:'PUT', headers:{...ghHeaders(),'Content-Type':'application/json'}, body: JSON.stringify(body)
+      method:'PUT',
+      headers:{...ghHeaders(),'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+      keepalive: !!keepalive
     });
     if(res.ok){
       const data = await res.json();
@@ -1012,7 +1119,15 @@ async function pushDB(retry){
     }
     if((res.status===409 || res.status===422) && !retry){
       const g = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}?ref=main`, {headers:ghHeaders(), cache:'no-store'});
-      if(g.ok){ const d = await g.json(); localStorage.setItem(SHA_KEY, d.sha); return pushDB(true); }
+      if(g.ok){
+        const d = await g.json();
+        localStorage.setItem(SHA_KEY, d.sha);
+        try{
+          DB = mergeActsDB(DB, normalizeDB(JSON.parse(b64dec(d.content))));
+          localStorage.setItem(DB_KEY, JSON.stringify(DB));
+        }catch(e){}
+        return pushDB(true);
+      }
     }
     setSync('Ошибка сохранения ('+res.status+')', true);
   }catch(e){ setSync('Нет связи с GitHub — сохранено локально', true); }
@@ -1310,13 +1425,21 @@ function monthActualPrepay(c, contractId, month){
   month = String(month||'').slice(0,7);
   if(!month) return 0;
   let best = 0;
+  let hasPrepaySvc = false;
   contractServices(c, contractId).forEach(s=>{
     if(monthKey(s.date)!==month) return;
     if(s.pay!=='full_prepay' && s.pay!=='part_prepay') return;
+    hasPrepaySvc = true;
     const v = Number(s.actualPrepay)||0;
     if(v>best) best = v;
   });
-  return best;
+  if(best>0) return best;
+  if(hasPrepaySvc){
+    const ct = getContract(c, contractId);
+    if(ct && ct.prepaySnapshots && ct.prepaySnapshots[month]!=null) return Number(ct.prepaySnapshots[month])||0;
+    if(ct) return Number(ct.prepay)||0;
+  }
+  return 0;
 }
 /** Значение по умолчанию для поля «фактически внесено» в форме услуги. */
 function defaultActualPrepayForForm(c, contractId, dateISO, priceGuess, exceptServiceId){
@@ -1445,9 +1568,9 @@ function sortServices(list){
 /* ====================== ИНИЦИАЛИЗАЦИЯ И ВИДЫ ====================== */
 async function init(){
   DB = await loadDB();
-  if(window.__restoreLocalNewer){
-    window.__restoreLocalNewer = false;
-    save();
+  if(window.__needsCloudPush){
+    window.__needsCloudPush = false;
+    await save({immediate:true});
   }
   await loadOffers();
   restoreNav();
@@ -2620,6 +2743,7 @@ function saveService(clientId, svcId){
   const data = {
     contractId, date, code, side: window.__ctx.side, desc, price, pay, payAmount: payAmt,
     actualPrepay: (pay==='full_prepay'||pay==='part_prepay') ? actualPrepay : 0,
+    updatedAt: new Date().toISOString(),
     surcharges: window.__ctx.surSel.slice(),
     surchargeMeta: JSON.parse(JSON.stringify(window.__ctx.surMeta||{})),
     applied: r.applied.map(a=>({name:a.name, amount:a.amount, delta:a.delta, count:a.count||1, comment:a.comment||'', extraAmount:Number(a.extraAmount)||0})),
@@ -2645,7 +2769,7 @@ function saveService(clientId, svcId){
     const from = (pay==='full_prepay' || pay==='part_prepay') ? '' : date;
     recalculateContractMonthServices(c, contractId, monthKey(date), from);
   }
-  save(); closeModal(); renderAllViews();
+  save({immediate:true}); closeModal(); renderAllViews();
 }
 function deleteService(clientId, svcId){
   const c = getClient(clientId);
