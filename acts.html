@@ -1579,6 +1579,9 @@ function sortServices(list){
 async function init(){
   try{
     DB = await loadDB();
+    if(refreshAbonementDiscountsFromTariffs(DB)){
+      window.__needsCloudPush = true;
+    }
     if(window.__needsCloudPush){
       window.__needsCloudPush = false;
       await save({immediate:true});
@@ -1854,6 +1857,29 @@ function getAutoContractParams(){
     document.getElementById('clPrepay')?.value,
     document.getElementById('ctTerm')?.value
   );
+}
+function refreshAbonementDiscountsFromTariffs(db){
+  if(!db || typeof RaleksizCalculator==='undefined') return false;
+  let changed = false;
+  (db.clients||[]).forEach(client => {
+    (client.contracts||[]).forEach(ct => {
+      const basis = ct.basisType || 'contract';
+      if(basis !== 'contract' && basis !== 'addendum') return;
+      const auto = abonementParamsFromValues(ct.contractPrice, ct.prepay, ct.term);
+      if(
+        ct.status === auto.status &&
+        ct.tariff === auto.tariff &&
+        Number(ct.discount) === auto.discount
+      ) return;
+      ct.status = auto.status;
+      ct.tariff = auto.tariff;
+      ct.discount = auto.discount;
+      ct.updatedAt = new Date().toISOString();
+      changed = true;
+      recalculateContractServices(client, ct.id);
+    });
+  });
+  return changed;
 }
 function refreshAutoContractParams(){
   const type = document.getElementById('clBasisType')?.value;
@@ -2513,14 +2539,30 @@ function onCodeChange(){
 function surchargeNeedsCount(x){
   if(!x) return false;
   if(x.countable===true) return true;
+  if(x.countable===false) return false;
   const n=String(x.name||'').toLowerCase();
-  // Сопровождение на стороне третьего лица относится к формату "суд под ключ",
-  // количество не требуется.
+  if(/плательщик/i.test(n) && /не фл/i.test(n)) return false;
+  if(/нерабочие дни/i.test(n)) return false;
+  if(/смешанный предмет/i.test(n)) return false;
+  if(/рамочный договор/i.test(n)) return false;
+  if(/legal design/i.test(n)) return false;
+  if(/без правового заключения/i.test(n)) return false;
+  if(/юридическое лицо на стороне сделки/i.test(n) && !/сверх/i.test(n)) return false;
+  if(/добровольное нотариальное/i.test(n)) return false;
+  if(/акционерное общество/i.test(n)) return false;
+  if(/нотариальное удостоверение заявления/i.test(n)) return false;
+  if(/устав с нестандартными/i.test(n)) return false;
+  if(/без переговорной сессии/i.test(n)) return false;
+  if(/доверитель/i.test(n)) return false;
+  if(/представительство третьего лица/i.test(n)) return false;
+  if(/представительство ответчика/i.test(n)) return false;
+  if(/представительство должника/i.test(n)) return false;
   if(/сопровождение на стороне третьего лица/i.test(n)) return false;
-  // Явные правила по требованию ТЗ.
+  if(/упрощ[её]нн/i.test(n)) return false;
+  if(/зач[её]т при заказе претензии/i.test(n)) return false;
   if(/встреча для обсуждения/i.test(n)) return true;
   if(/уведомление банков/i.test(n)) return true;
-  return /(кажд|сторон|страниц|страниц|выезд|заседан|итерац|критери|изменени|участник|лицо сверх|10 стр|сверх лимит|дополнительн)/i.test(n);
+  return /(кажд|сторон|страниц|выезд|заседан|итерац|критери|изменени|участник|лицо сверх|10 стр|сверх лимит|дополнительн)/i.test(n);
 }
 function surchargeMeta(i){
   const m=window.__ctx.surMeta||{};

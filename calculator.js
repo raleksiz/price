@@ -373,6 +373,29 @@
     return 1000;
   }
 
+  var REALESTATE_CHEAPEST_NAMES = [
+    'Многосторонняя сделка (3 и более участников): каждое физическое лицо сверх двух',
+    'Многосторонняя сделка (3 и более участников): каждое юридическое лицо сверх двух',
+    'Добровольное нотариальное удостоверение'
+  ];
+
+  function isCheapestRealestateGroup(item) {
+    if (item && item.definition && item.definition.group === 'cheapest_realestate') return true;
+    var key = normSurchargeName(item && item.name);
+    return REALESTATE_CHEAPEST_NAMES.some(function (name) {
+      return normSurchargeName(name) === key;
+    });
+  }
+
+  function cheapestMagnitude(item) {
+    return Math.abs(n(item && item.definition && item.definition.value) * Math.max(1, n(item && item.count)));
+  }
+
+  function isNonstandardSurcharge(item) {
+    if (item && item.definition && item.definition.groupOverflowTarget === 'нестандартность') return true;
+    return /нестандартност/i.test(item && item.name);
+  }
+
   function applySurcharges(startPrice, definitions, selectedSurcharges) {
     var price = round(startPrice);
     var notes = [];
@@ -403,24 +426,41 @@
       };
     });
 
-    var cheapest = resolved.filter(function (item) {
-      return item.definition && item.definition.group === 'cheapest_realestate';
-    });
+    var cheapest = resolved.filter(isCheapestRealestateGroup);
     if (cheapest.length > 1) {
       cheapest.sort(function (a, b) {
-        return Math.abs(n(a.definition.value)) - Math.abs(n(b.definition.value));
+        var byAmount = cheapestMagnitude(a) - cheapestMagnitude(b);
+        if (byAmount) return byAmount;
+        return a.order - b.order || a.index - b.index;
       });
       var keep = cheapest[0];
-      var overflow = cheapest.slice(1).length;
+      var overflow = cheapest.slice(1).reduce(function (sum, item) {
+        return sum + Math.max(1, n(item.count));
+      }, 0);
       resolved = resolved.filter(function (item) {
-        return !item.definition || item.definition.group !== 'cheapest_realestate' || item === keep;
+        return !isCheapestRealestateGroup(item) || item === keep;
       });
-      var target = resolved.filter(function (item) {
-        return item.definition && (
-          item.definition.groupOverflowTarget === 'нестандартность' ||
-          /нестандартност/i.test(item.name)
-        );
-      })[0];
+      var target = resolved.filter(isNonstandardSurcharge)[0];
+      if (!target) {
+        var defTarget = (definitions || []).filter(function (item) {
+          return item && (
+            item.groupOverflowTarget === 'нестандартность' ||
+            /нестандартност/i.test(surchargeName(item))
+          );
+        })[0];
+        if (defTarget) {
+          target = {
+            entry: { name: surchargeName(defTarget), count: 0 },
+            definition: defTarget,
+            index: 999,
+            name: surchargeName(defTarget),
+            order: surchargeApplyOrder(surchargeName(defTarget), catKey),
+            count: 0,
+            extraAmount: 0
+          };
+          resolved.push(target);
+        }
+      }
       if (target) target.count += overflow;
     }
 
@@ -639,7 +679,7 @@
       status: contract && contract.status,
       catKey: service.catKey,
       offerCats: (contract && (contract.offerCats || contract.offerCategories || contract.categories)) || [],
-      contractPrice: contract && contract.contractPrice,
+      contractPrice: getMonthBudget(contract, monthKey(service.date)),
       contractRemainder: contractRemainder
     });
     var surcharges = applySurcharges(stage1.stage1Price, definitions, service.surcharges);
