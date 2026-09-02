@@ -279,11 +279,106 @@
     return /50%.*базов/i.test(name) && !/за сторон/i.test(name);
   }
 
+  function normSurchargeName(value) {
+    return text(value).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
+  var SURCHARGE_ORDERS = {
+    consult: [
+      'Плательщик — не ФЛ (надбавка, в т.ч. для ИП)',
+      'Выезд для консультирования (Мск и МО)',
+      'Каждый выезд за пределы Мск и МО',
+      'Нерабочие дни и после 19:00 по Мск'
+    ],
+    contracts: [
+      'Смешанный предмет договора',
+      'Каждая самостоятельная сторона сверх двух',
+      'Входящий договор на анализ свыше 10 страниц',
+      'Рамочный договор',
+      'Внедрение Legal Design с переосмыслением архитектуры договора (паспорт сделки, таймлайн и пр.)',
+      'Нерабочие дни и после 19:00 по Мск',
+      'Каждая итерация согласования, начиная со второй'
+    ],
+    realestate: [
+      'Скидка не в Мск или МО',
+      'Каждый выезд по Мск и МО менее трёх',
+      'Без правового заключения по сделке',
+      'Юридическое лицо на стороне сделки',
+      'Многосторонняя сделка (3 и более участников): каждое физическое лицо сверх двух',
+      'Многосторонняя сделка (3 и более участников): каждое юридическое лицо сверх двух',
+      'Добровольное нотариальное удостоверение',
+      'Каждый дополнительный критерий нестандартности сделки',
+      'Каждый выезд сверх согласованного лимита',
+      'Каждый выезд за пределы Мск и МО'
+    ],
+    corporate: [
+      'Если Акционерное общество',
+      'Два и более изменения в одном Р13014: каждое следующее',
+      'Нотариальное удостоверение заявления',
+      'Устав с нестандартными положениями (особый порядок управления и т.п.)',
+      'Уведомление банков, контрагентов, госорганов (за пределами ФНС)',
+      'Каждый дополнительный выезд (курьер, нотариус, ФНС)'
+    ],
+    pretrial: [
+      'Без переговорной сессии в составе претензии',
+      'Встреча для обсуждения (Мск и МО)',
+      'Нерабочие дни и после 19:00 по Мск',
+      'Каждый выезд за пределы Мск и МО'
+    ],
+    litigation_single: [
+      'Доверитель — ЮЛ / ИП',
+      'Представительство третьего лица',
+      'Представительство ответчика',
+      'Каждый выезд за пределы Мск и МО'
+    ],
+    full_repr: [
+      'Доверитель — юридическое лицо / ИП',
+      'Представительство должника в деле о банкротстве',
+      'Сопровождение на стороне третьего лица',
+      'Упрощённый порядок (до вступления в законную силу)',
+      'Каждое дополнительное заседание сверх лимита',
+      'Каждый выезд за пределы Мск и МО',
+      'Зачёт при заказе претензии'
+    ]
+  };
+
+  function categoryKeyForDefinitions(definitions) {
+    var names = {};
+    (definitions || []).forEach(function (item) {
+      names[normSurchargeName(surchargeName(item))] = true;
+    });
+    var cats = Object.keys(SURCHARGE_ORDERS);
+    var best = '';
+    var bestScore = -1;
+    cats.forEach(function (cat) {
+      var score = 0;
+      SURCHARGE_ORDERS[cat].forEach(function (itemName) {
+        if (names[normSurchargeName(itemName)]) score += 1;
+      });
+      if (score > bestScore) {
+        bestScore = score;
+        best = cat;
+      }
+    });
+    return bestScore > 0 ? best : '';
+  }
+
+  function surchargeApplyOrder(name, catKey) {
+    var key = normSurchargeName(name);
+    var list = catKey && SURCHARGE_ORDERS[catKey];
+    if (!list) return 1000;
+    for (var i = 0; i < list.length; i++) {
+      if (normSurchargeName(list[i]) === key) return i;
+    }
+    return 1000;
+  }
+
   function applySurcharges(startPrice, definitions, selectedSurcharges) {
     var price = round(startPrice);
     var notes = [];
     var applied = [];
     var selected = normalizeSelected(selectedSurcharges);
+    var catKey = categoryKeyForDefinitions(definitions);
     var resolved = selected.map(function (entry, index) {
       var found = findSurcharge(definitions, entry);
       var definition = found ? Object.assign({}, found, {
@@ -292,12 +387,17 @@
         comment: entry.comment,
         basePrice: entry.basePrice
       }) : entry;
+      var name = surchargeName(definition) || surchargeName(entry);
+      var namedOrder = surchargeApplyOrder(name, catKey);
+      var fallbackOrder = found && found.order != null
+        ? n(found.order)
+        : (definition.order != null ? n(definition.order) : index + 1000);
       return {
         entry: entry,
         definition: definition,
         index: index,
-        name: surchargeName(definition) || surchargeName(entry),
-        order: found && found.order != null ? n(found.order) : (definition.order != null ? n(definition.order) : index + 1000),
+        name: name,
+        order: namedOrder < 1000 ? namedOrder : fallbackOrder,
         count: selectedCount(entry, found || definition),
         extraAmount: Math.max(0, n(entry.extraAmount))
       };
@@ -705,6 +805,7 @@
     getDiscountDecision: getDiscountDecision,
     getStage1Price: getStage1Price,
     applySurcharges: applySurcharges,
+    SURCHARGE_ORDERS: SURCHARGE_ORDERS,
     calculate: calculateInput,
     calculateService: calculateService,
     calculateMonthHistory: calculateMonthHistory,

@@ -1179,11 +1179,17 @@ async function loadOffers(){
 /* ====================== ЦЕНЫ И РАСЧЁТЫ ====================== */
 function priceItem(code){ return DB.priceList.find(p=>p.code===code) || null; }
 function catSurcharges(catKey){ return DB.surcharges[catKey] || []; }
+function surchargeDisplayOrder(catKey, name, fallback){
+  const list = (window.RaleksizCalculator && RaleksizCalculator.SURCHARGE_ORDERS && RaleksizCalculator.SURCHARGE_ORDERS[catKey]) || [];
+  const key = String(name || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const i = list.findIndex(item => String(item).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase() === key);
+  return i < 0 ? 1000 + fallback : i;
+}
 function catSurchargesForDisplay(catKey){
   const list = catSurcharges(catKey);
   return list.map((item, index) => ({item, index})).sort((a, b) => {
-    const oa = a.item && a.item.order != null ? Number(a.item.order) : 1000 + a.index;
-    const ob = b.item && b.item.order != null ? Number(b.item.order) : 1000 + b.index;
+    const oa = surchargeDisplayOrder(catKey, a.item && a.item.name, a.index);
+    const ob = surchargeDisplayOrder(catKey, b.item && b.item.name, b.index);
     return oa - ob || a.index - b.index;
   });
 }
@@ -1208,7 +1214,7 @@ function selectedSurchargesForService(item, surKeys, surMeta){
       type:x.type || x.kind || 'fix',
       kind:x.type || x.kind || 'fix',
       value:Number(x.value)||0,
-      order:x.order != null ? Number(x.order) : idx,
+      order:surchargeDisplayOrder(item.cat, x.name, idx),
       count,
       extraAmount:Math.max(0,Number(m.extraAmount)||0),
       comment:m.comment||'',
@@ -1571,9 +1577,6 @@ function sortServices(list){
 async function init(){
   try{
     DB = await loadDB();
-    if(refreshAbonementDiscountsFromTariffs(DB)){
-      window.__needsCloudPush = true;
-    }
     if(window.__needsCloudPush){
       window.__needsCloudPush = false;
       await save({immediate:true});
@@ -1850,30 +1853,6 @@ function getAutoContractParams(){
     document.getElementById('ctTerm')?.value
   );
 }
-function refreshAbonementDiscountsFromTariffs(db){
-  if(!db || typeof RaleksizCalculator==='undefined') return false;
-  let changed = false;
-  (db.clients||[]).forEach(client => {
-    (client.contracts||[]).forEach(ct => {
-      const basis = ct.basisType || 'contract';
-      if(basis !== 'contract' && basis !== 'addendum') return;
-      const auto = abonementParamsFromValues(ct.contractPrice, ct.prepay, ct.term);
-      if(
-        ct.status === auto.status &&
-        ct.tariff === auto.tariff &&
-        Number(ct.discount) === auto.discount
-      ) return;
-      ct.status = auto.status;
-      ct.tariff = auto.tariff;
-      ct.discount = auto.discount;
-      ct.updatedAt = new Date().toISOString();
-      changed = true;
-      recalculateContractServices(client, ct.id);
-    });
-  });
-  return changed;
-}
-
 function refreshAutoContractParams(){
   const type = document.getElementById('clBasisType')?.value;
   if (type !== 'contract' && type !== 'addendum') return;
