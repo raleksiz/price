@@ -46,6 +46,14 @@ textarea.autogrow{resize:none;overflow:hidden;}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 @media (max-width:720px){.grid2,.grid3{grid-template-columns:1fr;}}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+.price-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-top:4px;}
+.calc-details{font-size:11.5px;}
+.calc-details summary{cursor:pointer;color:var(--violet);font-weight:600;list-style:none;}
+.calc-details summary::-webkit-details-marker{display:none;}
+.calc-details[open] summary{margin-bottom:4px;}
+.payment-block{margin-bottom:14px;}
+.payment-hint{margin-top:6px;}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
 .tab{padding:9px 14px;border-radius:10px;background:#fff;border:1.5px solid var(--line);cursor:pointer;font-size:13px;font-weight:700;color:#6b6b7b;}
 .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
@@ -2315,21 +2323,26 @@ function openServiceForm(clientId, contractId, svcId){
     <div id="baseContractFields" class="hidden"></div>
     <div id="surBox"></div>
     <div class="field"><label>Стоимость, ₽</label><input type="number" id="svcPrice" step="1" value="${Number(cur.price)||0}" oninput="onManualPrice()">
-      <div class="muted" id="priceNote"></div></div>
-    <div id="calcLine" class="calc-line hidden"></div>
-    <div class="grid2">
-      <div class="field"><label>Оплата</label>
-        <select id="svcPay" onchange="onPayChange()">
-          ${Object.keys(PAY_LABELS).map(k=>`<option value="${k}" ${cur.pay===k?'selected':''}>${PAY_LABELS[k]}</option>`).join('')}
-        </select></div>
-      <div class="field" id="payAmtField"><label>Сумма оплаты, ₽</label>
-        <input type="number" id="svcPayAmt" step="1" min="0" value="${Number(cur.payAmount)||0}" oninput="onPayChange(true)">
-        <div class="muted" id="prepayInfo"></div></div>
+      <div class="muted price-meta">
+        <span id="priceNote"></span>
+        <details id="calcDetails" class="calc-details hidden"><summary>Подробнее</summary><div id="calcLine" class="calc-line" style="margin:4px 0 0"></div></details>
+      </div>
     </div>
-    <div class="field" id="actualPrepayField" style="display:none">
-      <label>Фактически внесено предоплаты, ₽</label>
-      <input type="number" id="svcActualPrepay" step="1" min="0" value="${Number(cur.actualPrepay)||0}" oninput="onActualPrepayInput()">
-      <div class="muted" id="actualPrepayHint"></div>
+    <div class="field payment-block">
+      <div class="grid-auto payment-grid">
+        <div class="field" style="margin-bottom:0"><label>Оплата</label>
+          <select id="svcPay" onchange="onPayChange()">
+            ${Object.keys(PAY_LABELS).map(k=>`<option value="${k}" ${cur.pay===k?'selected':''}>${PAY_LABELS[k]}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" id="payAmtField" style="margin-bottom:0"><label id="payAmtLabel">Сумма оплаты, ₽</label>
+          <input type="number" id="svcPayAmt" step="1" min="0" value="${Number(cur.payAmount)||0}" oninput="onPayChange(true)">
+        </div>
+        <div class="field" id="actualPrepayField" style="margin-bottom:0;display:none"><label>Фактически внесено, ₽</label>
+          <input type="number" id="svcActualPrepay" step="1" min="0" value="${Number(cur.actualPrepay)||0}" oninput="onActualPrepayInput()">
+        </div>
+      </div>
+      <div class="muted payment-hint" id="paymentHint"></div>
     </div>
     ${cf}
     <div class="row" style="margin-top:8px">
@@ -2614,6 +2627,7 @@ function recalc(keepPrice){
   }
 
   const cl = document.getElementById('calcLine');
+  const clWrap = document.getElementById('calcDetails');
   if(item){
     const parts = [`база ${money(r.base)}`];
     r.applied.forEach(a=>{
@@ -2621,8 +2635,8 @@ function recalc(keepPrice){
       parts.push(`${a.name} (${money(a.amount)}${suffix})`);
     });
     cl.innerHTML = parts.join(' → ') + ` = <b>${money(r.price)}</b>`;
-    cl.classList.remove('hidden');
-  } else cl.classList.add('hidden');
+    if(clWrap) clWrap.classList.remove('hidden');
+  } else if(clWrap) clWrap.classList.add('hidden');
   onPayChange(true);
 }
 function onActualPrepayInput(){
@@ -2635,21 +2649,22 @@ function onSvcDateChange(){
 }
 function onPayChange(silent){
   const pay = document.getElementById('svcPay').value;
-  const needAmt = pay==='part' || pay==='part_prepay';
-  document.getElementById('payAmtField').style.display = needAmt ? 'block' : 'none';
+  const payAmtField = document.getElementById('payAmtField');
+  const payAmtLabel = document.getElementById('payAmtLabel');
   const c = ctxClient();
   const ct = ctxContract();
   const date = document.getElementById('svcDate').value;
   const price = Number(document.getElementById('svcPrice').value)||0;
-  const info = document.getElementById('prepayInfo');
+  const hint = document.getElementById('paymentHint');
   const actualBox = document.getElementById('actualPrepayField');
   const actualInp = document.getElementById('svcActualPrepay');
-  const actualHint = document.getElementById('actualPrepayHint');
   const fromPrepay = pay==='full_prepay' || pay==='part_prepay';
 
-  if(actualBox){
-    actualBox.style.display = fromPrepay ? 'block' : 'none';
-  }
+  const showPayAmt = pay==='part' || pay==='part_prepay';
+  if(payAmtField) payAmtField.style.display = showPayAmt ? '' : 'none';
+  if(payAmtLabel) payAmtLabel.textContent = pay==='part_prepay' ? 'Зачтено из предоплаты, ₽' : 'Сумма оплаты, ₽';
+  if(actualBox) actualBox.style.display = fromPrepay ? '' : 'none';
+
   if(fromPrepay && actualInp){
     if(!silent && !window.__ctx.actualPrepayManual){
       const def = defaultActualPrepayForForm(c, window.__ctx.contractId, date, price, window.__ctx.svcId);
@@ -2658,32 +2673,31 @@ function onPayChange(silent){
       const def = defaultActualPrepayForForm(c, window.__ctx.contractId, date, price, window.__ctx.svcId);
       if(def>0) actualInp.value = def;
     }
-    const planned = Number(ct && ct.prepay)||0;
-    if(actualHint){
-      actualHint.textContent = planned
-        ? ('Предусмотрено по договору: ' + money(planned) + (ct && ct.status==='Абонемент' ? ' в месяц' : ''))
-        : 'Укажите сумму, фактически полученную на дату этой услуги';
-    }
+  } else if(window.__ctx){
+    window.__ctx.actualPrepayManual = false;
   }
 
-  const formActual = fromPrepay ? (Number(actualInp && actualInp.value)||0) : null;
+  if(!hint) return;
+  if(!fromPrepay){ hint.innerHTML = ''; return; }
+
+  const formActual = Number(actualInp && actualInp.value)||0;
   const avail = prepayAvailable(c, window.__ctx.contractId, date, window.__ctx.svcId, formActual);
-  if(fromPrepay){
-    const need = pay==='full_prepay' ? price : (Number(document.getElementById('svcPayAmt').value)||0);
-    let txt = 'Доступно из предоплаты' + (ct && ct.status==='Абонемент' ? ' за ' + monthTitle(monthKey(date)) : '') + ': ' + money(avail);
-    if(!(formActual>0)) txt = 'Сначала укажите фактически внесённую предоплату';
-    else if(need > avail) txt += ' — превышение на ' + money(need-avail) + ', сверх лимита услуга оказывается на условиях разовой услуги';
-    info.textContent = txt;
-    info.style.color = (!(formActual>0) || need>avail) ? '#E65100' : '#888';
-    info.parentElement.style.display = 'block';
-    document.getElementById('payAmtField').style.display = 'block';
-    if(pay==='full_prepay') document.getElementById('payAmtField').querySelector('input').style.display='none';
-  } else {
-    info.textContent='';
-    const inp = document.getElementById('payAmtField').querySelector('input');
-    if(inp) inp.style.display='block';
-    if(window.__ctx) window.__ctx.actualPrepayManual = false;
+  const need = pay==='full_prepay' ? price : (Number(document.getElementById('svcPayAmt').value)||0);
+  const planned = Number(ct && ct.prepay)||0;
+
+  let availTxt = 'Доступно из предоплаты' + (ct && ct.status==='Абонемент' ? ' за ' + monthTitle(monthKey(date)) : '') + ': ' + money(avail);
+  let availColor = '#888';
+  if(!(formActual>0)){
+    availTxt = 'Сначала укажите фактически внесённую предоплату';
+    availColor = '#E65100';
+  } else if(need > avail){
+    availTxt += ' — превышение на ' + money(need-avail) + ', сверх лимита услуга оказывается на условиях разовой услуги';
+    availColor = '#E65100';
   }
+  const plannedTxt = planned
+    ? 'Предусмотрено по договору: ' + money(planned) + (ct && ct.status==='Абонемент' ? ' в месяц' : '')
+    : '';
+  hint.innerHTML = `<span style="color:${availColor}">${esc(availTxt)}</span>` + (plannedTxt ? ' · ' + esc(plannedTxt) : '');
 }
 function saveService(clientId, svcId){
   const c = getClient(clientId);
