@@ -17,8 +17,8 @@
   var tariffs = [
     { name: 'Base', from: 0, to: 24999, dmin: 0, dmax: 0 },
     { name: 'Easy', from: 25000, to: 49999, dmin: 0.10, dmax: 0.15 },
-    { name: 'Must have', from: 50000, to: 69999, dmin: 0.16, dmax: 0.20 },
-    { name: 'Power', from: 70000, to: 100000, dmin: 0.21, dmax: 0.25 }
+    { name: 'Must have', from: 50000, to: 69999, dmin: 0.1501, dmax: 0.20 },
+    { name: 'Power', from: 70000, to: 100000, dmin: 0.2001, dmax: 0.25 }
   ];
 
   var tariffParams = {
