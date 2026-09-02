@@ -1199,9 +1199,8 @@ function decodeStrictOfferToken(token){
 
 async function bootPage(){
   const catalog = await loadPriceCatalog();
-  SURCHARGE_ORDER_MAP = catalog
-    ? buildSurchargeOrderMap(catalog)
-    : buildSurchargeOrderMapFromLists(SURCHARGE_ORDERS);
+  // Порядок надбавок на сайте — фиксированный список, не порядок массива в каталоге.
+  SURCHARGE_ORDER_MAP = buildSurchargeOrderMapFromLists(SURCHARGE_ORDERS);
   if (catalog) applyCatalogFromActs(catalog);
   buildPage();
   updateCollapsedGroups();
