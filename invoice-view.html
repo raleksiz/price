@@ -20,7 +20,7 @@
     .invoice-title{margin:25px 0 18px}
     .invoice-title h1{font-size:24px;line-height:1.1;margin:0}
     .invoice-title p{margin:5px 0 0}
-    .invoice-payment{display:grid;grid-template-columns:minmax(0,1fr) 142px;grid-template-areas:"bank qr";gap:18px;align-items:center}
+    .invoice-payment{display:grid;grid-template-columns:142px minmax(0,1fr);grid-template-areas:"qr bank";gap:18px;align-items:center}
     .invoice-bank-grid{grid-area:bank;display:grid;grid-template-columns:58% 42%;min-width:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--soft)}
     .invoice-bank-grid>div{min-height:54px;padding:7px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;justify-content:center}
     .invoice-bank-grid>div:nth-child(2n){border-right:0}
@@ -29,7 +29,7 @@
     .invoice-bank-grid b{font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
     .invoice-qr{width:142px;min-width:142px;padding:5px;background:#fff;border:1px solid var(--line);border-radius:10px}
     .invoice-qr img,.invoice-qr canvas{display:block;margin:auto}
-    .invoice-qr-desktop{display:block;grid-area:qr;justify-self:end}
+    .invoice-qr-desktop{display:block;grid-area:qr;justify-self:start}
     .invoice-qr-mobile{display:none}
     .invoice-party-qr-area{display:block}
     .invoice-parties{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
