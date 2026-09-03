@@ -38,7 +38,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     return `<article class="invoice-sheet">
       <header class="invoice-head">
         <img class="invoice-logo" src="${API}/logo.png?v=20260903" alt="RALEKSIZ HOUSE">
-        <div class="invoice-issuer"><b>${RECIPIENT.name}</b><br>ИНН ${RECIPIENT.inn} · ОГРНИП ${RECIPIENT.ogrnip}<br>${RECIPIENT.email} · ${RECIPIENT.telegram}</div>
+        <div class="invoice-issuer"><b>${RECIPIENT.name}</b><br>ОГРНИП ${RECIPIENT.ogrnip}<br><a href="mailto:${esc(RECIPIENT.email)}">${RECIPIENT.email}</a> · <a href="${esc(RECIPIENT.telegram)}" target="_blank" rel="noopener">${RECIPIENT.telegram}</a></div>
       </header>
       <section class="invoice-title"><div><h1>СЧЁТ НА ОПЛАТУ № ${esc(d.number)}</h1><p>от ${date(d.date)}</p></div></section>
       <section class="invoice-payment"><div class="invoice-bank-grid">
@@ -49,7 +49,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
       <div class="invoice-party-qr-area"><section class="invoice-parties"><div><span>Плательщик</span><b>${esc(d.payer)}</b><small>ИНН ${payerInn}</small></div><div><span>Основание</span><b>${esc(d.basis)}</b></div></section><div class="invoice-qr invoice-qr-mobile" data-qr="${esc(paymentString(d))}"></div></div>
       <table class="invoice-items"><thead><tr><th>№</th><th>Наименование услуг</th><th>Кол-во</th><th>Ед.</th><th>Цена</th><th>Сумма</th></tr></thead><tbody><tr><td>1</td><td>Юридические услуги по ${esc(serviceBasis(d.basis))}</td><td>1</td><td>усл.</td><td>${money(d.amount)}</td><td>${money(d.amount)}</td></tr></tbody><tfoot><tr><td colspan="5">Итого к оплате</td><td>${money(d.amount)}</td></tr></tfoot></table>
       <div class="invoice-purpose"><span>Назначение платежа</span><b>${esc(d.purpose)}</b></div>
-      <footer class="invoice-footer"><span>НДС не облагается</span><span>Счёт действителен без подписи и печати.</span></footer>
+      <footer class="invoice-footer"><span>НДС не облагается</span></footer>
     </article>`;
   }
   function drawQrs(root) {

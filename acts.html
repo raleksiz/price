@@ -340,6 +340,7 @@ details[open] summary::before{content:"▾ ";}
 .contract-toolbar-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 @media(max-width:720px){.contract-toolbar-actions{margin-left:0;width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.contract-toolbar-actions .btn{width:100%;min-width:0;height:34px;padding:5px 3px;font-size:11px;line-height:1;white-space:nowrap}}
 .invoice-result-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;gap:8px;margin-top:14px;align-items:stretch}.invoice-result-actions .invoice-action{width:100%;min-width:0;justify-content:center}.invoice-action svg{display:none}.invoice-action-label{display:inline;white-space:nowrap;font-size:12px}@media(max-width:720px){.invoice-result-actions{gap:7px}.invoice-action{height:38px;min-width:0!important;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;border-radius:9px!important}.invoice-action-label{display:none}.invoice-action svg{display:block;width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.invoice-action.pdf svg{width:22px;height:22px}.invoice-action.pdf svg text{fill:currentColor;stroke:none;font-size:7px;font-family:Arial,sans-serif;font-weight:800;letter-spacing:-.4px}}
+.invoice-create-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.invoice-payer-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(105px,.6fr);gap:10px}@media(max-width:720px){.invoice-create-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.invoice-payer-row{grid-template-columns:minmax(0,1fr) minmax(105px,.6fr)}}
 .contract-preamble{font-size:12.5px;}
 .sent-flag-compact{margin-bottom:10px;}
 .sent-flag-label{text-transform:none;font-size:13px;margin:0;font-weight:700;}
@@ -3868,21 +3869,24 @@ function invoiceWriteKey(){
   if(key.trim()) try{localStorage.setItem(storageKey,key.trim());}catch(e){}
   return key.trim();
 }
+function nextInvoiceNumber(){
+  const n=Number(DB.invoiceLastNumber);
+  return Number.isSafeInteger(n) && n>=0 ? String(n+1) : '1';
+}
 function openInvoiceDialog(){
   const c=getClient(currentClientId), ct=getContract(c,currentContractId);
   if(!c || !ct) return;
   if(typeof RaleksizInvoice==='undefined'){ alert('Модуль счёта не загрузился. Обнови страницу.'); return; }
-  const basis=invoiceBasis(ct), purposeBasis=invoiceBasis(ct,true), invoices=Array.isArray(ct.invoices)?ct.invoices:[];
+  const purposeBasis=invoiceBasis(ct,true);
   openModal(`<h1>Счёт на оплату · ${esc(c.name)}</h1>
-    <div class="grid2">
-      <div class="field"><label>Номер счёта</label><input id="invNo" value="${invoices.length+1}"></div>
+    <div class="invoice-create-row">
       <div class="field"><label>Дата счёта</label><input id="invDate" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>Номер счёта</label><input id="invNo" type="number" min="1" step="1" inputmode="numeric" value="${nextInvoiceNumber()}"></div>
     </div>
-    <div class="field"><label>Плательщик</label><input id="invPayer" value="${esc(c.name)}"></div>
-    <div class="grid2"><div class="field"><label>ИНН плательщика <span class="muted">(необязательно)</span></label><input id="invPayerInn" inputmode="numeric"></div>
-      <div class="field"><label>Сумма, ₽</label><input id="invAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="Введите сумму"></div></div>
+    <div class="invoice-payer-row"><div class="field"><label>Плательщик</label><input id="invPayer" value="${esc(c.name)}"></div>
+      <div class="field"><label>ИНН <span class="muted">(необязательно)</span></label><input id="invPayerInn" inputmode="numeric"></div></div>
+    <div class="field"><label>Сумма, ₽</label><input id="invAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="Введите сумму"></div>
     <div class="field"><label>Назначение платежа</label><textarea id="invPurpose" class="autogrow">Оплата юридических услуг по ${esc(purposeBasis)}</textarea></div>
-    <div class="muted" style="margin:4px 0 12px">В бланке: «Юридические услуги по ${esc(basis)}». Назначение в QR-коде берётся из этого поля.</div>
     <div class="err" id="invErr"></div><div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button><button type="button" class="btn" onclick="saveInvoice()">Создать счёт</button></div>`);
   autoGrowTextarea(document.getElementById('invPurpose'));
 }
@@ -3892,6 +3896,8 @@ async function saveInvoice(){
   const amount=Number(document.getElementById('invAmount').value), number=document.getElementById('invNo').value.trim(), date=document.getElementById('invDate').value;
   const payer=document.getElementById('invPayer').value.trim(), payerInn=document.getElementById('invPayerInn').value.trim(), purpose=document.getElementById('invPurpose').value.trim();
   if(!number || !date || !payer || !purpose || !(amount>0)){ err.textContent='Заполни номер, дату, сумму, плательщика и назначение платежа.'; return; }
+  const invoiceNumber=Number(number);
+  if(!Number.isSafeInteger(invoiceNumber) || invoiceNumber<1){ err.textContent='Номер счёта должен быть положительным целым числом.'; return; }
   const invoice={id:uid(),number,date,amount,payer,payerInn,purpose,basis:invoiceBasisNominative(ct),createdAt:new Date().toISOString()};
   const key=invoiceWriteKey();
   if(!key){err.textContent='Для создания счёта нужен секретный ключ Cloudflare.';return;}
@@ -3907,6 +3913,8 @@ async function saveInvoice(){
     if(!published || !published.id) throw new Error('Worker не вернул идентификатор счёта');
   }catch(e){err.textContent='Не удалось сохранить счёт в Cloudflare: '+(e.message||e);if(button){button.disabled=false;button.textContent='Создать счёт';}return;}
   invoice.publicId=published.id;
+  DB.invoiceLastNumber=invoiceNumber;
+  if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.touchSection(DB,'invoiceLastNumber');
   ct.invoices=Array.isArray(ct.invoices)?ct.invoices:[]; ct.invoices.push(invoice); touchContract(ct); touchClient(c);
   save({immediate:true});
   const url=invoiceUrl(invoice), subject='Счёт на оплату № '+number+' от '+fmtDate(date), body='Направляю счёт на оплату.\n\nСсылка на счёт: '+url;
