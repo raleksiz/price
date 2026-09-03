@@ -3891,6 +3891,7 @@ function openInvoiceDialog(){
 }
 async function saveInvoice(){
   const c=getClient(currentClientId), ct=getContract(c,currentContractId), err=document.getElementById('invErr');
+  const button=[...document.querySelectorAll('.modal button')].find(x=>x.textContent.trim()==='Создать счёт');
   const amount=Number(document.getElementById('invAmount').value), number=document.getElementById('invNo').value.trim(), date=document.getElementById('invDate').value;
   const payer=document.getElementById('invPayer').value.trim(), payerInn=document.getElementById('invPayerInn').value.trim(), purpose=document.getElementById('invPurpose').value.trim();
   if(!number || !date || !payer || !purpose || !(amount>0)){ err.textContent='Заполни номер, дату, сумму, плательщика и назначение платежа.'; return; }
@@ -3898,6 +3899,7 @@ async function saveInvoice(){
   const key=invoiceWriteKey();
   if(!key){err.textContent='Для создания счёта нужен секретный ключ Cloudflare.';return;}
   let published;
+  if(button){button.disabled=true;button.textContent='Создаю…';}
   try{
     const res=await fetch(INVOICE_API+'/invoices',{method:'POST',headers:{'Content-Type':'application/json','X-CRM-Invoice-Key':key},body:JSON.stringify(invoice)});
     if(!res.ok){
@@ -3906,10 +3908,10 @@ async function saveInvoice(){
     }
     published=await res.json();
     if(!published || !published.id) throw new Error('Worker не вернул идентификатор счёта');
-  }catch(e){err.textContent='Не удалось сохранить счёт в Cloudflare: '+(e.message||e);return;}
+  }catch(e){err.textContent='Не удалось сохранить счёт в Cloudflare: '+(e.message||e);if(button){button.disabled=false;button.textContent='Создать счёт';}return;}
   invoice.publicId=published.id;
   ct.invoices=Array.isArray(ct.invoices)?ct.invoices:[]; ct.invoices.push(invoice); touchContract(ct); touchClient(c);
-  await save({immediate:true});
+  save({immediate:true});
   const url=invoiceUrl(invoice), subject='Счёт на оплату № '+number+' от '+fmtDate(date), body='Направляю счёт на оплату.\n\nСсылка на счёт: '+url;
   closeModal();
   openModal(`<h1>Счёт создан</h1><div class="link-box"><a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></div>
