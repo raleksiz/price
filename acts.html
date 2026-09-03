@@ -3954,6 +3954,12 @@ function refreshIssuedInvoices(){
   const list=box.querySelector('.invoice-issued-list');
   if(list && wasOpen) list.open=true;
 }
+function removeInvoiceFromCrm(c,ct,publicId){
+  ct.invoices=(ct.invoices||[]).filter(item=>invoicePublicId(item)!==publicId);
+  touchContract(ct); touchClient(c);
+  save({immediate:true});
+  refreshIssuedInvoices();
+}
 async function manageInvoice(publicId,action){
   const c=getClient(currentClientId), ct=c&&getContract(c,currentContractId);
   const invoice=ct && (ct.invoices||[]).find(item=>invoicePublicId(item)===publicId);
@@ -3976,15 +3982,24 @@ async function manageInvoice(publicId,action){
     if(!res.ok){
       if(res.status===403) try{localStorage.removeItem('raleksiz_invoice_write_key');}catch(e){}
       if(res.status===403) throw new Error('Ключ Cloudflare не принят. Нажми кнопку ещё раз и введи ключ заново.');
+      if(res.status===404 && action==='delete'){
+        const check=await fetch(url,{cache:'no-store'});
+        if(check.status===404){
+          removeInvoiceFromCrm(c,ct,publicId);
+          return;
+        }
+        throw new Error('Cloudflare не подтвердил удаление. В CRM ничего не изменено.');
+      }
       if(res.status===404) throw new Error('Счёт не найден в Cloudflare. В CRM ничего не изменено.');
       throw new Error('Cloudflare вернул ошибку '+res.status+'. В CRM ничего не изменено.');
     }
-    const result=await res.json();
+    let result={}; try{result=await res.json();}catch(e){}
     if(action==='annul'){
       invoice.status='annulled';
       invoice.annulledAt=result.annulledAt||new Date().toISOString();
     }else{
-      ct.invoices=ct.invoices.filter(item=>invoicePublicId(item)!==publicId);
+      removeInvoiceFromCrm(c,ct,publicId);
+      return;
     }
     touchContract(ct); touchClient(c);
     save({immediate:true});
