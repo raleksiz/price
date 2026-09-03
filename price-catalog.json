@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-03T10:45:00.000Z",
+  "updated": "2026-09-03T11:00:00.000Z",
   "priceList": [
     {
       "code": "1.1",
@@ -1548,6 +1548,16 @@
         "extra": false,
         "countable": false,
         "updatedAt": "2026-09-03T10:45:00.000Z"
+      },
+      {
+        "name": "Фактические расходы при выезде из Мск и МО",
+        "amount": "по факту",
+        "type": "fix",
+        "value": 0,
+        "extra": true,
+        "countable": false,
+        "onlyCodes": ["13.3"],
+        "updatedAt": "2026-09-03T11:20:00.000Z"
       }
     ]
   },

@@ -7,6 +7,26 @@
     'consult', 'contracts', 'realestate', 'corporate',
     'pretrial', 'litigation_single', 'full_repr', 'operations'
   ];
+  var DEFAULT_CAT_SHORT = {
+    consult: 'Консультации',
+    contracts: 'Договоры',
+    realestate: 'Недвижимость',
+    corporate: 'Корпоративные',
+    pretrial: 'Досудебное',
+    litigation_single: 'Суд: разовые услуги',
+    full_repr: 'Суд: под ключ',
+    operations: 'Операционная поддержка'
+  };
+  var DEFAULT_CAT_TITLES = {
+    consult: 'КОНСУЛЬТАЦИИ И ПРАВОВОЙ АНАЛИЗ ДОКУМЕНТОВ',
+    contracts: 'СОПРОВОЖДЕНИЕ КЛИЕНТСКИХ И ВХОДЯЩИХ ДОГОВОРОВ',
+    realestate: 'ПРАВОВОЕ СОПРОВОЖДЕНИЕ СДЕЛОК С НЕДВИЖИМОСТЬЮ',
+    corporate: 'КОРПОРАТИВНЫЕ ПРОЦЕДУРЫ И РЕГИСТРАЦИОННЫЕ ДЕЙСТВИЯ',
+    pretrial: 'ВНЕСУДЕБНОЕ (ДОСУДЕБНОЕ) СОПРОВОЖДЕНИЕ СПОРОВ',
+    litigation_single: 'РАЗОВЫЕ УСЛУГИ В СУДЕБНЫХ СПОРАХ',
+    full_repr: 'КОМПЛЕКСНОЕ СОПРОВОЖДЕНИЕ СПОРА В СУДЕ «ПОД КЛЮЧ»',
+    operations: 'ОПЕРАЦИОННАЯ ПРАВОВАЯ ПОДДЕРЖКА БИЗНЕСА'
+  };
 
   function n(value) { return Number(value) || 0; }
   function text(value) { return String(value == null ? '' : value); }
@@ -353,6 +373,7 @@
     db.customFields = Array.isArray(db.customFields) ? db.customFields : [];
     db.priceList = Array.isArray(db.priceList) ? db.priceList : [];
     db.surcharges = db.surcharges && typeof db.surcharges === 'object' ? db.surcharges : {};
+    ensureCatalogMeta(db);
     var sync = ensureSyncMeta(db);
     ['priceList', 'surcharges', 'customFields', 'catTitles', 'catShort'].forEach(function (section) {
       if (!sync.sections[section]) sync.sections[section] = fallback;
@@ -587,6 +608,70 @@
     ensureSyncMeta(db).sections[section] = when || isoNow();
   }
 
+  function ensureCatalogMeta(db) {
+    db = db || {};
+    db.catShort = db.catShort && typeof db.catShort === 'object' ? db.catShort : {};
+    db.catTitles = db.catTitles && typeof db.catTitles === 'object' ? db.catTitles : {};
+    OFFER_CATEGORIES.forEach(function (key) {
+      if (!db.catShort[key]) db.catShort[key] = DEFAULT_CAT_SHORT[key];
+      if (!db.catTitles[key]) db.catTitles[key] = DEFAULT_CAT_TITLES[key];
+    });
+    return db;
+  }
+
+  function serviceCodeGroups(priceList, catShort, catTitles) {
+    var cats = {};
+    (priceList || []).forEach(function (item) {
+      if (!item || !text(item.code)) return;
+      var key = text(item.cat) || 'other';
+      (cats[key] = cats[key] || []).push(item);
+    });
+    var extra = Object.keys(cats).filter(function (key) {
+      return OFFER_CATEGORIES.indexOf(key) === -1;
+    }).sort();
+    return OFFER_CATEGORIES.concat(extra).filter(function (key) {
+      return cats[key] && cats[key].length;
+    }).map(function (key) {
+      return {
+        key: key,
+        title: (catShort && catShort[key]) || (catTitles && catTitles[key]) || DEFAULT_CAT_SHORT[key] || key,
+        items: cats[key]
+      };
+    });
+  }
+
+  function mergeCatalogIntoDB(db, catalog) {
+    db = db || {};
+    catalog = catalog || {};
+    ensureSyncMeta(db);
+    ensureCatalogMeta(db);
+    var catalogTime = catalog.updated || isoNow();
+    var sync = db._sync;
+    db.priceList = mergeArraySection(
+      db.priceList || [],
+      catalog.priceList || [],
+      'code',
+      sync.sections.priceList,
+      catalogTime
+    );
+    db.surcharges = db.surcharges && typeof db.surcharges === 'object' ? db.surcharges : {};
+    var catalogSurcharges = catalog.surcharges && typeof catalog.surcharges === 'object' ? catalog.surcharges : {};
+    var surchargeKeys = new Set(Object.keys(db.surcharges).concat(Object.keys(catalogSurcharges)));
+    surchargeKeys.forEach(function (key) {
+      db.surcharges[key] = mergeArraySection(
+        db.surcharges[key] || [],
+        catalogSurcharges[key] || [],
+        'name',
+        sync.sections.surcharges,
+        catalogTime
+      );
+    });
+    db.catTitles = mergeObjectSection(db.catTitles, catalog.catTitles, true);
+    db.catShort = mergeObjectSection(db.catShort, catalog.catShort, true);
+    ensureCatalogMeta(db);
+    return db;
+  }
+
   var api = {
     SCHEMA_VERSION: SCHEMA_VERSION,
     OFFER_CATEGORIES: OFFER_CATEGORIES.slice(),
@@ -617,6 +702,9 @@
     migrateDB: migrateDB,
     mergeDB: mergeDB,
     touchSection: touchSection,
+    ensureCatalogMeta: ensureCatalogMeta,
+    serviceCodeGroups: serviceCodeGroups,
+    mergeCatalogIntoDB: mergeCatalogIntoDB,
     tombstoneKey: tombstoneKey
   };
 

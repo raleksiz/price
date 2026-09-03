@@ -232,6 +232,12 @@
     if (/уведомление банков/i.test(name)) {
       return count + ' ' + pluralRu(count, 'уведомление', 'уведомления', 'уведомлений');
     }
+    if (/проверка органов управления контрагентом/i.test(name)) {
+      return count + ' ' + pluralRu(count, 'контрагент', 'контрагента', 'контрагентов');
+    }
+    if (/дополнительн\S* час дистанционных/i.test(name)) {
+      return count + ' ' + pluralRu(count, 'час', 'часа', 'часов');
+    }
     return '';
   }
 
@@ -347,7 +353,8 @@
     operations: [
       'Проверка органов управления контрагентом',
       'Каждый дополнительный час дистанционных мероприятий',
-      'Нерабочие дни и после 19:00 по Мск'
+      'Нерабочие дни и после 19:00 по Мск',
+      'Фактические расходы при выезде из Мск и МО'
     ]
   };
 
@@ -512,6 +519,10 @@
         delta = amount;
       }
 
+      if (kind === 'fix' && !value && !item.extraAmount && !text(item.entry.comment)) {
+        return;
+      }
+
       if (kind !== 'manual' || item.extraAmount || item.entry.comment) {
         var appliedComment = '';
         try {
@@ -570,6 +581,13 @@
     var catKey = text(priceItem.cat || input.catKey);
     var definitions = (input.surchargesMap && input.surchargesMap[catKey]) ||
       input.surchargeDefinitions || [];
+    var serviceCode = text(priceItem.code || input.code);
+    var selectedForCode = (input.selectedSurcharges || []).filter(function (entry) {
+      var found = findSurcharge(definitions, entry);
+      var only = (found && (found.onlyCodes || found.codes)) || (entry && (entry.onlyCodes || entry.codes));
+      if (!only || !only.length) return true;
+      return only.map(String).indexOf(serviceCode) !== -1;
+    });
     var base = round(basePriceFromItem(priceItem, input.side));
     var stage1 = getStage1Price({
       basePrice: base,
@@ -581,7 +599,7 @@
       contractPrice: input.contractPrice,
       contractRemainder: input.contractRemainder != null ? input.contractRemainder : input.prepayBalance
     });
-    var surcharges = applySurcharges(stage1.stage1Price, definitions, input.selectedSurcharges || []);
+    var surcharges = applySurcharges(stage1.stage1Price, definitions, selectedForCode);
     var applied = buildAppliedTariff(stage1).concat(surcharges.applied);
 
     return {
@@ -691,7 +709,17 @@
       contractPrice: getMonthBudget(contract, monthKey(service.date)),
       contractRemainder: contractRemainder
     });
-    var surcharges = applySurcharges(stage1.stage1Price, definitions, service.surcharges);
+    var selected = normalizeSelected(service.surcharges).filter(function (entry) {
+      var resolved = entry;
+      if (typeof entry === 'number' || (typeof entry === 'string' && /^\d+$/.test(String(entry)))) {
+        resolved = (definitions || [])[n(entry)] || entry;
+      }
+      var found = findSurcharge(definitions, resolved) || (resolved && surchargeName(resolved) ? resolved : null);
+      var only = (found && (found.onlyCodes || found.codes)) || (entry && (entry.onlyCodes || entry.codes));
+      if (!only || !only.length) return true;
+      return only.map(String).indexOf(text(service.code || service.svcCode)) !== -1;
+    });
+    var surcharges = applySurcharges(stage1.stage1Price, definitions, selected);
     var applied = buildAppliedTariff(stage1).concat(surcharges.applied);
 
     return {

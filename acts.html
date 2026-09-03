@@ -906,6 +906,9 @@ function normalizeDB(db){
   db.tariffs      = Array.isArray(db.tariffs) && db.tariffs.length ? db.tariffs : ['Base','Easy','Must have','Power','Offer'];
   db.statuses     = Array.isArray(db.statuses) && db.statuses.length ? db.statuses : ['Разовая услуга','Абонемент'];
   db.catTitles    = db.catTitles || {};
+  db.catShort     = db.catShort || {};
+  if(typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.ensureCatalogMeta) RaleksizCRMCore.ensureCatalogMeta(db);
+  db.catShort     = db.catShort || {};
   db.clients.forEach(c=>{
     c.services = Array.isArray(c.services) ? c.services : [];
     c.custom   = c.custom || {};
@@ -1042,6 +1045,21 @@ async function loadDB(){
   }
   // Публичный raw acts.json больше не используем — база только в private
   return normalizeDB({});
+}
+async function loadPublicCatalog(){
+  try{
+    const local = await fetch('price-catalog.json', {cache:'no-store'});
+    if(local.ok) return await local.json();
+  }catch(e){}
+  const token = localStorage.getItem(TOKEN_KEY);
+  if(!token) return null;
+  try{
+    const res = await fetch(`https://api.github.com/repos/${GH_PUBLIC_REPO}/contents/${GH_CATALOG}?ref=main`, {headers:ghHeaders(), cache:'no-store'});
+    if(!res.ok) return null;
+    const data = await res.json();
+    if(!data || !data.content) return null;
+    return JSON.parse(b64dec(data.content));
+  }catch(e){ return null; }
 }
 let saveTimer = null;
 let pushInFlight = null;
@@ -1194,15 +1212,22 @@ async function loadOffers(){
 /* ====================== ЦЕНЫ И РАСЧЁТЫ ====================== */
 function priceItem(code){ return DB.priceList.find(p=>p.code===code) || null; }
 function catSurcharges(catKey){ return DB.surcharges[catKey] || []; }
+function surchargeAppliesToCode(x, code){
+  const only = x && (x.onlyCodes || x.codes);
+  if(!only || !Array.isArray(only) || !only.length) return true;
+  return only.map(String).includes(String(code||''));
+}
 function surchargeDisplayOrder(catKey, name, fallback){
   const list = (window.RaleksizCalculator && RaleksizCalculator.SURCHARGE_ORDERS && RaleksizCalculator.SURCHARGE_ORDERS[catKey]) || [];
   const key = String(name || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
   const i = list.findIndex(item => String(item).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase() === key);
   return i < 0 ? 1000 + fallback : i;
 }
-function catSurchargesForDisplay(catKey){
+function catSurchargesForDisplay(catKey, code){
   const list = catSurcharges(catKey);
-  return list.map((item, index) => ({item, index})).sort((a, b) => {
+  return list.map((item, index) => ({item, index}))
+    .filter(({item}) => surchargeAppliesToCode(item, code))
+    .sort((a, b) => {
     const oa = surchargeDisplayOrder(catKey, a.item && a.item.name, a.index);
     const ob = surchargeDisplayOrder(catKey, b.item && b.item.name, b.index);
     return oa - ob || a.index - b.index;
@@ -1223,7 +1248,7 @@ function selectedSurchargesForService(item, surKeys, surMeta){
     const domCountEl = document.querySelector(`.sur-count[data-sur-index="${idx}"]`);
     const domCount = domCountEl ? Math.max(1, Number(domCountEl.value) || 1) : null;
     const count = domCount != null ? domCount : Math.max(1, Number(m.count) || 1);
-    return x ? {
+    return x && surchargeAppliesToCode(x, item.code) ? {
       id:x.name,
       name:x.name,
       type:x.type || x.kind || 'fix',
@@ -1235,7 +1260,8 @@ function selectedSurchargesForService(item, surKeys, surMeta){
       comment:m.comment||'',
       basePrice: Math.max(0, Number(m.basePrice)||0),
       group:x.group,
-      groupOverflowTarget:x.groupOverflowTarget
+      groupOverflowTarget:x.groupOverflowTarget,
+      onlyCodes:x.onlyCodes || x.codes
     } : null;
   }).filter(Boolean);
 }
@@ -1651,6 +1677,14 @@ function sortServices(list){
 async function init(){
   try{
     DB = await loadDB();
+    const catalog = await loadPublicCatalog();
+    if(catalog && typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.mergeCatalogIntoDB){
+      const before = new Set((DB.priceList||[]).map(item => String(item && item.code||'')));
+      RaleksizCRMCore.mergeCatalogIntoDB(DB, catalog);
+      if((DB.priceList||[]).some(item => item && !before.has(String(item.code||'')))){
+        window.__needsCloudPush = true;
+      }
+    }
     if(refreshAbonementDiscountsFromTariffs(DB)){
       window.__needsCloudPush = true;
     }
@@ -2424,10 +2458,17 @@ function openServiceForm(clientId, contractId, svcId){
                     baseContractPrice: (s && s.baseContractPrice) || 0};
   const cats = {};
   DB.priceList.forEach(p=>{ (cats[p.cat] = cats[p.cat] || []).push(p); });
+  const groups = (typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.serviceCodeGroups)
+    ? RaleksizCRMCore.serviceCodeGroups(DB.priceList, DB.catShort, DB.catTitles)
+    : Object.keys(cats).map(k=>({
+        key: k,
+        title: (DB.catShort && DB.catShort[k]) || DB.catTitles[k] || k,
+        items: cats[k]
+      }));
   const codeOpts = ['<option value="">— выбери код —</option>'].concat(
-    Object.keys(cats).map(k=>{
-      const title = (DB.catShort && DB.catShort[k]) || DB.catTitles[k] || k;
-      return `<optgroup label="${esc(title)}">` + cats[k].map(p=>
+    groups.map(group=>{
+      const title = group.title || group.key;
+      return `<optgroup label="${esc(title)}">` + (group.items||[]).map(p=>
         `<option value="${esc(p.code)}" ${cur.code===p.code?'selected':''}>${esc(p.code)} — ${esc(p.name).slice(0,80)}</option>`
       ).join('') + '</optgroup>';
     })
@@ -2647,7 +2688,7 @@ function surchargeNeedsCount(x){
   if(x.countable===false) return false;
   const n=String(x.name||'').toLowerCase();
   if(/плательщик/i.test(n) && /не фл/i.test(n)) return false;
-  if(/нерабочие дни/i.test(n)) return false;
+  if(/фактические расходы/i.test(n)) return false;
   if(/смешанный предмет/i.test(n)) return false;
   if(/рамочный договор/i.test(n)) return false;
   if(/legal design/i.test(n)) return false;
@@ -2712,7 +2753,7 @@ function renderSurcharges(){
   const list = catSurcharges(item.cat);
   if(!list.length){ box.innerHTML=''; return; }
   const selected = new Set((window.__ctx.surSel || []).map(i => Number(i)));
-  const display = catSurchargesForDisplay(item.cat);
+  const display = catSurchargesForDisplay(item.cat, item.code);
   box.innerHTML = `<div class="sur-box"><h3 style="margin-bottom:4px">${esc((DB.catShort&&DB.catShort[item.cat])||item.cat)}</h3>
     <div class="muted" style="margin-bottom:6px">Отметь применимые корректировки. Количественные надбавки можно указать счетчиком.</div>
     ${display.map(({item:x, index:i})=>{
@@ -2721,15 +2762,17 @@ function renderSurcharges(){
       const needs=surchargeNeedsCount(x);
       const showExtra = !!(x.extra || x.type==='manual');
       const needsBase = surchargeNeedsBasePrice(x);
+      const extraOnly = showExtra && !needs && !needsBase;
+      const showDetails = (checked && (needs || showExtra || needsBase)) || (extraOnly && String(item.code)==='13.3');
       return `<div>
         <label class="sur-item">
           <input type="checkbox" class="sur-cb" value="${i}" ${checked?'checked':''} onchange="onSurChange()">
           <span>${esc(x.name)}${x.type==='manual'?' <span class="muted">(вручную)</span>':''}</span>
           <span class="amt">${esc(x.amount)}${needs && Number(m.count)>1 ? ' × '+Number(m.count) : ''}</span>
         </label>
-        ${checked && (needs || showExtra || needsBase) ? `<div class="sur-extra">
+        ${showDetails ? `<div class="sur-extra">
           ${needs?`<input type="number" min="1" step="1" class="sur-count" data-sur-index="${i}" value="${Math.max(1,Number(m.count)||1)}" placeholder="Кол-во" oninput="onSurMetaChange()" onchange="onSurMetaChange()">`: ''}
-          ${showExtra?`<input type="number" min="0" step="1" class="sur-extra-amount" data-sur-extra="${i}" value="${Number(m.extraAmount)||0}" placeholder="${x.type==='manual'?'Сумма зачёта, ₽':'Факт. расходы'}" oninput="onSurMetaChange()">`: ''}
+          ${showExtra?`<input type="number" min="0" step="1" class="sur-extra-amount" data-sur-extra="${i}" value="${Number(m.extraAmount)||0}" placeholder="${x.type==='manual'?'Сумма зачёта, ₽':'Факт. расходы, ₽'}" oninput="onSurMetaChange()">`: ''}
           ${needsBase?`<div class="sur-base-contract">
             <div class="muted">Базовый договор — 50% считается от его цены, не от накопленной суммы</div>
             <select class="sur-base-code" data-sur-base-code="${i}" onchange="onSurBaseCodeChange('${i}')">${baseContractOptionsHtml(m.baseCode)}</select>
@@ -2791,17 +2834,25 @@ function syncSurMetaFromDom(){
 function onSurMetaChange(){
   const active = document.activeElement;
   const activeIndex = active && active.classList && active.classList.contains('sur-count') ? active.dataset.surIndex : null;
-  const selStart = active && activeIndex != null ? active.selectionStart : null;
+  const extraActive = active && active.classList && active.classList.contains('sur-extra-amount') ? active.dataset.surExtra : null;
+  const selStart = active && (activeIndex != null || extraActive != null) ? active.selectionStart : null;
   syncSurMetaFromDom();
+  document.querySelectorAll('.sur-extra-amount').forEach(el=>{
+    const amt = Math.max(0, Number(el.value)||0);
+    if(amt <= 0) return;
+    const cb = document.querySelector(`.sur-cb[value="${el.dataset.surExtra}"]`);
+    if(cb) cb.checked = true;
+  });
+  window.__ctx.surSel = [...document.querySelectorAll('.sur-cb:checked')].map(cb=>Number(cb.value));
   window.__ctx.manual=false;
   refreshSurchargeAmtLabels();
   recalc();
-  if(activeIndex != null){
-    const el = document.querySelector(`.sur-count[data-sur-index="${activeIndex}"]`);
-    if(el){
-      el.focus();
-      if(selStart != null) try{ el.setSelectionRange(selStart, selStart); }catch(e){}
-    }
+  const restoreSel = extraActive != null
+    ? document.querySelector(`.sur-extra-amount[data-sur-extra="${extraActive}"]`)
+    : (activeIndex != null ? document.querySelector(`.sur-count[data-sur-index="${activeIndex}"]`) : null);
+  if(restoreSel){
+    restoreSel.focus();
+    if(selStart != null) try{ restoreSel.setSelectionRange(selStart, selStart); }catch(e){}
   }
 }
 function onSurChange(){
