@@ -3884,7 +3884,7 @@ function openInvoiceDialog(){
       <div class="field"><label>Номер счёта</label><input id="invNo" type="number" min="1" step="1" inputmode="numeric" value="${nextInvoiceNumber()}"></div>
     </div>
     <div class="invoice-payer-row"><div class="field"><label>Плательщик</label><input id="invPayer" value="${esc(c.name)}"></div>
-      <div class="field"><label>ИНН</label><input id="invPayerInn" inputmode="numeric"></div></div>
+      <div class="field"><label>ИНН</label><input id="invPayerInn" inputmode="numeric" value="${esc(c.inn||'')}"></div></div>
     <div class="field"><label>Сумма, ₽</label><input id="invAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="Введите сумму"></div>
     <div class="field"><label>Назначение платежа</label><textarea id="invPurpose" class="autogrow">Оплата юридических услуг по ${esc(purposeBasis)}</textarea></div>
     <div class="err" id="invErr"></div><div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button><button type="button" class="btn" onclick="saveInvoice()">Создать счёт</button></div>`);
@@ -3915,7 +3915,7 @@ async function saveInvoice(){
   invoice.publicId=published.id;
   DB.invoiceLastNumber=invoiceNumber;
   if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.touchSection(DB,'invoiceLastNumber');
-  ct.invoices=Array.isArray(ct.invoices)?ct.invoices:[]; ct.invoices.push(invoice); touchContract(ct); touchClient(c);
+  ct.invoices=Array.isArray(ct.invoices)?ct.invoices:[]; ct.invoices.push(invoice); c.inn=payerInn; touchContract(ct); touchClient(c);
   save({immediate:true});
   const url=invoiceUrl(invoice), subject='Счёт на оплату № '+number+' от '+fmtDate(date), body='Направляю счёт на оплату.\n\nСсылка на счёт: '+url;
   closeModal();
