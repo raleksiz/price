@@ -42,10 +42,13 @@
     </article>`;
   }
   function drawQrs(root) {
-    root.querySelectorAll('[data-qr]').forEach(el => {
+    const targets = [...root.querySelectorAll('[data-qr]')];
+    if (!targets.length) throw new Error('qr_target_missing');
+    if (!global.QRCode) throw new Error('qr_library_missing');
+    targets.forEach(el => {
       el.innerHTML='';
-      if (global.QRCode) new global.QRCode(el, {text:el.dataset.qr, width:132, height:132, correctLevel:global.QRCode.CorrectLevel.M});
-      else el.textContent='Не удалось загрузить QR-код';
+      new global.QRCode(el, {text:el.dataset.qr, width:132, height:132, correctLevel:global.QRCode.CorrectLevel.M});
+      if (!el.querySelector('canvas,img')) throw new Error('qr_render_failed');
     });
   }
   function readToken() { return new URLSearchParams(location.search).get('i') || ''; }
