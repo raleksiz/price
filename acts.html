@@ -341,6 +341,7 @@ details[open] summary::before{content:"▾ ";}
 @media(max-width:720px){.contract-toolbar-actions{margin-left:0;width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.contract-toolbar-actions .btn{width:100%;min-width:0;height:34px;padding:5px 3px;font-size:11px;line-height:1;white-space:nowrap}}
 .invoice-result-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;gap:8px;margin-top:14px;align-items:stretch}.invoice-result-actions .invoice-action{width:100%;min-width:0;justify-content:center}.invoice-action svg{display:none}.invoice-action-label{display:inline;white-space:nowrap;font-size:12px}@media(max-width:720px){.invoice-result-actions{gap:7px}.invoice-action{height:38px;min-width:0!important;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;border-radius:9px!important}.invoice-action-label{display:none}.invoice-action svg{display:block;width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.invoice-action.pdf svg{width:22px;height:22px}.invoice-action.pdf svg text{fill:currentColor;stroke:none;font-size:7px;font-family:Arial,sans-serif;font-weight:800;letter-spacing:-.4px}}
 .invoice-create-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.invoice-payer-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(105px,.6fr);gap:10px;align-items:start}.invoice-payer-row .field{min-width:0}.invoice-payer-row .field>label{min-height:16px;white-space:nowrap}@media(max-width:720px){.invoice-create-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.invoice-payer-row{grid-template-columns:minmax(0,1fr) minmax(105px,.6fr)}}
+.invoice-issued-list{margin:10px 0 0;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:var(--soft)}.invoice-issued-list summary{color:var(--violet)}.invoice-issued-list ul{margin:0 0 10px 18px;padding:0}.invoice-issued-list li{margin:4px 0}.invoice-issued-list a{color:var(--violet);font-weight:700;text-decoration:none}.invoice-issued-list a:hover{text-decoration:underline}
 .contract-preamble{font-size:12.5px;}
 .sent-flag-compact{margin-bottom:10px;}
 .sent-flag-label{text-transform:none;font-size:13px;margin:0;font-weight:700;}
@@ -3861,6 +3862,41 @@ function invoiceBasisNominative(ct){
 function invoiceUrl(invoice){
   return BASE_URL + 'invoice-view.html?i=' + encodeURIComponent(invoice.publicId||'');
 }
+function invoiceDateValue(invoice){
+  const date=String((invoice&&invoice.date)||'').slice(0,10);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(date)) return Date.parse(date+'T00:00:00Z')||0;
+  const created=Date.parse(String((invoice&&invoice.createdAt)||''));
+  return Number.isFinite(created) ? created : 0;
+}
+function sortInvoicesNewestFirst(invoices){
+  return (Array.isArray(invoices)?invoices:[]).slice().sort((a,b)=>{
+    const byDate=invoiceDateValue(b)-invoiceDateValue(a);
+    if(byDate) return byDate;
+    const byNumber=(Number(b&&b.number)||0)-(Number(a&&a.number)||0);
+    if(byNumber) return byNumber;
+    return String((b&&b.createdAt)||'').localeCompare(String((a&&a.createdAt)||''));
+  });
+}
+function rememberedPayerInn(c){
+  const saved=String((c&&(c.invoicePayerInn||c.inn))||'').trim();
+  if(saved) return saved;
+  const prior=[];
+  (c&&Array.isArray(c.contracts)?c.contracts:[]).forEach(contract=>{
+    (Array.isArray(contract.invoices)?contract.invoices:[]).forEach(invoice=>{
+      if(String((invoice&&invoice.payerInn)||'').trim()) prior.push(invoice);
+    });
+  });
+  const latest=sortInvoicesNewestFirst(prior)[0];
+  return String((latest&&latest.payerInn)||'').trim();
+}
+function issuedInvoicesHtml(ct){
+  const invoices=sortInvoicesNewestFirst(ct&&ct.invoices).filter(invoice=>invoice&&invoice.publicId);
+  if(!invoices.length) return '';
+  return `<details class="invoice-issued-list"><summary>Выставленные счета</summary><ul>${invoices.map(invoice=>{
+    const label='Счёт № '+String(invoice.number||'')+(invoice.date?' от '+fmtDate(invoice.date):'');
+    return `<li><a href="${esc(invoiceUrl(invoice))}" target="_blank" rel="noopener">${esc(label)}</a></li>`;
+  }).join('')}</ul></details>`;
+}
 function invoiceWriteKey(){
   const storageKey='raleksiz_invoice_write_key';
   let key=''; try{ key=localStorage.getItem(storageKey)||''; }catch(e){}
@@ -3884,9 +3920,10 @@ function openInvoiceDialog(){
       <div class="field"><label>Номер счёта</label><input id="invNo" type="number" min="1" step="1" inputmode="numeric" value="${nextInvoiceNumber()}"></div>
     </div>
     <div class="invoice-payer-row"><div class="field"><label>Плательщик</label><input id="invPayer" value="${esc(c.name)}"></div>
-      <div class="field"><label>ИНН</label><input id="invPayerInn" inputmode="numeric" value="${esc(c.inn||'')}"></div></div>
+      <div class="field"><label>ИНН</label><input id="invPayerInn" inputmode="numeric" value="${esc(rememberedPayerInn(c))}"></div></div>
     <div class="field"><label>Сумма, ₽</label><input id="invAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="Введите сумму"></div>
     <div class="field"><label>Назначение платежа</label><textarea id="invPurpose" class="autogrow">Оплата юридических услуг по ${esc(purposeBasis)}</textarea></div>
+    ${issuedInvoicesHtml(ct)}
     <div class="err" id="invErr"></div><div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button><button type="button" class="btn" onclick="saveInvoice()">Создать счёт</button></div>`);
   autoGrowTextarea(document.getElementById('invPurpose'));
 }
@@ -3915,7 +3952,7 @@ async function saveInvoice(){
   invoice.publicId=published.id;
   DB.invoiceLastNumber=invoiceNumber;
   if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.touchSection(DB,'invoiceLastNumber');
-  ct.invoices=Array.isArray(ct.invoices)?ct.invoices:[]; ct.invoices.push(invoice); c.inn=payerInn; touchContract(ct); touchClient(c);
+  ct.invoices=Array.isArray(ct.invoices)?ct.invoices:[]; ct.invoices.push(invoice); c.invoicePayerInn=payerInn; c.inn=payerInn; touchContract(ct); touchClient(c);
   save({immediate:true});
   const url=invoiceUrl(invoice), subject='Счёт на оплату № '+number+' от '+fmtDate(date), body='Направляю счёт на оплату.\n\nСсылка на счёт: '+url;
   closeModal();
