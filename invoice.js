@@ -47,9 +47,8 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
         <div><span>ИНН</span><b>${RECIPIENT.inn}</b></div><div><span>р/с</span><b>${RECIPIENT.account}</b></div>
       </div><div class="invoice-qr invoice-qr-desktop" data-qr="${esc(paymentString(d))}"></div></section>
       <div class="invoice-party-qr-area"><section class="invoice-parties"><div><span>Плательщик</span><b>${esc(d.payer)}</b><small>ИНН ${payerInn}</small></div><div><span>Основание</span><b>${esc(d.basis)}</b></div></section><div class="invoice-qr invoice-qr-mobile" data-qr="${esc(paymentString(d))}"></div></div>
-      <table class="invoice-items"><thead><tr><th>№</th><th>Наименование услуг</th><th>Кол-во</th><th>Ед.</th><th>Цена</th><th>Сумма</th></tr></thead><tbody><tr><td>1</td><td>Юридические услуги по ${esc(serviceBasis(d.basis))}</td><td>1</td><td>усл.</td><td>${money(d.amount)}</td><td>${money(d.amount)}</td></tr></tbody><tfoot><tr><td colspan="5">Итого к оплате</td><td>${money(d.amount)}</td></tr></tfoot></table>
+      <table class="invoice-items"><thead><tr><th>№</th><th>Наименование услуг</th><th>Кол-во</th><th>Ед.</th><th>Цена</th><th>НДС</th><th>Сумма</th></tr></thead><tbody><tr><td>1</td><td>Юридические услуги по ${esc(serviceBasis(d.basis))}</td><td>1</td><td>усл.</td><td>${money(d.amount)}</td><td>—</td><td>${money(d.amount)}</td></tr></tbody><tfoot><tr><td colspan="6">Итого к оплате</td><td>${money(d.amount)}</td></tr></tfoot></table>
       <div class="invoice-purpose"><span>Назначение платежа</span><b>${esc(d.purpose)}</b></div>
-      <footer class="invoice-footer"><span>НДС не облагается</span></footer>
     </article>`;
   }
   function drawQrs(root) {
@@ -58,7 +57,8 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     if (!global.QRCode) throw new Error('qr_library_missing');
     targets.forEach(el => {
       el.innerHTML='';
-      new global.QRCode(el, {text:el.dataset.qr, width:132, height:132, correctLevel:global.QRCode.CorrectLevel.M});
+      const size = el.classList.contains('invoice-qr-mobile') ? 220 : 132;
+      new global.QRCode(el, {text:el.dataset.qr, width:size, height:size, correctLevel:global.QRCode.CorrectLevel.M});
       if (!el.querySelector('canvas,img')) throw new Error('qr_render_failed');
     });
   }

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Счёт на оплату</title>
-  <script src="invoice.js?v=mobile-layout-fix-20260903"></script>
+  <script src="invoice.js?v=invoice-layout-20260903b"></script>
   <style>
     :root{--ink:#2B1A6B;--soft:#F3ECFA;--line:#CDB9E8}
     *{box-sizing:border-box}
@@ -20,8 +20,8 @@
     .invoice-title{margin:25px 0 18px}
     .invoice-title h1{font-size:24px;line-height:1.1;margin:0}
     .invoice-title p{margin:5px 0 0}
-    .invoice-payment{display:flex;flex-direction:row;gap:18px;align-items:center}
-    .invoice-bank-grid{display:grid;grid-template-columns:58% 42%;flex:1 1 auto;min-width:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--soft)}
+    .invoice-payment{display:grid;grid-template-columns:minmax(0,1fr) 142px;grid-template-areas:"bank qr";gap:18px;align-items:center}
+    .invoice-bank-grid{grid-area:bank;display:grid;grid-template-columns:58% 42%;min-width:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--soft)}
     .invoice-bank-grid>div{min-height:54px;padding:7px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;justify-content:center}
     .invoice-bank-grid>div:nth-child(2n){border-right:0}
     .invoice-bank-grid>div:nth-last-child(-n+2){border-bottom:0}
@@ -29,7 +29,7 @@
     .invoice-bank-grid b{font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
     .invoice-qr{width:142px;min-width:142px;padding:5px;background:#fff;border:1px solid var(--line);border-radius:10px}
     .invoice-qr img,.invoice-qr canvas{display:block;margin:auto}
-    .invoice-qr-desktop{order:1;flex:0 0 142px}
+    .invoice-qr-desktop{display:block;grid-area:qr;justify-self:end}
     .invoice-qr-mobile{display:none}
     .invoice-party-qr-area{display:block}
     .invoice-parties{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
@@ -39,13 +39,12 @@
     .invoice-items{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
     .invoice-items th{background:var(--soft);font-size:10px;text-transform:uppercase;letter-spacing:.25px}
     .invoice-items th,.invoice-items td{padding:9px 8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:left}
-    .invoice-items th:nth-child(1){width:5%}.invoice-items th:nth-child(2){width:48%}.invoice-items th:nth-child(3){width:9%}.invoice-items th:nth-child(4){width:9%}.invoice-items th:nth-child(5),.invoice-items th:nth-child(6){width:14.5%}
+    .invoice-items th:nth-child(1){width:5%}.invoice-items th:nth-child(2){width:35%}.invoice-items th:nth-child(3){width:8%}.invoice-items th:nth-child(4){width:7%}.invoice-items th:nth-child(5){width:17%}.invoice-items th:nth-child(6){width:7%}.invoice-items th:nth-child(7){width:21%}
     .invoice-items th:not(:nth-child(2)),.invoice-items td:not(:nth-child(2)){text-align:center}
-    .invoice-items td:nth-child(5),.invoice-items td:nth-child(6),.invoice-items tfoot td:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+    .invoice-items td:nth-child(5),.invoice-items td:nth-child(7),.invoice-items tfoot td:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
     .invoice-items th:last-child,.invoice-items td:last-child{border-right:0;text-align:right}
     .invoice-items tfoot td{border-bottom:0;font-weight:800;background:#fbf9fe}
     .invoice-purpose{margin-top:16px}
-    .invoice-footer{display:flex;justify-content:space-between;gap:12px;margin-top:24px;font-size:12px;font-weight:bold}
     @media(max-width:620px){
       .page{margin:0}.actions{right:12px;bottom:12px}.invoice-sheet{padding:20px 14px;box-shadow:none}.invoice-head{align-items:flex-start}.invoice-logo{width:105px}.invoice-issuer{font-size:10px}.invoice-title h1{font-size:20px}
       .invoice-payment{display:block}.invoice-payment .invoice-qr-desktop{display:none}
@@ -53,9 +52,9 @@
       .invoice-party-qr-area{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:stretch;margin:18px 0}
       .invoice-party-qr-area .invoice-parties{grid-column:1;grid-row:1;grid-template-columns:1fr;gap:8px;margin:0;min-width:0}
       .invoice-party-qr-area .invoice-parties>div{min-width:0;padding:7px 9px}
-      .invoice-qr-mobile{grid-column:2;grid-row:1;display:flex;width:auto;min-width:0;align-items:center;justify-content:center;padding:5px}
-      .invoice-party-qr-area .invoice-qr-mobile canvas,.invoice-party-qr-area .invoice-qr-mobile img{max-width:100%;height:auto}
-      .invoice-items{font-size:10px}.invoice-items th,.invoice-items td{padding:6px 3px}.invoice-items th:nth-child(2){width:39%}.invoice-items th:nth-child(5),.invoice-items th:nth-child(6){width:19%}.invoice-footer{display:block}.invoice-footer span{display:block;margin-top:5px}
+      .invoice-qr-mobile{grid-column:2;grid-row:1;display:flex;width:100%;min-width:0;align-items:center;justify-content:center;padding:5px}
+      .invoice-party-qr-area .invoice-qr-mobile canvas,.invoice-party-qr-area .invoice-qr-mobile img{display:block;width:100%!important;max-width:100%;height:auto!important}
+      .invoice-items{font-size:9px}.invoice-items th,.invoice-items td{padding:6px 2px}.invoice-items th:nth-child(2){width:35%}.invoice-items td:nth-child(5),.invoice-items td:nth-child(7),.invoice-items tfoot td:last-child{white-space:normal;line-height:1.25}
     }
     @media print{body{background:#fff}.page{max-width:none;margin:0}.actions{display:none}.invoice-sheet{box-shadow:none;padding:13mm 12mm}.invoice-title{margin-top:16px}}
   </style>

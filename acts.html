@@ -340,7 +340,7 @@ details[open] summary::before{content:"▾ ";}
 .contract-toolbar-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 @media(max-width:720px){.contract-toolbar-actions{margin-left:0;width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.contract-toolbar-actions .btn{width:100%;min-width:0;height:34px;padding:5px 3px;font-size:11px;line-height:1;white-space:nowrap}}
 .invoice-result-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;gap:8px;margin-top:14px;align-items:stretch}.invoice-result-actions .invoice-action{width:100%;min-width:0;justify-content:center}.invoice-action svg{display:none}.invoice-action-label{display:inline;white-space:nowrap;font-size:12px}@media(max-width:720px){.invoice-result-actions{gap:7px}.invoice-action{height:38px;min-width:0!important;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;border-radius:9px!important}.invoice-action-label{display:none}.invoice-action svg{display:block;width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.invoice-action.pdf svg{width:22px;height:22px}.invoice-action.pdf svg text{fill:currentColor;stroke:none;font-size:7px;font-family:Arial,sans-serif;font-weight:800;letter-spacing:-.4px}}
-.invoice-create-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.invoice-payer-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(105px,.6fr);gap:10px}@media(max-width:720px){.invoice-create-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.invoice-payer-row{grid-template-columns:minmax(0,1fr) minmax(105px,.6fr)}}
+.invoice-create-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.invoice-payer-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(105px,.6fr);gap:10px;align-items:start}.invoice-payer-row .field{min-width:0}.invoice-payer-row .field>label{min-height:16px;white-space:nowrap}@media(max-width:720px){.invoice-create-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.invoice-payer-row{grid-template-columns:minmax(0,1fr) minmax(105px,.6fr)}}
 .contract-preamble{font-size:12.5px;}
 .sent-flag-compact{margin-bottom:10px;}
 .sent-flag-label{text-transform:none;font-size:13px;margin:0;font-weight:700;}
@@ -3884,7 +3884,7 @@ function openInvoiceDialog(){
       <div class="field"><label>Номер счёта</label><input id="invNo" type="number" min="1" step="1" inputmode="numeric" value="${nextInvoiceNumber()}"></div>
     </div>
     <div class="invoice-payer-row"><div class="field"><label>Плательщик</label><input id="invPayer" value="${esc(c.name)}"></div>
-      <div class="field"><label>ИНН <span class="muted">(необязательно)</span></label><input id="invPayerInn" inputmode="numeric"></div></div>
+      <div class="field"><label>ИНН</label><input id="invPayerInn" inputmode="numeric"></div></div>
     <div class="field"><label>Сумма, ₽</label><input id="invAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="Введите сумму"></div>
     <div class="field"><label>Назначение платежа</label><textarea id="invPurpose" class="autogrow">Оплата юридических услуг по ${esc(purposeBasis)}</textarea></div>
     <div class="err" id="invErr"></div><div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button><button type="button" class="btn" onclick="saveInvoice()">Создать счёт</button></div>`);
