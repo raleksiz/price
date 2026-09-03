@@ -39,7 +39,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     const payerInn = d.payerInn ? esc(d.payerInn) : '—';
     return `<article class="invoice-sheet">
       <header class="invoice-head">
-        <img class="invoice-logo" src="${API}/logo.png" alt="RALEKSIZ HOUSE">
+        <img class="invoice-logo" src="${API}/logo.png?v=20260903" alt="RALEKSIZ HOUSE">
         <div class="invoice-issuer"><b>${RECIPIENT.name}</b><br>ИНН ${RECIPIENT.inn} · ОГРНИП ${RECIPIENT.ogrnip}<br>${RECIPIENT.email} · ${RECIPIENT.telegram}</div>
       </header>
       <section class="invoice-title"><div><h1>СЧЁТ НА ОПЛАТУ № ${esc(d.number)}</h1><p>от ${date(d.date)}</p></div></section>
