@@ -1900,7 +1900,8 @@ function offerCatNames(){
     corporate: 'Корпоративные',
     pretrial: 'Досудебное',
     litigation_single: 'Суд: разовые',
-    full_repr: 'Суд: под ключ'
+    full_repr: 'Суд: под ключ',
+    operations: 'Операционная поддержка'
   };
 }
 function parseRuDate(value){
@@ -2642,7 +2643,7 @@ function onCodeChange(){
 }
 function surchargeNeedsCount(x){
   if(!x) return false;
-  if(x.countable===true) return true;
+  if(x.countable===true || x.counter===true) return true;
   if(x.countable===false) return false;
   const n=String(x.name||'').toLowerCase();
   if(/плательщик/i.test(n) && /не фл/i.test(n)) return false;

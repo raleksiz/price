@@ -172,6 +172,7 @@
       <label class="cat-check" id="lbl_pretrial"><input type="checkbox" class="cat-cb" value="pretrial" onchange="toggleCatStyle(this);updateDiscIndicator()"> Досудебное</label>
       <label class="cat-check" id="lbl_litigation_single"><input type="checkbox" class="cat-cb" value="litigation_single" onchange="toggleCatStyle(this);updateDiscIndicator()"> Суд: разовые</label>
       <label class="cat-check" id="lbl_full_repr"><input type="checkbox" class="cat-cb" value="full_repr" onchange="toggleCatStyle(this);updateDiscIndicator()"> Суд: под ключ</label>
+      <label class="cat-check" id="lbl_operations"><input type="checkbox" class="cat-cb" value="operations" onchange="toggleCatStyle(this);updateDiscIndicator()"> Операционная поддержка</label>
     </div>
   </div>
 
@@ -723,7 +724,7 @@ function renderSentOffers(){
       return;
     }
     const catNames = {'consult':'Консультации','contracts':'Договоры','realestate':'Недвижимость',
-      'corporate':'Корпоративные','pretrial':'Досудебное','litigation_single':'Суд: разовые','full_repr':'Суд: под ключ'};
+      'corporate':'Корпоративные','pretrial':'Досудебное','litigation_single':'Суд: разовые','full_repr':'Суд: под ключ','operations':'Операционная поддержка'};
     const now = new Date(); now.setHours(0,0,0,0);
     const twoWeeks = new Date(now); twoWeeks.setDate(twoWeeks.getDate()+14);
     list.innerHTML = offers.map(o => {

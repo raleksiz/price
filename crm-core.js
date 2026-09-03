@@ -5,7 +5,7 @@
   var PAY_TYPES = ['none', 'full', 'part', 'full_prepay', 'part_prepay'];
   var OFFER_CATEGORIES = [
     'consult', 'contracts', 'realestate', 'corporate',
-    'pretrial', 'litigation_single', 'full_repr'
+    'pretrial', 'litigation_single', 'full_repr', 'operations'
   ];
 
   function n(value) { return Number(value) || 0; }
