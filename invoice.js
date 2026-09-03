@@ -9,7 +9,8 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
   };
   const API = 'https://invoices.raleksiz-law.workers.dev';
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const money = n => Math.round(Number(n) || 0).toLocaleString('ru-RU') + ' ₽';
+  const amountText = n => Math.round(Number(n) || 0).toLocaleString('ru-RU');
+  const money = n => amountText(n) + ' ₽';
   const date = iso => { const p=String(iso||'').split('-'); return p.length===3 ? p[2]+'.'+p[1]+'.'+p[0] : ''; };
   const b64url = text => btoa(unescape(encodeURIComponent(text))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   const unb64url = text => decodeURIComponent(escape(atob(String(text||'').replace(/-/g,'+').replace(/_/g,'/') + '==='.slice((String(text||'').length+3)%4))));
@@ -37,7 +38,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     const payerInn = d.payerInn ? esc(d.payerInn) : '—';
     return `<article class="invoice-sheet">
       <header class="invoice-head">
-        <img class="invoice-logo" src="${API}/logo.png?v=20260903" alt="RALEKSIZ HOUSE">
+        <img class="invoice-logo" src="${API}/logo.png?v=logo-20260903b" alt="RALEKSIZ HOUSE">
         <div class="invoice-issuer"><b>${RECIPIENT.name}</b><br>ОГРНИП ${RECIPIENT.ogrnip}<br><a href="mailto:${esc(RECIPIENT.email)}">${RECIPIENT.email}</a> · <a href="${esc(RECIPIENT.telegram)}" target="_blank" rel="noopener">${RECIPIENT.telegram}</a></div>
       </header>
       <section class="invoice-title"><div><h1>СЧЁТ НА ОПЛАТУ № ${esc(d.number)}</h1><p>от ${date(d.date)}</p></div></section>
@@ -47,9 +48,27 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
         <div><span>ИНН</span><b>${RECIPIENT.inn}</b></div><div><span>р/с</span><b>${RECIPIENT.account}</b></div>
       </div><div class="invoice-qr invoice-qr-desktop" data-qr="${esc(paymentString(d))}"></div></section>
       <div class="invoice-party-qr-area"><section class="invoice-parties"><div><span>Плательщик</span><b>${esc(d.payer)}</b><small>ИНН ${payerInn}</small></div><div><span>Основание</span><b>${esc(d.basis)}</b></div></section><div class="invoice-qr invoice-qr-mobile" data-qr="${esc(paymentString(d))}"></div></div>
-      <table class="invoice-items"><thead><tr><th>№</th><th>Наименование услуг</th><th>Кол-во</th><th>Ед.</th><th>Цена</th><th>НДС</th><th>Сумма</th></tr></thead><tbody><tr><td>1</td><td>Юридические услуги по ${esc(serviceBasis(d.basis))}</td><td>1</td><td>усл.</td><td>${money(d.amount)}</td><td>—</td><td>${money(d.amount)}</td></tr></tbody><tfoot><tr><td colspan="6">Итого к оплате</td><td>${money(d.amount)}</td></tr></tfoot></table>
+      <table class="invoice-items"><thead><tr><th>№</th><th>Наименование услуг</th><th>Кол‑во</th><th>Ед.</th><th>Цена, ₽</th><th>НДС</th><th>Сумма, ₽</th></tr></thead><tbody><tr><td>1</td><td>Юридические услуги по ${esc(serviceBasis(d.basis))}</td><td>1</td><td>усл.</td><td class="invoice-money">${amountText(d.amount)}</td><td>—</td><td class="invoice-money">${amountText(d.amount)}</td></tr></tbody><tfoot><tr><td colspan="6">Итого к оплате</td><td class="invoice-money">${amountText(d.amount)}</td></tr></tfoot></table>
       <div class="invoice-purpose"><span>Назначение платежа</span><b>${esc(d.purpose)}</b></div>
     </article>`;
+  }
+  function fitAmounts(root) {
+    root.querySelectorAll('.invoice-money').forEach(cell => {
+      cell.style.fontSize='';
+      cell.style.letterSpacing='';
+      let size=parseFloat(global.getComputedStyle(cell).fontSize)||12;
+      while(cell.scrollWidth>cell.clientWidth && size>3){
+        size=Math.max(3,size-.25);
+        cell.style.fontSize=size+'px';
+      }
+      if(cell.scrollWidth>cell.clientWidth){
+        cell.style.letterSpacing='-.35px';
+        while(cell.scrollWidth>cell.clientWidth && size>2){
+          size=Math.max(2,size-.2);
+          cell.style.fontSize=size+'px';
+        }
+      }
+    });
   }
   function drawQrs(root) {
     const targets = [...root.querySelectorAll('[data-qr]')];
@@ -64,5 +83,5 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
   }
   function readToken() { return new URLSearchParams(location.search).get('i') || ''; }
   function token(d) { return b64url(JSON.stringify([1,d.number,d.date,Number(d.amount)||0,d.payer,d.payerInn||'',d.purpose,d.basis])); }
-  global.RaleksizInvoice = {API, RECIPIENT, documentHtml, drawQrs, paymentString, token, readToken, money, date};
+  global.RaleksizInvoice = {API, RECIPIENT, documentHtml, drawQrs, fitAmounts, paymentString, token, readToken, money, date};
 })(window);
