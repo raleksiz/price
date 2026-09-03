@@ -15,12 +15,18 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
   const unb64url = text => decodeURIComponent(escape(atob(String(text||'').replace(/-/g,'+').replace(/_/g,'/') + '==='.slice((String(text||'').length+3)%4))));
   const paymentString = d => ['ST00012','Name='+RECIPIENT.name,'PersonalAcc='+RECIPIENT.account,'BankName='+RECIPIENT.bank,'BIC='+RECIPIENT.bik,'CorrespAcc='+RECIPIENT.corr,'PayeeINN='+RECIPIENT.inn,'Purpose='+String(d.purpose||'')].join('|');
   function serviceBasis(basis) {
+    const after = '(?=[\\s№]|$)';
     return String(basis||'')
-      .replace(/^Договор\b/, 'Договору')
-      .replace(/^Дополнительное соглашение\b/, 'Дополнительному соглашению')
-      .replace(/^Персональное предложение\b/, 'Персональному предложению')
-      .replace(/^Обращение\b/, 'Обращению')
-      .replace(/ к Договор\b/g, ' к Договору');
+      .replace(new RegExp('^Дополнительное соглашение'+after), 'Дополнительному соглашению')
+      .replace(new RegExp('^дополнительное соглашение'+after), 'дополнительному соглашению')
+      .replace(new RegExp('^Персональное предложение'+after), 'Персональному предложению')
+      .replace(new RegExp('^персональное предложение'+after), 'персональному предложению')
+      .replace(new RegExp('^Обращение'+after), 'Обращению')
+      .replace(new RegExp('^обращение'+after), 'обращению')
+      .replace(new RegExp('^Договор'+after), 'Договору')
+      .replace(new RegExp('^договор'+after), 'договору')
+      .replace(new RegExp(' к Договор'+after, 'g'), ' к Договору')
+      .replace(new RegExp(' к договор'+after, 'g'), ' к договору');
   }
 
   function documentHtml(d) {
