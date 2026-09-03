@@ -3867,6 +3867,10 @@ function invoiceWriteKey(){
   if(key.trim()) try{localStorage.setItem(storageKey,key.trim());}catch(e){}
   return key.trim();
 }
+function resetInvoiceWriteKey(){
+  try{localStorage.removeItem('raleksiz_invoice_write_key');}catch(e){}
+  alert('Ключ удалён из этого браузера. При следующем создании счёта CRM попросит ввести новый ключ.');
+}
 function openInvoiceDialog(){
   const c=getClient(currentClientId), ct=getContract(c,currentContractId);
   if(!c || !ct) return;
@@ -3882,7 +3886,7 @@ function openInvoiceDialog(){
       <div class="field"><label>Сумма, ₽</label><input id="invAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="Введите сумму"></div></div>
     <div class="field"><label>Назначение платежа</label><textarea id="invPurpose" class="autogrow">Оплата юридических услуг по ${esc(purposeBasis)}</textarea></div>
     <div class="muted" style="margin:4px 0 12px">В бланке: «Юридические услуги по ${esc(basis)}». Назначение в QR-коде берётся из этого поля.</div>
-    <div class="err" id="invErr"></div><div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button><button type="button" class="btn" onclick="saveInvoice()">Создать счёт</button></div>`);
+    <div class="err" id="invErr"></div><div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button><button type="button" class="btn ghost" onclick="resetInvoiceWriteKey()">Сменить ключ</button><button type="button" class="btn" onclick="saveInvoice()">Создать счёт</button></div>`);
   autoGrowTextarea(document.getElementById('invPurpose'));
 }
 async function saveInvoice(){
@@ -3896,7 +3900,10 @@ async function saveInvoice(){
   let published;
   try{
     const res=await fetch(INVOICE_API+'/invoices',{method:'POST',headers:{'Content-Type':'application/json','X-CRM-Invoice-Key':key},body:JSON.stringify(invoice)});
-    if(!res.ok) throw new Error((await res.text())||'Ошибка Worker');
+    if(!res.ok){
+      if(res.status===403) try{localStorage.removeItem('raleksiz_invoice_write_key');}catch(e){}
+      throw new Error(res.status===403 ? 'Ключ Cloudflare не принят. Нажми «Создать счёт» ещё раз и введи ключ заново.' : ((await res.text())||'Ошибка Worker'));
+    }
     published=await res.json();
     if(!published || !published.id) throw new Error('Worker не вернул идентификатор счёта');
   }catch(e){err.textContent='Не удалось сохранить счёт в Cloudflare: '+(e.message||e);return;}
