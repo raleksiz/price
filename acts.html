@@ -332,6 +332,7 @@ details[open] summary::before{content:"▾ ";}
 .fields-name-column{flex:2;}
 .fields-add-action{flex:0 0 auto;display:flex;align-items:flex-end;}
 .client-title{margin:0 0 0 6px;}
+.client-title-editable{cursor:pointer;}
 .client-debt-chip{display:inline-flex;align-items:center;gap:5px;background:var(--soft);border:1.5px solid #C4B5FD;border-radius:8px;padding:5px 11px;font-size:12.5px;font-weight:700;white-space:nowrap;}
 .client-link{font-size:12.5px;}
 .contracts-sent-toolbar{margin-bottom:10px;display:none;}
@@ -754,7 +755,7 @@ details[open] summary::before{content:"▾ ";}
     <div class="card">
       <div class="toolbar">
         <button type="button" class="icon-btn" onclick="currentContractId ? openContract(null) : setView('clients')"> ← </button>
-        <h2 id="cName" class="client-title">Заказчик</h2>
+        <h2 id="cName" class="client-title client-title-editable" ondblclick="openClientForm(currentClientId)" title="Дважды щёлкните, чтобы изменить название заказчика">Заказчик</h2>
         <div class="client-meta-row">
           <span id="cDebtChip" class="client-debt-chip"></span>
           <span id="cLink" class="client-link"></span>
