@@ -646,30 +646,124 @@
     ensureSyncMeta(db);
     ensureCatalogMeta(db);
     var catalogTime = catalog.updated || isoNow();
-    var sync = db._sync;
-    db.priceList = mergeArraySection(
-      db.priceList || [],
-      catalog.priceList || [],
-      'code',
-      sync.sections.priceList,
-      catalogTime
-    );
-    db.surcharges = db.surcharges && typeof db.surcharges === 'object' ? db.surcharges : {};
-    var catalogSurcharges = catalog.surcharges && typeof catalog.surcharges === 'object' ? catalog.surcharges : {};
-    var surchargeKeys = new Set(Object.keys(db.surcharges).concat(Object.keys(catalogSurcharges)));
-    surchargeKeys.forEach(function (key) {
-      db.surcharges[key] = mergeArraySection(
-        db.surcharges[key] || [],
-        catalogSurcharges[key] || [],
-        'name',
-        sync.sections.surcharges,
-        catalogTime
-      );
+    if (Array.isArray(catalog.priceList)) {
+      db.priceList = clone(catalog.priceList);
+      db._sync.sections.priceList = catalogTime;
+    }
+    if (catalog.surcharges && typeof catalog.surcharges === 'object') {
+      db.surcharges = clone(catalog.surcharges);
+      db._sync.sections.surcharges = catalogTime;
+    }
+    db.catTitles = db.catTitles && typeof db.catTitles === 'object' ? db.catTitles : {};
+    db.catShort = db.catShort && typeof db.catShort === 'object' ? db.catShort : {};
+    if (catalog.catTitles) {
+      Object.keys(catalog.catTitles).forEach(function (key) {
+        if (catalog.catTitles[key]) db.catTitles[key] = catalog.catTitles[key];
+      });
+    }
+    if (catalog.catShort) {
+      Object.keys(catalog.catShort).forEach(function (key) {
+        if (catalog.catShort[key]) db.catShort[key] = catalog.catShort[key];
+      });
+    }
+    (catalog.categories || []).forEach(function (cat) {
+      if (!cat || !cat.key) return;
+      if (cat.title) db.catTitles[cat.key] = cat.title;
+      if (cat.short) db.catShort[cat.key] = cat.short;
     });
-    db.catTitles = mergeObjectSection(db.catTitles, catalog.catTitles, true);
-    db.catShort = mergeObjectSection(db.catShort, catalog.catShort, true);
+    applyCatalog(catalog);
     ensureCatalogMeta(db);
     return db;
+  }
+
+  function surchargeOrdersFromCatalog(catalog) {
+    var out = {};
+    var surcharges = (catalog && catalog.surcharges) || {};
+    Object.keys(surcharges).forEach(function (key) {
+      out[key] = (surcharges[key] || []).map(function (item) {
+        return text(item && (item.name || item.title || item.label));
+      }).filter(Boolean);
+    });
+    return out;
+  }
+
+  function buildPublicDataFromCatalog(catalog) {
+    catalog = catalog || {};
+    var byCode = {};
+    (catalog.priceList || []).forEach(function (item) {
+      if (item && item.code) byCode[String(item.code)] = item;
+    });
+    var categories = (catalog.categories || []).map(function (cat) {
+      var live = (catalog.surcharges && catalog.surcharges[cat.key]) || [];
+      return {
+        key: cat.key,
+        title: cat.title,
+        short: cat.short,
+        dual: !!cat.dual,
+        col1_label: cat.col1_label || 'Цена, ₽',
+        col2_label: cat.col2_label || '',
+        intro: cat.intro,
+        oplata: cat.oplata,
+        blocks: (cat.blocks || []).map(function (block) {
+          return {
+            subheading: block.subheading,
+            intro: block.intro,
+            rows: (block.codes || []).map(function (code) {
+              var item = byCode[String(code)] || { code: code };
+              var title = item.nameHtml || item.name || '';
+              var term = item.termHtml || item.term || '';
+              if (cat.dual) return [item.code || code, title, term, item.price, item.price2];
+              var row = [item.code || code, title, term, item.formula && !(n(item.price) > 0) ? item.formula : item.price];
+              if (item.noteHtml || item.note) row.push(item.noteHtml || item.note);
+              return row;
+            })
+          };
+        }),
+        surcharges: live.map(function (item) {
+          return [item.nameHtml || item.name || '', item.amountHtml || item.amount || ''];
+        })
+      };
+    });
+    return {
+      categories: categories,
+      abonementOplata: catalog.abonementOplata || ''
+    };
+  }
+
+  function applyCatalog(catalog) {
+    catalog = catalog || {};
+    var keys = (catalog.categories || []).map(function (item) { return item && item.key; }).filter(Boolean);
+    if (keys.length) {
+      OFFER_CATEGORIES.length = 0;
+      keys.forEach(function (key) { OFFER_CATEGORIES.push(key); });
+      if (global.RaleksizCRMCore) global.RaleksizCRMCore.OFFER_CATEGORIES = OFFER_CATEGORIES.slice();
+    }
+    (catalog.categories || []).forEach(function (cat) {
+      if (!cat || !cat.key) return;
+      if (cat.short) DEFAULT_CAT_SHORT[cat.key] = cat.short;
+      if (cat.title) DEFAULT_CAT_TITLES[cat.key] = cat.title;
+    });
+    if (catalog.catShort) {
+      Object.keys(catalog.catShort).forEach(function (key) {
+        if (catalog.catShort[key]) DEFAULT_CAT_SHORT[key] = catalog.catShort[key];
+      });
+    }
+    if (catalog.catTitles) {
+      Object.keys(catalog.catTitles).forEach(function (key) {
+        if (catalog.catTitles[key]) DEFAULT_CAT_TITLES[key] = catalog.catTitles[key];
+      });
+    }
+    return catalog;
+  }
+
+  function catalogCatShort(catalog) {
+    applyCatalog(catalog);
+    var out = {};
+    OFFER_CATEGORIES.forEach(function (key) { out[key] = DEFAULT_CAT_SHORT[key] || key; });
+    Object.keys(DEFAULT_CAT_SHORT).forEach(function (key) {
+      if (!out[key]) out[key] = DEFAULT_CAT_SHORT[key];
+    });
+    return out;
   }
 
   var api = {
@@ -705,6 +799,10 @@
     ensureCatalogMeta: ensureCatalogMeta,
     serviceCodeGroups: serviceCodeGroups,
     mergeCatalogIntoDB: mergeCatalogIntoDB,
+    surchargeOrdersFromCatalog: surchargeOrdersFromCatalog,
+    buildPublicDataFromCatalog: buildPublicDataFromCatalog,
+    applyCatalog: applyCatalog,
+    catalogCatShort: catalogCatShort,
     tombstoneKey: tombstoneKey
   };
 

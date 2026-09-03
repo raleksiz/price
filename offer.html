@@ -164,7 +164,7 @@
 
   <div class="field">
     <span class="cats-label">Категории со скидкой</span>
-    <div class="cats-grid">
+    <div class="cats-grid" id="offerCatsGrid">
       <label class="cat-check" id="lbl_consult"><input type="checkbox" class="cat-cb" value="consult" onchange="toggleCatStyle(this);updateDiscIndicator()"> Консультации</label>
       <label class="cat-check" id="lbl_contracts"><input type="checkbox" class="cat-cb" value="contracts" onchange="toggleCatStyle(this);updateDiscIndicator()"> Договоры</label>
       <label class="cat-check" id="lbl_realestate"><input type="checkbox" class="cat-cb" value="realestate" onchange="toggleCatStyle(this);updateDiscIndicator()"> Недвижимость</label>
@@ -313,7 +313,30 @@ document.addEventListener('keydown', e => {
 });
 
 // Check session on load
-window.addEventListener('DOMContentLoaded', () => { checkSession(); });
+async function loadOfferCatalog(){
+  const urls = ['price-catalog.json', 'https://raleksiz.github.io/price/price-catalog.json'];
+  for (const url of urls){
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (res.ok) return await res.json();
+    } catch (e) {}
+  }
+  return null;
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  checkSession();
+  const catalog = await loadOfferCatalog();
+  if (!catalog) return;
+  RaleksizCRMCore.applyCatalog(catalog);
+  const names = RaleksizCRMCore.catalogCatShort(catalog);
+  const grid = document.getElementById('offerCatsGrid');
+  if (grid){
+    grid.innerHTML = RaleksizCRMCore.OFFER_CATEGORIES.map(key =>
+      `<label class="cat-check" id="lbl_${key}"><input type="checkbox" class="cat-cb" value="${key}" onchange="toggleCatStyle(this);updateDiscIndicator()"> ${RaleksizCRMCore.escapeHtml(names[key] || key)}</label>`
+    ).join('');
+  }
+});
 
 function updateDiscIndicator(){
   const disc = parseFloat(document.getElementById('disc').value) || 0;
@@ -723,7 +746,9 @@ function renderSentOffers(){
       list.innerHTML = '<div class="sent-empty">Список пуст</div>';
       return;
     }
-    const catNames = {'consult':'Консультации','contracts':'Договоры','realestate':'Недвижимость',
+    const catNames = (typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.catalogCatShort)
+      ? RaleksizCRMCore.catalogCatShort()
+      : {'consult':'Консультации','contracts':'Договоры','realestate':'Недвижимость',
       'corporate':'Корпоративные','pretrial':'Досудебное','litigation_single':'Суд: разовые','full_repr':'Суд: под ключ','operations':'Операционная поддержка'};
     const now = new Date(); now.setHours(0,0,0,0);
     const twoWeeks = new Date(now); twoWeeks.setDate(twoWeeks.getDate()+14);

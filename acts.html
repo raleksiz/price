@@ -805,7 +805,6 @@ const SESSION_TTL= 7*24*60*60*1000;
 const TOKEN_KEY  = 'raleksiz_gh_token';
 const DB_KEY     = 'raleksiz_acts_db';
 const SHA_KEY    = 'raleksiz_acts_sha';
-const CAT_SHA_KEY= 'raleksiz_price_catalog_sha';
 const PENDING_KEY= 'raleksiz_acts_pending_sync';
 const GH_REPO        = 'raleksiz/Price-private'; // acts.json + offers.json (private)
 const GH_PUBLIC_REPO = 'raleksiz/price';         // price-catalog.json (public)
@@ -1047,10 +1046,13 @@ async function loadDB(){
   return normalizeDB({});
 }
 async function loadPublicCatalog(){
-  try{
-    const local = await fetch('price-catalog.json', {cache:'no-store'});
-    if(local.ok) return await local.json();
-  }catch(e){}
+  const urls = ['price-catalog.json', 'https://raleksiz.github.io/price/price-catalog.json'];
+  for (const url of urls){
+    try{
+      const local = await fetch(url, {cache:'no-store'});
+      if(local.ok) return await local.json();
+    }catch(e){}
+  }
   const token = localStorage.getItem(TOKEN_KEY);
   if(!token) return null;
   try{
@@ -1128,7 +1130,6 @@ async function pushDBOnce(retry){
       }else{
         pushAgain = true;
       }
-      await pushPriceCatalog();
       return;
     }
     if((res.status===409 || res.status===422) && !retry){
@@ -1145,45 +1146,6 @@ async function pushDBOnce(retry){
     }
     setSync('Ошибка сохранения ('+res.status+')', true);
   }catch(e){ setSync('Нет связи с GitHub — сохранено локально', true); }
-}
-function buildPublicCatalog(){
-  return {
-    updated: DB.updated || new Date().toISOString(),
-    priceList: Array.isArray(DB.priceList) ? DB.priceList : [],
-    surcharges: DB.surcharges && typeof DB.surcharges==='object' ? DB.surcharges : {}
-  };
-}
-async function pushPriceCatalog(retry){
-  const token = localStorage.getItem(TOKEN_KEY);
-  if(!token) return;
-  try{
-    const body = {
-      message: 'Update price-catalog.json',
-      content: b64enc(JSON.stringify(buildPublicCatalog(), null, 2))
-    };
-    const sha = localStorage.getItem(CAT_SHA_KEY);
-    if(sha) body.sha = sha;
-    const res = await fetch(`https://api.github.com/repos/${GH_PUBLIC_REPO}/contents/${GH_CATALOG}`, {
-      method:'PUT', headers:{...ghHeaders(),'Content-Type':'application/json'}, body: JSON.stringify(body)
-    });
-    if(res.ok){
-      const data = await res.json();
-      if(data && data.content && data.content.sha) localStorage.setItem(CAT_SHA_KEY, data.content.sha);
-      return;
-    }
-    if((res.status===409 || res.status===422) && !retry){
-      const g = await fetch(`https://api.github.com/repos/${GH_PUBLIC_REPO}/contents/${GH_CATALOG}?ref=main`, {headers:ghHeaders(), cache:'no-store'});
-      if(g.ok){
-        const d = await g.json();
-        localStorage.setItem(CAT_SHA_KEY, d.sha);
-        return pushPriceCatalog(true);
-      }
-      // файла ещё нет — пишем без sha
-      localStorage.removeItem(CAT_SHA_KEY);
-      return pushPriceCatalog(true);
-    }
-    console.warn('price-catalog save failed', res.status);
-  }catch(e){ console.warn('price-catalog save error', e); }
 }
 async function loadOffers(){
   const localKey = 'raleksiz_sent_offers';
@@ -1680,7 +1642,11 @@ async function init(){
     const catalog = await loadPublicCatalog();
     if(catalog && typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.mergeCatalogIntoDB){
       const before = new Set((DB.priceList||[]).map(item => String(item && item.code||'')));
+      RaleksizCRMCore.applyCatalog(catalog);
       RaleksizCRMCore.mergeCatalogIntoDB(DB, catalog);
+      if(window.RaleksizCalculator && typeof RaleksizCalculator.setSurchargeOrders === 'function'){
+        RaleksizCalculator.setSurchargeOrders(RaleksizCRMCore.surchargeOrdersFromCatalog(catalog));
+      }
       if((DB.priceList||[]).some(item => item && !before.has(String(item.code||'')))){
         window.__needsCloudPush = true;
       }
@@ -1927,16 +1893,10 @@ function decodeOfferUrl(url){
   }
 }
 function offerCatNames(){
-  return {
-    consult: 'Консультации',
-    contracts: 'Договоры',
-    realestate: 'Недвижимость',
-    corporate: 'Корпоративные',
-    pretrial: 'Досудебное',
-    litigation_single: 'Суд: разовые',
-    full_repr: 'Суд: под ключ',
-    operations: 'Операционная поддержка'
-  };
+  if(typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.catalogCatShort){
+    return RaleksizCRMCore.catalogCatShort({ categories: Object.keys(DB.catShort||{}).map(key => ({ key, short: DB.catShort[key], title: (DB.catTitles||{})[key] })), catShort: DB.catShort, catTitles: DB.catTitles });
+  }
+  return Object.assign({}, DB.catShort || {});
 }
 function parseRuDate(value){
   const parsed = typeof RaleksizCRMCore!=='undefined' ? RaleksizCRMCore.parseDateParts(value) : null;

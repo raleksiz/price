@@ -1121,6 +1121,13 @@
     getDiscountDecision: getDiscountDecision,
     getStage1Price: getStage1Price,
     applySurcharges: applySurcharges,
+    setSurchargeOrders: function (orders) {
+      Object.keys(SURCHARGE_ORDERS).forEach(function (key) { delete SURCHARGE_ORDERS[key]; });
+      Object.keys(orders || {}).forEach(function (key) {
+        SURCHARGE_ORDERS[key] = (orders[key] || []).slice();
+      });
+      return SURCHARGE_ORDERS;
+    },
     SURCHARGE_ORDERS: SURCHARGE_ORDERS,
     calculate: calculateInput,
     calculateService: calculateService,
