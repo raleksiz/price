@@ -341,7 +341,7 @@ details[open] summary::before{content:"▾ ";}
 @media(max-width:720px){.contract-toolbar-actions{margin-left:0;width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.contract-toolbar-actions .btn{width:100%;min-width:0;height:34px;padding:5px 3px;font-size:11px;line-height:1;white-space:nowrap}}
 .invoice-result-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;gap:8px;margin-top:14px;align-items:stretch}.invoice-result-actions .invoice-action{width:100%;min-width:0;justify-content:center}.invoice-action svg{display:none}.invoice-action-label{display:inline;white-space:nowrap;font-size:12px}@media(max-width:720px){.invoice-result-actions{gap:7px}.invoice-action{height:38px;min-width:0!important;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;border-radius:9px!important}.invoice-action-label{display:none}.invoice-action svg{display:block;width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.invoice-action.pdf svg{width:22px;height:22px}.invoice-action.pdf svg text{fill:currentColor;stroke:none;font-size:7px;font-family:Arial,sans-serif;font-weight:800;letter-spacing:-.4px}}
 .invoice-create-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.invoice-payer-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(105px,.6fr);gap:10px;align-items:start}.invoice-payer-row .field{min-width:0}.invoice-payer-row .field>label{min-height:16px;white-space:nowrap}@media(max-width:720px){.invoice-create-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.invoice-payer-row{grid-template-columns:minmax(0,1fr) minmax(105px,.6fr)}}
-.invoice-issued-list{margin:10px 0 0;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:var(--soft)}.invoice-issued-list summary{color:var(--violet)}.invoice-issued-list ul{margin:0 0 10px 18px;padding:0}.invoice-issued-list li{margin:4px 0}.invoice-issued-list a{color:var(--violet);font-weight:700;text-decoration:none}.invoice-issued-list a:hover{text-decoration:underline}
+.invoice-issued-list{margin:10px 0 0;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:var(--soft)}.invoice-issued-list summary{color:var(--violet)}.invoice-issued-list ul{margin:0 0 10px 18px;padding:0}.invoice-issued-row{margin:5px 0}.invoice-issued-line{display:flex;align-items:center;gap:7px;min-width:0}.invoice-issued-line>a{min-width:0;color:var(--violet);font-weight:700;text-decoration:none;overflow-wrap:anywhere}.invoice-issued-line>a:hover{text-decoration:underline}.invoice-issued-state{flex:0 0 auto;padding:2px 5px;border-radius:999px;background:#f1eeee;color:#8b5353;font-size:10px;font-weight:700;line-height:1.2;text-transform:uppercase}.invoice-issued-row.is-annulled .invoice-issued-line>a{color:#856d7b;text-decoration:line-through}.invoice-manage{display:inline-flex;flex:0 0 28px;width:28px;height:28px;align-items:center;justify-content:center;padding:0;border:1px solid #cfc4de;border-radius:7px;background:#fff;color:#6e3b8c;cursor:pointer}.invoice-manage:hover,.invoice-manage[aria-expanded="true"]{border-color:var(--violet);background:#f8f4ff}.invoice-manage svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.invoice-manage-menu{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:5px 0 8px;padding:7px 8px;border:1px solid #d9cdea;border-radius:8px;background:#fff}.invoice-manage-menu .btn{flex:0 0 auto;min-width:0}.invoice-manage-error{flex-basis:100%;color:var(--bad);font-size:11px;line-height:1.35}.invoice-year-group{border-top:1px solid #ddd1ec}.invoice-year-group:first-child{border-top:0}.invoice-year-group summary{padding:8px 0;color:#6e3b8c}.invoice-year-group ul{margin-bottom:9px}
 .contract-preamble{font-size:12.5px;}
 .sent-flag-compact{margin-bottom:10px;}
 .sent-flag-label{text-transform:none;font-size:13px;margin:0;font-weight:700;}
@@ -3889,13 +3889,110 @@ function rememberedPayerInn(c){
   const latest=sortInvoicesNewestFirst(prior)[0];
   return String((latest&&latest.payerInn)||'').trim();
 }
+function invoicePublicId(invoice){
+  const id=String((invoice&&invoice.publicId)||'').trim();
+  return /^[A-Za-z0-9]{12}$/.test(id) ? id : '';
+}
+function invoiceLabel(invoice){
+  return 'Счёт № '+String((invoice&&invoice.number)||'')+((invoice&&invoice.date)?' от '+fmtDate(invoice.date):'');
+}
+function invoiceYear(invoice){
+  const value=String((invoice&&invoice.date)||String((invoice&&invoice.createdAt)||'')).slice(0,4);
+  return /^\d{4}$/.test(value) ? value : 'Без даты';
+}
+function invoiceCountLabel(count){
+  const n=Math.abs(Number(count)||0), tail=n%100, last=n%10;
+  const word=tail>10 && tail<20 ? 'счетов' : last===1 ? 'счёт' : last>=2 && last<=4 ? 'счёта' : 'счетов';
+  return n+' '+word;
+}
+function issuedInvoiceItemHtml(invoice){
+  const id=invoicePublicId(invoice);
+  if(!id) return '';
+  const annulled=invoice.status==='annulled';
+  const label=invoiceLabel(invoice);
+  const annulButton=annulled ? '' : `<button type="button" class="btn ghost sm" onclick="manageInvoice('${id}','annul')">Аннулировать</button>`;
+  return `<li class="invoice-issued-row${annulled?' is-annulled':''}"><div class="invoice-issued-line"><a href="${esc(invoiceUrl(invoice))}" target="_blank" rel="noopener">${esc(label)}</a>${annulled?'<span class="invoice-issued-state">аннулирован</span>':''}<button type="button" class="invoice-manage" data-invoice-id="${id}" title="Удалить или аннулировать" aria-label="Удалить или аннулировать" aria-expanded="false" onclick="toggleInvoiceManageMenu('${id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button></div><div class="invoice-manage-menu hidden" id="invoiceManage-${id}">${annulButton}<button type="button" class="btn danger sm" onclick="manageInvoice('${id}','delete')">Удалить навсегда</button><button type="button" class="btn ghost sm" onclick="hideInvoiceManageMenu('${id}')">Отмена</button><span class="invoice-manage-error" id="invoiceManageError-${id}"></span></div></li>`;
+}
+function issuedInvoicesListHtml(invoices){
+  return `<ul>${invoices.map(issuedInvoiceItemHtml).join('')}</ul>`;
+}
 function issuedInvoicesHtml(ct){
-  const invoices=sortInvoicesNewestFirst(ct&&ct.invoices).filter(invoice=>invoice&&invoice.publicId);
+  const invoices=sortInvoicesNewestFirst(ct&&ct.invoices).filter(invoice=>invoicePublicId(invoice));
   if(!invoices.length) return '';
-  return `<details class="invoice-issued-list"><summary>Выставленные счета</summary><ul>${invoices.map(invoice=>{
-    const label='Счёт № '+String(invoice.number||'')+(invoice.date?' от '+fmtDate(invoice.date):'');
-    return `<li><a href="${esc(invoiceUrl(invoice))}" target="_blank" rel="noopener">${esc(label)}</a></li>`;
-  }).join('')}</ul></details>`;
+  const byYear={};
+  invoices.forEach(invoice=>{ const year=invoiceYear(invoice); (byYear[year]=byYear[year]||[]).push(invoice); });
+  const years=Object.keys(byYear).sort((a,b)=>b.localeCompare(a,'ru',{numeric:true}));
+  const grouped=years.some(year=>byYear[year].length>15);
+  const content=grouped
+    ? years.map(year=>`<details class="invoice-year-group"><summary>${esc(year)} · ${invoiceCountLabel(byYear[year].length)}</summary>${issuedInvoicesListHtml(byYear[year])}</details>`).join('')
+    : issuedInvoicesListHtml(invoices);
+  return `<details class="invoice-issued-list"><summary>Выставленные счета</summary><div class="invoice-issued-content">${content}</div></details>`;
+}
+function toggleInvoiceManageMenu(publicId){
+  const target=document.getElementById('invoiceManage-'+publicId);
+  if(!target) return;
+  const willOpen=target.classList.contains('hidden');
+  document.querySelectorAll('#issuedInvoicesContainer .invoice-manage-menu').forEach(menu=>menu.classList.add('hidden'));
+  document.querySelectorAll('#issuedInvoicesContainer .invoice-manage').forEach(button=>button.setAttribute('aria-expanded','false'));
+  if(willOpen){
+    target.classList.remove('hidden');
+    const button=document.querySelector('#issuedInvoicesContainer .invoice-manage[data-invoice-id="'+publicId+'"]');
+    if(button) button.setAttribute('aria-expanded','true');
+  }
+}
+function hideInvoiceManageMenu(publicId){
+  const menu=document.getElementById('invoiceManage-'+publicId);
+  if(menu) menu.classList.add('hidden');
+  const button=document.querySelector('#issuedInvoicesContainer .invoice-manage[data-invoice-id="'+publicId+'"]');
+  if(button) button.setAttribute('aria-expanded','false');
+}
+function refreshIssuedInvoices(){
+  const c=getClient(currentClientId), ct=c&&getContract(c,currentContractId), box=document.getElementById('issuedInvoicesContainer');
+  if(!ct || !box) return;
+  const wasOpen=!!box.querySelector('.invoice-issued-list[open]');
+  box.innerHTML=issuedInvoicesHtml(ct);
+  const list=box.querySelector('.invoice-issued-list');
+  if(list && wasOpen) list.open=true;
+}
+async function manageInvoice(publicId,action){
+  const c=getClient(currentClientId), ct=c&&getContract(c,currentContractId);
+  const invoice=ct && (ct.invoices||[]).find(item=>invoicePublicId(item)===publicId);
+  const menu=document.getElementById('invoiceManage-'+publicId), err=document.getElementById('invoiceManageError-'+publicId);
+  if((action!=='annul' && action!=='delete') || !c || !ct || !invoice || !menu || !err) return;
+  if(action==='annul' && invoice.status==='annulled') return;
+  const key=invoiceWriteKey();
+  if(!key){err.textContent='Для изменения счёта нужен секретный ключ Cloudflare.';return;}
+  const buttons=[...menu.querySelectorAll('button')];
+  buttons.forEach(button=>button.disabled=true);
+  err.textContent='';
+  try{
+    const url=INVOICE_API+'/invoices/'+encodeURIComponent(publicId);
+    const options={method:action==='annul'?'PATCH':'DELETE',headers:{'X-CRM-Invoice-Key':key}};
+    if(action==='annul'){
+      options.headers['Content-Type']='application/json';
+      options.body=JSON.stringify({action:'annul'});
+    }
+    const res=await fetch(url,options);
+    if(!res.ok){
+      if(res.status===403) try{localStorage.removeItem('raleksiz_invoice_write_key');}catch(e){}
+      if(res.status===403) throw new Error('Ключ Cloudflare не принят. Нажми кнопку ещё раз и введи ключ заново.');
+      if(res.status===404) throw new Error('Счёт не найден в Cloudflare. В CRM ничего не изменено.');
+      throw new Error('Cloudflare вернул ошибку '+res.status+'. В CRM ничего не изменено.');
+    }
+    const result=await res.json();
+    if(action==='annul'){
+      invoice.status='annulled';
+      invoice.annulledAt=result.annulledAt||new Date().toISOString();
+    }else{
+      ct.invoices=ct.invoices.filter(item=>invoicePublicId(item)!==publicId);
+    }
+    touchContract(ct); touchClient(c);
+    save({immediate:true});
+    refreshIssuedInvoices();
+  }catch(e){
+    err.textContent=e.message||'Не удалось изменить счёт.';
+    buttons.forEach(button=>button.disabled=false);
+  }
 }
 function invoiceWriteKey(){
   const storageKey='raleksiz_invoice_write_key';
@@ -3923,7 +4020,7 @@ function openInvoiceDialog(){
       <div class="field"><label>ИНН</label><input id="invPayerInn" inputmode="numeric" value="${esc(rememberedPayerInn(c))}"></div></div>
     <div class="field"><label>Сумма, ₽</label><input id="invAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="Введите сумму"></div>
     <div class="field"><label>Назначение платежа</label><textarea id="invPurpose" class="autogrow">Оплата юридических услуг по ${esc(purposeBasis)}</textarea></div>
-    ${issuedInvoicesHtml(ct)}
+    <div id="issuedInvoicesContainer">${issuedInvoicesHtml(ct)}</div>
     <div class="err" id="invErr"></div><div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button><button type="button" class="btn" onclick="saveInvoice()">Создать счёт</button></div>`);
   autoGrowTextarea(document.getElementById('invPurpose'));
 }

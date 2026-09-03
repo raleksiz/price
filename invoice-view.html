@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Счёт на оплату</title>
-  <script src="invoice.js?v=invoice-layout-20260903c"></script>
+  <script src="invoice.js?v=invoice-layout-20260903d"></script>
   <style>
     :root{--ink:#2B1A6B;--soft:#F3ECFA;--line:#CDB9E8}
     *{box-sizing:border-box}
@@ -46,6 +46,7 @@
     .invoice-items th:last-child,.invoice-items td:last-child{border-right:0;text-align:right}
     .invoice-items tfoot td{border-bottom:0;font-weight:800;background:#fbf9fe}
     .invoice-purpose{margin-top:16px}
+    .invoice-annulled{margin-top:18px;border:1px solid #f0b7b7;border-radius:10px;padding:18px;background:#fff5f5;color:#8f1d1d}.invoice-annulled h2{margin:0 0 5px;font-size:20px}.invoice-annulled p{margin:0;font-weight:700}
     @media(max-width:620px){
       .page{margin:0}.actions{right:12px;bottom:12px}.invoice-sheet{padding:20px 14px;box-shadow:none}.invoice-head{align-items:flex-start}.invoice-logo{width:112px;height:34px;flex-basis:112px}.invoice-issuer{font-size:10px}.invoice-title h1{font-size:20px}
       .invoice-payment{display:block}.invoice-payment .invoice-qr-desktop{display:none}
@@ -62,7 +63,7 @@
 </head>
 <body>
   <main class="page">
-    <div class="actions"><button onclick="window.print()">Скачать PDF</button></div>
+    <div class="actions"><button id="downloadPdf" onclick="window.print()">Скачать PDF</button></div>
     <div id="root"></div>
   </main>
   <script>
@@ -76,6 +77,12 @@
         if(!r.ok)throw new Error();
         d=await r.json()
       }catch(_){root.innerHTML='<p>Не удалось загрузить счёт. Повтори попытку позже.</p>';return}
+      if(d.status==='annulled'){
+        root.innerHTML=RaleksizInvoice.annulledHtml(d);
+        document.getElementById('downloadPdf').hidden=true;
+        document.title='Аннулированный счёт № '+d.number;
+        return;
+      }
       try{
         const draft=document.createElement('div');
         draft.innerHTML=RaleksizInvoice.documentHtml(d);

@@ -34,6 +34,17 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
       .replace(new RegExp(' к договор'+after, 'g'), ' к договору');
   }
 
+  function annulledHtml(d) {
+    return `<article class="invoice-sheet invoice-annulled-sheet">
+      <header class="invoice-head">
+        <img class="invoice-logo" src="${API}/logo.png?v=logo-20260903b" alt="RALEKSIZ HOUSE">
+        <div class="invoice-issuer"><b>${RECIPIENT.name}</b><br>ОГРНИП ${RECIPIENT.ogrnip}<br><a href="mailto:${esc(RECIPIENT.email)}">${RECIPIENT.email}</a> · <a href="${esc(RECIPIENT.telegram)}" target="_blank" rel="noopener">${RECIPIENT.telegram}</a></div>
+      </header>
+      <section class="invoice-title"><div><h1>СЧЁТ НА ОПЛАТУ № ${esc(d.number)}</h1><p>от ${date(d.date)}</p></div></section>
+      <section class="invoice-annulled"><h2>Счёт аннулирован</h2><p>Этот счёт не подлежит оплате.</p></section>
+    </article>`;
+  }
+
   function documentHtml(d) {
     const payerInn = d.payerInn ? esc(d.payerInn) : '—';
     return `<article class="invoice-sheet">
@@ -83,5 +94,5 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
   }
   function readToken() { return new URLSearchParams(location.search).get('i') || ''; }
   function token(d) { return b64url(JSON.stringify([1,d.number,d.date,Number(d.amount)||0,d.payer,d.payerInn||'',d.purpose,d.basis])); }
-  global.RaleksizInvoice = {API, RECIPIENT, documentHtml, drawQrs, fitAmounts, paymentString, token, readToken, money, date};
+  global.RaleksizInvoice = {API, RECIPIENT, documentHtml, annulledHtml, drawQrs, fitAmounts, paymentString, token, readToken, money, date};
 })(window);
