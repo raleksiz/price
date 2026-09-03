@@ -332,7 +332,7 @@ details[open] summary::before{content:"▾ ";}
 .fields-name-column{flex:2;}
 .fields-add-action{flex:0 0 auto;display:flex;align-items:flex-end;}
 .client-title{margin:0 0 0 6px;}
-.client-title-editable{cursor:pointer;}
+.client-title-editable{cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;}
 .client-debt-chip{display:inline-flex;align-items:center;gap:5px;background:var(--soft);border:1.5px solid #C4B5FD;border-radius:8px;padding:5px 11px;font-size:12.5px;font-weight:700;white-space:nowrap;}
 .client-link{font-size:12.5px;}
 .contracts-sent-toolbar{margin-bottom:10px;display:none;}
@@ -1672,6 +1672,7 @@ async function init(){
     renderAllViews();
     setView(currentView, currentClientId, true);
     bindSwipeNav();
+    bindClientNameEdit();
     if(!window.__actsHashBound){
       window.__actsHashBound = true;
       window.addEventListener('hashchange', onHashChange);
@@ -1748,6 +1749,40 @@ function bindSwipeNav(){
     x0 = null;
     if(dx > 72 && Math.abs(dx) > Math.abs(dy) * 1.4) openContract(null);
   }, {passive:true});
+}
+function bindClientNameEdit(){
+  const title = document.getElementById('cName');
+  if(!title || title.dataset.editBound) return;
+  title.dataset.editBound = '1';
+  const holdMs = 550, moveLimit = 10;
+  let timer = null, pointerId = null, x0 = 0, y0 = 0, longPressOpened = false;
+  const cancel = () => {
+    if(timer){ clearTimeout(timer); timer = null; }
+    pointerId = null;
+  };
+  title.addEventListener('pointerdown', event => {
+    if(event.pointerType !== 'touch' || !event.isPrimary) return;
+    cancel();
+    pointerId = event.pointerId;
+    x0 = event.clientX;
+    y0 = event.clientY;
+    longPressOpened = false;
+    timer = setTimeout(() => {
+      timer = null;
+      longPressOpened = true;
+      openClientForm(currentClientId);
+    }, holdMs);
+  }, {passive:true});
+  title.addEventListener('pointermove', event => {
+    if(event.pointerId !== pointerId) return;
+    if(Math.hypot(event.clientX - x0, event.clientY - y0) > moveLimit) cancel();
+  }, {passive:true});
+  ['pointerup','pointercancel','pointerleave'].forEach(type => title.addEventListener(type, event => {
+    if(event.pointerId === pointerId) cancel();
+  }, {passive:true}));
+  title.addEventListener('contextmenu', event => {
+    if(pointerId !== null || longPressOpened) event.preventDefault();
+  });
 }
 function renderAllViews(){
   renderClients(); renderFields(); fillAllFilters(); renderAll();
