@@ -49,9 +49,30 @@ textarea.autogrow{resize:none;overflow:hidden;}
 .grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
 .payment-block{margin-bottom:14px;}
 .payment-hint{margin-top:6px;}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:stretch;margin-bottom:16px;}
 .tab{padding:9px 14px;border-radius:10px;background:#fff;border:1.5px solid var(--line);cursor:pointer;font-size:13px;font-weight:700;color:#6b6b7b;}
 .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.tab-ico{
+  padding:9px 12px;border-radius:10px;background:#fff;border:1.5px solid var(--line);
+  cursor:pointer;font-size:16px;line-height:1;font-family:inherit;color:var(--ink);
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.tab-ico:hover{border-color:var(--violet);}
+.sync-line{margin:-6px 0 12px;min-height:0;}
+.sync-line:empty{display:none;margin:0;}
+@media (max-width:720px){
+  .tabs{flex-wrap:nowrap;gap:3px;margin-bottom:12px;}
+  .tab,.tab-ico{
+    min-height:38px;min-width:0;width:0;padding:0 4px;border-radius:10px;
+    border:1.5px solid var(--violet-d);background:var(--violet);color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-family:inherit;font-weight:700;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;box-sizing:border-box;
+  }
+  .tab{flex:1.35 1 0;font-size:12px;cursor:pointer;}
+  .tab.active{background:var(--violet-d);border-color:var(--ink);color:#fff;}
+  .tab-ico{flex:.7 1 0;font-size:16px;padding:0;}
+}
 .muted{color:var(--muted);font-size:12px;line-height:1.55;}
 .err{color:var(--bad);font-size:13px;min-height:18px;margin-bottom:10px;}
 .hidden{display:none !important;}
@@ -84,6 +105,8 @@ tr.locked td{background:#FAFAFC;}
   #view-clients > .card,
   #view-client.list-narrow > .card{
     max-width:1084px;
+    margin-left:auto;
+    margin-right:auto;
   }
   #view-client.list-narrow .client-list-actions{
     display:flex;align-items:center;gap:8px;flex-shrink:0;
@@ -122,8 +145,12 @@ tr.locked td{background:#FAFAFC;}
 .cl-ico{flex:1 1 0;cursor:pointer;font-size:16px;line-height:1;color:inherit;padding:0;opacity:1;overflow:hidden;flex-shrink:1;}
 .cl-ico.act-ico{font-size:12px;font-weight:800;color:#6E3B8C;}
 .cl-ico.act-ico.on{background:var(--violet);color:#fff;border-color:var(--violet);}
+@media (min-width:721px){
+  .clients,.contracts-grid{justify-content:center;}
+  .cl-card{flex:0 0 340px;width:340px;max-width:340px;}
+}
 @media (max-width:720px){
-  .cl-card{max-width:none;}
+  .cl-card{max-width:none;width:100%;flex:1 1 auto;}
   .cl-bar{gap:2px;padding:6px 6px 8px;}
   .cl-amt{font-size:11.5px;padding:0 4px;}
   .cl-ico{font-size:15px;}
@@ -354,8 +381,6 @@ details[open] summary::before{content:"▾ ";}
 .sent-flag input[type=checkbox]{width:18px;height:18px;accent-color:var(--violet);}
 .link-box{background:#F4F0FA;border:1.5px solid #C4B5FD;border-radius:10px;padding:10px 12px;font-size:12.5px;word-break:break-all;line-height:1.5;margin-top:8px;}
 .token-hint{margin-top:4px;}
-.app-header{padding:16px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-.app-header-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
 .fields-description{margin-bottom:14px;}
 .fields-add-row{margin-bottom:14px;}
 .fields-name-column{flex:2;}
@@ -677,20 +702,14 @@ details[open] summary::before{content:"▾ ";}
 
 <!-- ЭКРАН ПРИЛОЖЕНИЯ -->
 <div class="wrap hidden" id="mainScreen">
-  <div class="card app-header">
-    <div class="logo">RALEKSIZ HOUSE</div>
-    <div class="muted" id="syncState"></div>
-    <div class="app-header-actions">
-      <button type="button" class="icon-btn" onclick="openTokenPrompt()">Token</button>
-      <button type="button" class="icon-btn" onclick="logout()">Выход</button>
-    </div>
-  </div>
-
   <div class="tabs">
     <div class="tab active" data-view="clients" onclick="setView('clients')">Заказчики</div>
     <div class="tab" data-view="all" onclick="setView('all')">Все услуги</div>
-    <div class="tab" data-view="fields" onclick="setView('fields')">Настройка полей</div>
+    <div class="tab" data-view="fields" onclick="setView('fields')">Доп. поля</div>
+    <button type="button" class="tab-ico" onclick="openTokenPrompt()" title="Обновить токен">🔑</button>
+    <button type="button" class="tab-ico" onclick="logout()" title="Выход">🚪</button>
   </div>
+  <div class="muted sync-line" id="syncState"></div>
 
   <!-- ВИД: ЗАКАЗЧИКИ -->
   <div id="view-clients">
