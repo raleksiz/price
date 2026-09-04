@@ -20,7 +20,7 @@
 :root{--bg:#F4F0FA;--card:#fff;--ink:#2B1A6B;--muted:#888;--line:#E4E5EA;--violet:#7C3AED;--violet-d:#5B21B6;--soft:#F3ECFA;--ok:#16a34a;--warn:#E65100;--bad:#dc2626;}
 body{font-family:Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:16px 12px 60px;-webkit-text-size-adjust:100%;}
 .wrap{max-width:1400px;width:100%;margin:0 auto;}
-.card{background:var(--card);border-radius:16px;padding:22px 20px;box-shadow:0 8px 32px rgba(80,40,120,.10);margin-bottom:16px;}
+.card{background:var(--card);border-radius:16px;padding:22px 20px;box-shadow:0 8px 32px rgba(80,40,120,.10);margin-bottom:16px;min-width:0;overflow:visible;}
 .card.narrow{max-width:480px;margin:0 auto 16px;}
 .logo{font-family:Montserrat,system-ui,sans-serif;font-weight:800;font-size:18px;letter-spacing:.5px;}
 .subtitle{font-size:12px;color:var(--muted);margin-bottom:22px;}
@@ -60,6 +60,39 @@ textarea.autogrow{resize:none;overflow:hidden;}
 .tab-ico:hover{border-color:var(--violet);}
 .sync-line{margin:-6px 0 12px;min-height:0;}
 .sync-line:empty{display:none;margin:0;}
+.side-nav{display:none;}
+.app-shell{display:block;}
+.app-main{min-width:0;}
+.side-nav-btn{
+  width:44px;height:44px;padding:0;border-radius:10px;border:1.5px solid var(--line);
+  background:#fff;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;
+  justify-content:center;flex-shrink:0;
+}
+.side-nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.side-account-menu .side-nav-btn svg{fill:currentColor;stroke:none;}
+.side-nav-btn:hover{border-color:var(--violet);color:var(--violet);}
+.side-nav-btn.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.side-account-menu{position:relative;flex-shrink:0;}
+.side-account-menu-list{
+  position:absolute;left:calc(100% + 8px);bottom:0;z-index:40;
+  min-width:148px;padding:4px;border:1.5px solid var(--line);border-radius:10px;
+  background:#fff;box-shadow:0 8px 24px rgba(80,40,120,.12);white-space:nowrap;
+}
+.side-account-menu-list button{
+  display:block;width:100%;text-align:left;border:none;background:#fff;
+  padding:8px 10px;border-radius:8px;font-size:13px;font-weight:700;
+  font-family:inherit;color:var(--ink);cursor:pointer;
+}
+.side-account-menu-list button:hover{background:var(--soft);color:var(--violet);}
+@media (min-width:721px){
+  .tabs{display:none;}
+  .app-shell{display:flex;align-items:flex-start;gap:12px;}
+  .side-nav{
+    display:flex;flex-direction:column;gap:6px;flex:0 0 44px;
+    position:sticky;top:16px;
+  }
+  .app-main{flex:1;min-width:0;}
+}
 @media (max-width:720px){
   .tabs{flex-wrap:nowrap;gap:3px;margin-bottom:12px;}
   .tab,.tab-ico{
@@ -91,16 +124,20 @@ tr.locked td{background:#FAFAFC;}
 .pill.pre{background:#EDE9FE;color:#5B21B6;}
 .pill.lock{background:#EEE;color:#666;}
 .clients,.contracts-grid{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;}
-.clients-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:14px;}
-.clients-toolbar .tot{margin:0;padding:6px 10px;min-width:0;}
-.clients-toolbar .tot .v{font-size:15px;margin-top:0;white-space:nowrap;}
+.clients-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:14px;min-width:0;}
+.clients-page-title{margin:0;font-size:15px;font-weight:700;flex-shrink:0;line-height:1.2;}
+.clients-toolbar #globalTotals{display:flex;align-items:center;min-width:0;}
 .icon-btn-toggle{background:#fff;border:1.5px solid var(--line);border-radius:8px;width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;color:#666;flex-shrink:0;}
 .icon-btn-toggle:hover{border-color:var(--violet);color:var(--violet);}
 .icon-btn-toggle.active{border-color:var(--violet);background:var(--soft);color:var(--violet);}
-.clients-toolbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;}
+.clients-add-btn{margin-left:auto;flex-shrink:0;}
+@media (min-width:721px){.clients-add-btn{display:none;}}
 .contracts-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
 .contracts-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
 .client-list-actions{display:none;}
+#view-client.list-narrow .client-list-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+#view-client.list-narrow .contracts-toolbar,
+#view-client.list-narrow .contracts-empty-add{display:none;}
 @media (min-width:721px){
   #view-clients > .card,
   #view-client.list-narrow > .card{
@@ -108,11 +145,6 @@ tr.locked td{background:#FAFAFC;}
     margin-left:auto;
     margin-right:auto;
   }
-  #view-client.list-narrow .client-list-actions{
-    display:flex;align-items:center;gap:8px;flex-shrink:0;
-  }
-  #view-client.list-narrow .contracts-toolbar,
-  #view-client.list-narrow .contracts-empty-add{display:none;}
 }
 .contract-card{margin:0;}
 .cl-card{
@@ -346,14 +378,29 @@ details[open] summary::before{content:"▾ ";}
 .comp-result-head .big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
 .toolbar .grow{flex:1;min-width:160px;}
+.client-head > .icon-btn{flex-shrink:0;}
 
 .filters-toolbar{display:flex;align-items:flex-end;gap:8px;margin-bottom:22px;min-width:0;}
 .filters-toggle{display:none !important;flex:0 0 auto;margin-bottom:0;}
-.all-filters{display:flex;gap:8px;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;padding-bottom:3px;-webkit-overflow-scrolling:touch;}
+.all-filters{display:flex;gap:8px;flex:1 1 auto;min-width:0;overflow:visible;flex-wrap:wrap;padding-bottom:3px;}
 .all-filters>div{flex:1 1 0;min-width:155px;}
 .all-filters.filters-collapsed{display:none;}
 .all-filters label{font-size:10.5px;}
-.all-filters input,.all-filters select{height:36px;padding:7px 9px;font-size:12px;}
+.all-filters input{height:36px;padding:7px 9px;font-size:12px;}
+.xl-filter{position:relative;min-width:0;}
+.xl-filter-drop{
+  position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:25;
+  max-height:220px;overflow-y:auto;
+  background:#fff;border:1.5px solid var(--line);border-radius:10px;
+  box-shadow:0 8px 24px rgba(80,40,120,.12);
+}
+.xl-filter-drop button{
+  display:block;width:100%;text-align:left;border:none;background:#fff;
+  padding:7px 10px;font-size:12.5px;font-family:inherit;color:var(--ink);
+  cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.xl-filter-drop button:hover,.xl-filter-drop button.active{background:var(--soft);color:var(--violet);}
+.xl-filter-drop .xl-empty{padding:8px 10px;font-size:12px;color:var(--muted);}
 @media (min-width:721px){.all-filters::-webkit-scrollbar{height:6px;}.all-filters{scrollbar-width:thin;}}
 @media(max-width:720px){
   .all-filters label{font-size:10px;}
@@ -373,9 +420,59 @@ details[open] summary::before{content:"▾ ";}
   .all-filters{display:grid;grid-template-columns:1fr 1fr;overflow:visible;padding-bottom:0;}
   .all-filters>div{width:100%;min-width:0;flex:1 1 auto;}
 }
-.client-meta-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-left:auto;}
+.client-head{min-width:0;width:100%;}
+.client-meta-row{display:flex;gap:8px;flex-wrap:nowrap;align-items:center;margin-left:auto;min-width:0;flex:0 0 auto;}
+.client-link-ico{text-decoration:none;flex-shrink:0;}
+.head-contract-name{display:none;}
+.head-contract-actions{display:none;}
+.doc-menu{position:relative;flex-shrink:0;}
+.doc-menu-list{
+  position:absolute;right:0;top:calc(100% + 4px);z-index:30;
+  min-width:160px;padding:4px;border:1.5px solid var(--line);border-radius:10px;
+  background:#fff;box-shadow:0 8px 24px rgba(80,40,120,.12);
+}
+.doc-menu-list button{
+  display:block;width:100%;text-align:left;border:none;background:#fff;
+  padding:8px 10px;border-radius:8px;font-size:13px;font-weight:700;
+  font-family:inherit;color:var(--ink);cursor:pointer;
+}
+.doc-menu-list button:hover{background:var(--soft);color:var(--violet);}
 @media (max-width:720px){
   .client-meta-row{margin-left:0;width:100%;justify-content:flex-start;}
+  #view-client.list-narrow .client-head{flex-wrap:wrap;}
+  #view-client.list-narrow .client-meta-row{
+    width:100%;flex-wrap:nowrap;gap:4px;min-width:0;
+  }
+  #view-client.list-narrow .client-debt-chip{
+    flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    padding:5px 8px;font-size:12px;
+  }
+  #view-client.list-narrow .client-list-actions .btn{
+    padding:6px 8px;font-size:11.5px;white-space:nowrap;flex-shrink:0;
+  }
+}
+@media (min-width:721px){
+  .client-head{flex-wrap:nowrap;min-width:0;overflow:visible;}
+  .client-title{
+    flex:1 1 0;min-width:0;max-width:none;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  #view-client:not(.list-narrow) .head-contract-name{
+    display:block;flex:1 1 0;min-width:0;max-width:none;margin:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:700;
+  }
+  #view-client:not(.list-narrow) .client-debt-chip{
+    flex:0 1 auto;min-width:0;max-width:9.5em;
+    overflow:hidden;text-overflow:ellipsis;
+  }
+  #view-client:not(.list-narrow) .head-contract-actions{
+    display:flex !important;flex-wrap:nowrap;gap:6px;align-items:center;margin-left:0;flex-shrink:0;
+  }
+  #view-client:not(.list-narrow) .head-contract-actions .btn{
+    padding:7px 10px;font-size:12px;white-space:nowrap;
+  }
+  #view-client:not(.list-narrow) .client-list-actions{display:none;}
+  #view-client:not(.list-narrow) #cContractDetail > .toolbar{display:none;}
 }
 .sent-flag{display:flex;align-items:center;gap:10px;background:var(--soft);border-radius:10px;padding:10px 12px;margin-bottom:14px;flex-wrap:wrap;}
 .sent-flag input[type=checkbox]{width:18px;height:18px;accent-color:var(--violet);}
@@ -387,7 +484,7 @@ details[open] summary::before{content:"▾ ";}
 .fields-add-action{flex:0 0 auto;display:flex;align-items:flex-end;}
 .client-title{margin:0 0 0 6px;}
 .client-title-editable{cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;}
-.client-debt-chip{display:inline-flex;align-items:center;gap:5px;background:var(--soft);border:1.5px solid #C4B5FD;border-radius:8px;padding:5px 11px;font-size:12.5px;font-weight:700;white-space:nowrap;}
+.client-debt-chip{display:inline-flex;align-items:center;gap:5px;background:var(--soft);border:1.5px solid #C4B5FD;border-radius:8px;padding:5px 11px;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .client-link{font-size:12.5px;}
 .contracts-sent-toolbar{margin-bottom:10px;display:none;}
 .muted-status{font-size:12px;}
@@ -710,16 +807,40 @@ details[open] summary::before{content:"▾ ";}
     <button type="button" class="tab-ico" onclick="logout()" title="Выход">🚪</button>
   </div>
   <div class="muted sync-line" id="syncState"></div>
+  <div class="app-shell">
+    <nav class="side-nav" aria-label="Навигация">
+      <button type="button" class="side-nav-btn active" data-view="clients" onclick="setView('clients')" title="Заказчики">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c.6-3.4 3.2-5.2 6.5-5.2s5.9 1.8 6.5 5.2"/></svg>
+      </button>
+      <button type="button" class="side-nav-btn" onclick="openClientForm(null)" title="Добавить заказчика">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9.2" cy="8" r="3"/><path d="M3.8 19c.55-3.1 2.85-4.7 5.7-4.7 1.05 0 2 .22 2.8.62"/><path d="M17 11v8"/><path d="M13 15h8"/></svg>
+      </button>
+      <button type="button" class="side-nav-btn" data-view="all" onclick="setView('all')" title="Все услуги">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M8 21h8"/><path d="M12 5L5 13h14L12 5z"/><path d="M5 13l-2.4 5h4.8L5 13z"/><path d="M19 13l-2.4 5h4.8L19 13z"/></svg>
+      </button>
+      <button type="button" class="side-nav-btn" data-view="fields" onclick="setView('fields')" title="Доп. поля">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="3.2" rx="1"/><rect x="4" y="10.4" width="16" height="3.2" rx="1"/><rect x="4" y="15.8" width="16" height="3.2" rx="1"/></svg>
+      </button>
+      <div class="side-account-menu">
+        <button type="button" class="side-nav-btn" id="accountMenuBtn" onclick="toggleAccountMenu(event)" title="Ещё" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18" cy="12" r="1.7"/></svg>
+        </button>
+        <div class="side-account-menu-list hidden" id="accountMenuList">
+          <button type="button" onclick="openTokenPrompt();closeAccountMenu()">Токен</button>
+          <button type="button" onclick="logout();closeAccountMenu()">Выйти</button>
+        </div>
+      </div>
+    </nav>
+    <div class="app-main">
 
   <!-- ВИД: ЗАКАЗЧИКИ -->
   <div id="view-clients">
     <div class="card">
       <div class="clients-toolbar">
+        <h2 class="clients-page-title">Заказчики</h2>
         <div id="globalTotals"></div>
-        <div class="clients-toolbar-actions">
-          <button type="button" class="icon-btn-toggle" id="showHiddenBtn" onclick="toggleShowHiddenClients()" title="Показывать скрытых" aria-pressed="false">👁</button>
-          <button type="button" class="btn sm" onclick="openClientForm(null)">+ Заказчик</button>
-        </div>
+        <button type="button" class="icon-btn-toggle" id="showHiddenBtn" onclick="toggleShowHiddenClients()" title="Показывать скрытых" aria-pressed="false">👁</button>
+        <button type="button" class="btn sm clients-add-btn" onclick="openClientForm(null)">+ Заказчик</button>
       </div>
       <div class="clients" id="clientsList"></div>
     </div>
@@ -732,40 +853,35 @@ details[open] summary::before{content:"▾ ";}
       <div class="filters-toolbar">
         <button type="button" class="btn sm ghost filters-toggle" onclick="toggleAllFilters()" id="filtersToggle">Свернуть фильтры</button>
         <div id="allFilters" class="all-filters">
-          <div>
+          <div class="xl-filter">
             <label>Заказчик</label>
-            <input type="text" id="fClient" list="fClientList" placeholder="Все / имя заказчика" oninput="renderAll()" autocomplete="off">
-            <datalist id="fClientList"></datalist>
+            <input type="text" id="fClient" class="xl-filter-input" data-filter="fClient" placeholder="Все / начните вводить" autocomplete="off">
+            <div class="xl-filter-drop hidden"></div>
           </div>
-          <div>
+          <div class="xl-filter">
             <label>Основание</label>
-            <input type="text" id="fBasis" list="fBasisList" placeholder="основание или название договора" oninput="renderAll()" autocomplete="off">
-            <datalist id="fBasisList"></datalist>
+            <input type="text" id="fBasis" class="xl-filter-input" data-filter="fBasis" placeholder="Все / начните вводить" autocomplete="off">
+            <div class="xl-filter-drop hidden"></div>
           </div>
-          <div class="filter-date">
+          <div class="xl-filter filter-date">
             <label>Дата с</label>
-            <input type="text" id="fFrom" list="fFromList" placeholder="ГГГГ-ММ-ДД или ДД.ММ.ГГГГ" oninput="renderAll()" autocomplete="off">
-            <datalist id="fFromList"></datalist>
+            <input type="text" id="fFrom" class="xl-filter-input" data-filter="fFrom" placeholder="Дата или фрагмент" autocomplete="off">
+            <div class="xl-filter-drop hidden"></div>
           </div>
-          <div class="filter-date">
+          <div class="xl-filter filter-date">
             <label>Дата по</label>
-            <input type="text" id="fTo" list="fToList" placeholder="ГГГГ-ММ-ДД или ДД.ММ.ГГГГ" oninput="renderAll()" autocomplete="off">
-            <datalist id="fToList"></datalist>
+            <input type="text" id="fTo" class="xl-filter-input" data-filter="fTo" placeholder="Дата или фрагмент" autocomplete="off">
+            <div class="xl-filter-drop hidden"></div>
           </div>
-          <div>
+          <div class="xl-filter">
             <label>Статус оплаты</label>
-            <input type="text" id="fPay" list="fPayList" placeholder="Любой / статус" oninput="renderAll()" autocomplete="off">
-            <datalist id="fPayList">
-              <option value="Не оплачено"></option>
-              <option value="Оплачено"></option>
-              <option value="Оплачено частично"></option>
-              <option value="С зачётом предоплаты"></option>
-            </datalist>
+            <input type="text" id="fPay" class="xl-filter-input" data-filter="fPay" placeholder="Любой / начните вводить" autocomplete="off">
+            <div class="xl-filter-drop hidden"></div>
           </div>
-          <div>
+          <div class="xl-filter">
             <label>Поиск по расшифровке</label>
-            <input type="text" id="fText" list="fTextList" placeholder="текст" oninput="renderAll()" autocomplete="off">
-            <datalist id="fTextList"></datalist>
+            <input type="text" id="fText" class="xl-filter-input" data-filter="fText" placeholder="Текст / начните вводить" autocomplete="off">
+            <div class="xl-filter-drop hidden"></div>
           </div>
         </div>
       </div>
@@ -801,16 +917,28 @@ details[open] summary::before{content:"▾ ";}
   <!-- ВИД: КАРТОЧКА ЗАКАЗЧИКА -->
   <div id="view-client" class="hidden">
     <div class="card">
-      <div class="toolbar">
+      <div class="toolbar client-head">
         <button type="button" class="icon-btn" onclick="currentContractId ? openContract(null) : setView('clients')"> ← </button>
         <h2 id="cName" class="client-title client-title-editable" ondblclick="openClientForm(currentClientId)" title="Дважды щёлкните, чтобы изменить название заказчика">Заказчик</h2>
+        <h3 class="contract-title head-contract-name">Договор</h3>
         <div class="client-meta-row">
           <span id="cDebtChip" class="client-debt-chip"></span>
-          <span id="cLink" class="client-link"></span>
+          <a id="cLink" class="icon-btn-toggle client-link-ico" target="_blank" rel="noopener" title="Ссылка для заказчика">🔗</a>
           <span class="client-list-actions">
             <button type="button" class="icon-btn-toggle" id="showHiddenContractsBtn" onclick="toggleShowHiddenContracts()" title="Показывать скрытые" aria-pressed="false">👁</button>
             <button type="button" class="btn sm" onclick="openContractForm(currentClientId,null)">+ Договор</button>
           </span>
+          <div class="head-contract-actions">
+            <button type="button" class="btn sm" onclick="openServiceForm(currentClientId,currentContractId,null)">+ Услуга</button>
+            <div class="doc-menu">
+              <button type="button" class="icon-btn-toggle" id="docMenuBtn" onclick="toggleDocMenu(event)" title="Документы" aria-expanded="false">⋯</button>
+              <div class="doc-menu-list hidden" id="docMenuList">
+                <button type="button" onclick="openPdfDialog();closeDocMenu()">PDF</button>
+                <button type="button" onclick="openInvoiceDialog();closeDocMenu()">Счёт</button>
+                <button type="button" onclick="openCompensationDialog();closeDocMenu()">Компенсация</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -844,6 +972,8 @@ details[open] summary::before{content:"▾ ";}
           </div>
         </div>
       </div>
+    </div>
+  </div>
     </div>
   </div>
 </div>
@@ -1773,6 +1903,7 @@ async function init(){
     setView(currentView, currentClientId, true);
     bindSwipeNav();
     bindClientNameEdit();
+    bindExcelFilters();
     if(!window.__actsHashBound){
       window.__actsHashBound = true;
       window.addEventListener('hashchange', onHashChange);
@@ -1931,7 +2062,10 @@ function setView(v, id, keepContract){
     const el = document.getElementById('view-'+k);
     if(el) el.classList.toggle('hidden', k!==v);
   });
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===v));
+  document.querySelectorAll('.tab[data-view], .side-nav-btn[data-view]').forEach(t=>{
+    const v = t.dataset.view;
+    t.classList.toggle('active', v===currentView || (v==='clients' && currentView==='client'));
+  });
   if(v==='clients') renderClients();
   if(v==='all') renderAll();
   if(v==='client') renderClientCard();
@@ -1958,7 +2092,7 @@ function renderClients(){
   const list = sortedClients().filter(c=>showHidden || !c.hidden);
   const box = document.getElementById('clientsList');
   if(!list.length){
-    box.innerHTML = '<div class="muted">Заказчиков пока нет. Нажми «+ Заказчик».</div>';
+    box.innerHTML = '<div class="muted">Заказчиков пока нет.</div>';
   } else {
     box.innerHTML = list.map(c=>{
       const t = clientAllTotals(c);
@@ -1977,7 +2111,7 @@ function renderClients(){
   let debt=0;
   DB.clients.forEach(c=>{ debt+=clientAllTotals(c).debt; });
   document.getElementById('globalTotals').innerHTML =
-    `<div class="tot"><span class="v" style="font-size:15px;margin-top:0;color:${debt?'#dc2626':'#16a34a'}">${money(debt)}</span></div>`;
+    `<span class="client-debt-chip" title="Предстоящие оплаты"><b style="color:${debt?'#dc2626':'#16a34a'}">${money(debt)}</b></span>`;
 }
 function toggleShowHiddenClients(){
   showHiddenClients = !showHiddenClients;
@@ -3300,13 +3434,149 @@ function deleteService(clientId, svcId){
 }
 
 /* ====================== ВКЛАДКА «ВСЕ УСЛУГИ» ====================== */
-function fillDatalist(id, values){
-  const list = document.getElementById(id);
-  if(!list) return;
+function uniqSorted(values){
   const uniq = [...new Set((values||[]).map(v=>String(v||'').trim()).filter(Boolean))];
   uniq.sort((a,b)=>a.localeCompare(b,'ru',{sensitivity:'base'}));
-  list.innerHTML = uniq.map(v=>`<option value="${esc(v)}"></option>`).join('');
+  return uniq;
 }
+const FILTER_OPTIONS = {
+  fClient: [],
+  fBasis: [],
+  fFrom: [],
+  fTo: [],
+  fPay: ['Не оплачено','Оплачено','Оплачено частично','С зачётом предоплаты'],
+  fText: []
+};
+function fillAllFilters(){
+  if(!DB) return;
+  const clients = [];
+  const bases = [];
+  const dates = [];
+  const descs = [];
+  (DB.clients||[]).forEach(c=>{
+    if(c.name) clients.push(c.name);
+    (c.contracts||[]).forEach(ct=>{
+      contractFilterLabels(ct).forEach(l=>bases.push(l));
+    });
+    (c.services||[]).forEach(s=>{
+      if(s.date){
+        dates.push(s.date);
+        const d = fmtDate(s.date);
+        if(d) dates.push(d);
+      }
+      const desc = String(s.desc||'').trim();
+      if(desc) descs.push(desc.length>120 ? desc.slice(0,120) : desc);
+    });
+  });
+  FILTER_OPTIONS.fClient = uniqSorted(clients);
+  FILTER_OPTIONS.fBasis = uniqSorted(bases);
+  FILTER_OPTIONS.fFrom = uniqSorted(dates);
+  FILTER_OPTIONS.fTo = uniqSorted(dates);
+  FILTER_OPTIONS.fText = uniqSorted(descs);
+}
+function closeXlDrops(except){
+  document.querySelectorAll('.xl-filter-drop').forEach(el=>{
+    if(el !== except) el.classList.add('hidden');
+  });
+}
+function xlDropButtons(box){
+  return box ? [...box.querySelectorAll('button[data-val]')] : [];
+}
+function moveXlActive(box, dir){
+  const btns = xlDropButtons(box);
+  if(!btns.length) return;
+  let i = btns.findIndex(b => b.classList.contains('active'));
+  if(i < 0) i = dir > 0 ? 0 : btns.length - 1;
+  else i = Math.max(0, Math.min(btns.length - 1, i + dir));
+  btns.forEach(b => b.classList.remove('active'));
+  btns[i].classList.add('active');
+  btns[i].scrollIntoView({block:'nearest'});
+}
+function pickXlValue(input, val){
+  input.value = val;
+  closeXlDrops();
+  renderAll();
+}
+function openXlDrop(input){
+  const wrap = input.closest('.xl-filter');
+  const box = wrap && wrap.querySelector('.xl-filter-drop');
+  if(!box) return;
+  const key = input.dataset.filter || input.id;
+  const q = input.value.trim().toLowerCase();
+  const opts = FILTER_OPTIONS[key] || [];
+  const filtered = q ? opts.filter(o => o.toLowerCase().indexOf(q) >= 0) : opts;
+  const shown = filtered.slice(0, 50);
+  const rows = [];
+  if(!q) rows.push('<button type="button" data-val="">(Все)</button>');
+  shown.forEach(o => rows.push(`<button type="button" data-val="${esc(o)}">${esc(o)}</button>`));
+  box.innerHTML = rows.join('') || '<div class="xl-empty">Нет совпадений</div>';
+  const first = box.querySelector('button[data-val]');
+  if(first) first.classList.add('active');
+  closeXlDrops(box);
+  box.classList.remove('hidden');
+}
+function bindExcelFilters(){
+  if(window.__xlFiltersBound) return;
+  window.__xlFiltersBound = true;
+  document.querySelectorAll('.xl-filter-input').forEach(input=>{
+    input.addEventListener('focus', ()=>openXlDrop(input));
+    input.addEventListener('input', ()=>{ openXlDrop(input); renderAll(); });
+    input.addEventListener('keydown', e=>{
+      const box = input.closest('.xl-filter').querySelector('.xl-filter-drop');
+      const open = box && !box.classList.contains('hidden');
+      if(e.key==='Escape'){ closeXlDrops(); input.blur(); return; }
+      if(!open) return;
+      if(e.key==='ArrowDown'){ e.preventDefault(); moveXlActive(box, 1); }
+      if(e.key==='ArrowUp'){ e.preventDefault(); moveXlActive(box, -1); }
+      if(e.key==='Enter'){
+        const pick = box.querySelector('button.active[data-val]') || box.querySelector('button[data-val]');
+        if(pick){
+          e.preventDefault();
+          pickXlValue(input, pick.dataset.val);
+        }
+      }
+    });
+  });
+  document.addEventListener('mousedown', e=>{
+    if(!e.target.closest('.xl-filter')) closeXlDrops();
+    const pick = e.target.closest('.xl-filter-drop [data-val]');
+    if(pick){
+      const input = pick.closest('.xl-filter').querySelector('.xl-filter-input');
+      pickXlValue(input, pick.dataset.val);
+      e.preventDefault();
+    }
+  });
+}
+function togglePopupMenu(listId, btnId, ev){
+  if(ev) ev.stopPropagation();
+  const list = document.getElementById(listId);
+  const btn = document.getElementById(btnId);
+  if(!list || !btn) return;
+  const willOpen = list.classList.contains('hidden');
+  closeDocMenu();
+  closeAccountMenu();
+  if(!willOpen) return;
+  list.classList.remove('hidden');
+  btn.setAttribute('aria-expanded', 'true');
+  btn.classList.add('active');
+}
+function closePopupMenu(listId, btnId){
+  const list = document.getElementById(listId);
+  const btn = document.getElementById(btnId);
+  if(list) list.classList.add('hidden');
+  if(btn){
+    btn.setAttribute('aria-expanded', 'false');
+    btn.classList.remove('active');
+  }
+}
+function toggleDocMenu(ev){ togglePopupMenu('docMenuList','docMenuBtn', ev); }
+function closeDocMenu(){ closePopupMenu('docMenuList','docMenuBtn'); }
+function toggleAccountMenu(ev){ togglePopupMenu('accountMenuList','accountMenuBtn', ev); }
+function closeAccountMenu(){ closePopupMenu('accountMenuList','accountMenuBtn'); }
+document.addEventListener('mousedown', e=>{
+  if(!e.target.closest('.doc-menu')) closeDocMenu();
+  if(!e.target.closest('.side-account-menu')) closeAccountMenu();
+});
 function contractFilterLabels(ct){
   if(!ct) return [];
   const labels = [];
@@ -3347,33 +3617,6 @@ function matchPayFilter(s, fpayRaw){
 
   const label = (isNone?'не оплачено': isPaid?'оплачено': 'оплачено частично') + (isPre?' предоплата':'');
   return label.indexOf(q)>=0;
-}
-function fillAllFilters(){
-  if(!DB) return;
-  const clients = [];
-  const bases = [];
-  const dates = [];
-  const descs = [];
-  (DB.clients||[]).forEach(c=>{
-    if(c.name) clients.push(c.name);
-    (c.contracts||[]).forEach(ct=>{
-      contractFilterLabels(ct).forEach(l=>bases.push(l));
-    });
-    (c.services||[]).forEach(s=>{
-      if(s.date){
-        dates.push(s.date);
-        const d = fmtDate(s.date);
-        if(d) dates.push(d);
-      }
-      const desc = String(s.desc||'').trim();
-      if(desc) descs.push(desc.length>120 ? desc.slice(0,120) : desc);
-    });
-  });
-  fillDatalist('fClientList', clients);
-  fillDatalist('fBasisList', bases);
-  fillDatalist('fFromList', dates);
-  fillDatalist('fToList', dates);
-  fillDatalist('fTextList', descs);
 }
 function toggleAllFilters(){
   const box=document.getElementById('allFilters');
@@ -3560,14 +3803,17 @@ function renderClientCard(){
   document.getElementById('cName').textContent = c.name || 'Без наименования';
 
   const link = BASE_URL + 'act-view.html?c=' + c.token;
-  document.getElementById('cLink').innerHTML =
-    `<a href="${esc(link)}" target="_blank" style="color:var(--violet);word-break:break-all">Ссылка для заказчика</a>`;
+  const linkEl = document.getElementById('cLink');
+  if(linkEl) linkEl.href = link;
 
   const t = currentContractId ? contractTotals(c, currentContractId) : clientAllTotals(c);
-  document.getElementById('cDebtChip').innerHTML = 'Предстоящие оплаты: <b style="color:' + (t.debt ? '#dc2626' : '#16a34a') + '">' + money(t.debt) + '</b>';
+  const chip = document.getElementById('cDebtChip');
+  chip.title = 'Предстоящие оплаты';
+  chip.innerHTML = '<b style="color:' + (t.debt ? '#dc2626' : '#16a34a') + '">' + money(t.debt) + '</b>';
 
   const viewEl = document.getElementById('view-client');
   if(!currentContractId){
+    closeDocMenu();
     if(viewEl) viewEl.classList.add('list-narrow');
     document.getElementById('cContractsList').classList.remove('hidden');
     document.getElementById('cContractDetail').classList.add('hidden');
@@ -3668,10 +3914,11 @@ function renderContractsList(c){
 }
 
 function renderContractDetail(c, ct){
-  document.getElementById('ctName').textContent =
+  const title =
     ct.basisType==='offer'
       ? ('Оффер' + (ct.basisDate ? ' от ' + fmtDate(ct.basisDate) : ''))
       : contractLabel(ct);
+  document.querySelectorAll('.contract-title').forEach(el=>{ el.textContent = title; });
   const basis = basisText(ct);
   let basisHtml = '';
   if(ct.basisType==='offer' && ct.basisUrl){
