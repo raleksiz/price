@@ -456,6 +456,10 @@ details[open] summary::before{content:"▾ ";}
 .comp-col-code{width:56px;}
 .comp-col-desc{width:240px;}
 .comp-col-num{width:108px;}
+@media (min-width:721px){
+  .comp-svc{width:100%;min-width:740px;}
+  .comp-col-desc{width:auto;}
+}
 .comp-svc-date,.comp-svc-code,
 .comp-svc th:nth-child(1),.comp-svc th:nth-child(2){
   white-space:nowrap;overflow:hidden;
@@ -484,6 +488,11 @@ details[open] summary::before{content:"▾ ";}
   min-width:0;height:auto;padding:6px 7px;font-size:11px;line-height:1.25;
   white-space:normal;border-radius:8px;
 }
+.comp-actions .comp-delete{
+  grid-column:1 / -1;
+  color:#b42318;border-color:#E8B4B4;
+}
+.comp-actions .comp-delete:hover{border-color:#b42318;background:#FFF5F5;}
 #compPeriodRow .field{min-width:0;}
 #compPeriodRow input{min-width:0;width:100%;}
 @media (max-width:720px){
@@ -4203,11 +4212,8 @@ function renderContractDetail(c, ct){
   if(ct.compensation && ct.compensation.result){
     const shown = !!ct.compensation.showInAct;
     const extra = ' Компенсация ' + money(ct.compensation.result.compensation) + ' по п. ' + (ct.compensation.result.clause||'') + (shown ? ' сейчас на акте заказчика.' : ' только в CRM.');
-    if(shown){
-      hint.innerHTML = esc(sentBase + extra) + ' <button type="button" class="btn sm ghost" onclick="hideCompensationFromAct()">Убрать с акта заказчика</button>';
-    } else {
-      hint.textContent = sentBase + extra;
-    }
+    const hideBtn = shown ? ' <button type="button" class="btn sm ghost" onclick="hideCompensationFromAct()">Убрать с акта заказчика</button>' : '';
+    hint.innerHTML = esc(sentBase + extra) + hideBtn + ' <button type="button" class="btn sm ghost" onclick="deleteCompensation()">Удалить расчёт</button>';
   } else {
     hint.textContent = sentBase;
   }
@@ -4587,6 +4593,7 @@ function openCompensationDialog(){
       <button type="button" class="comp-close" onclick="closeModal()" title="Закрыть" aria-label="Закрыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <button type="button" class="btn ghost" onclick="${shown?'hideCompensationFromAct()':'saveCompensation(false)'}">${shown?'Убрать с акта заказчика':'Сохранить только в CRM'}</button>
       <button type="button" class="btn" onclick="saveCompensation(true)">${shown?'Сохранить на акте заказчика':'Показать на акте заказчика'}</button>
+      ${saved && saved.result ? '<button type="button" class="btn ghost comp-delete" onclick="deleteCompensation()">Удалить расчёт</button>' : ''}
     </div>`, true, 'comp-wide');
   renderCompensationPaidRows();
   onCompensationModeChange();
@@ -4627,6 +4634,20 @@ function hideCompensationFromAct(){
   closeModal();
   renderClientCard();
   alert('Разбор скрыт с акта заказчика. Расчёт в договоре сохранён.');
+}
+function deleteCompensation(){
+  const ctx = window.__compCtx;
+  const c = getClient((ctx && ctx.clientId) || currentClientId);
+  const ct = c ? getContract(c, (ctx && ctx.contractId) || currentContractId) : null;
+  if(!ct || !ct.compensation){ alert('Расчёт компенсации не сохранён.'); return; }
+  if(!confirm('Удалить сохранённый расчёт компенсации из договора? С акта заказчика он тоже пропадёт.')) return;
+  delete ct.compensation;
+  touchContract(ct);
+  touchClient(c);
+  save({immediate:true});
+  closeModal();
+  renderClientCard();
+  alert('Расчёт компенсации удалён.');
 }
 
 /* ====================== СЧЁТ ====================== */
