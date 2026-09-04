@@ -2167,7 +2167,7 @@ function moveClientListNameHold(event){
   if(Math.hypot(event.clientX - hold.x, event.clientY - hold.y) > 10) clearClientListNameHold(event);
 }
 function renderAllViews(){
-  renderClients(); renderFields(); fillAllFilters(); renderAll();
+  renderClients(); renderFields(); renderAll();
   const box=document.getElementById('allFilters');
   const btn=document.getElementById('filtersToggle');
   if(box && btn && window.matchMedia('(max-width:720px)').matches){
@@ -3563,40 +3563,52 @@ function uniqSorted(values){
   uniq.sort((a,b)=>a.localeCompare(b,'ru',{sensitivity:'base'}));
   return uniq;
 }
-const FILTER_OPTIONS = {
-  fClient: [],
-  fBasis: [],
-  fFrom: [],
-  fTo: [],
-  fPay: ['Не оплачено','Оплачено','Оплачено частично','С зачётом предоплаты'],
-  fText: []
-};
-function fillAllFilters(){
+const PAY_FILTER_OPTIONS = ['Не оплачено','Оплачено','Оплачено частично','С зачётом предоплаты'];
+function payLabelsForService(s){
+  return PAY_FILTER_OPTIONS.filter(label => matchPayFilter(s, label));
+}
+function liveXlFilterValue(id){
+  return (document.getElementById(id)?.value || '').trim();
+}
+function eachFilteredService(exceptKey, fn){
   if(!DB) return;
-  const clients = [];
-  const bases = [];
-  const dates = [];
-  const descs = [];
+  const fc = exceptKey==='fClient' ? '' : liveXlFilterValue('fClient').toLowerCase();
+  const fbasis = exceptKey==='fBasis' ? '' : liveXlFilterValue('fBasis').toLowerCase();
+  const fpay = exceptKey==='fPay' ? '' : liveXlFilterValue('fPay');
+  const from = exceptKey==='fFrom' ? '' : filterDateISO(liveXlFilterValue('fFrom'));
+  const to = exceptKey==='fTo' ? '' : filterDateISO(liveXlFilterValue('fTo'));
+  const ftext = exceptKey==='fText' ? '' : liveXlFilterValue('fText').toLowerCase();
   (DB.clients||[]).forEach(c=>{
-    if(c.name) clients.push(c.name);
-    (c.contracts||[]).forEach(ct=>{
-      contractFilterLabels(ct).forEach(l=>bases.push(l));
-    });
-    (c.services||[]).forEach(s=>{
-      if(s.date){
-        dates.push(s.date);
-        const d = fmtDate(s.date);
-        if(d) dates.push(d);
-      }
-      const desc = String(s.desc||'').trim();
-      if(desc) descs.push(desc.length>120 ? desc.slice(0,120) : desc);
+    if(fc && String(c.name||'').toLowerCase().indexOf(fc)<0) return;
+    filterByPeriod(c.services||[], from, to).forEach(s=>{
+      const ct = getContract(c, s.contractId);
+      if(!matchBasisFilter(ct, fbasis)) return;
+      if(ftext && String(s.desc||'').toLowerCase().indexOf(ftext)<0) return;
+      if(!matchPayFilter(s, fpay)) return;
+      fn(c, s, ct);
     });
   });
-  FILTER_OPTIONS.fClient = uniqSorted(clients);
-  FILTER_OPTIONS.fBasis = uniqSorted(bases);
-  FILTER_OPTIONS.fFrom = uniqSorted(dates);
-  FILTER_OPTIONS.fTo = uniqSorted(dates);
-  FILTER_OPTIONS.fText = uniqSorted(descs);
+}
+function filterOptionsFor(key){
+  const values = [];
+  eachFilteredService(key, (c,s,ct)=>{
+    if(key==='fClient' && c.name) values.push(c.name);
+    else if(key==='fBasis') contractFilterLabels(ct).forEach(l=>values.push(l));
+    else if(key==='fFrom' || key==='fTo'){
+      if(s.date){
+        values.push(s.date);
+        const d = fmtDate(s.date);
+        if(d) values.push(d);
+      }
+    }
+    else if(key==='fPay') payLabelsForService(s).forEach(l=>values.push(l));
+    else if(key==='fText'){
+      const desc = String(s.desc||'').trim();
+      if(desc) values.push(desc.length>120 ? desc.slice(0,120) : desc);
+    }
+  });
+  if(key==='fPay') return PAY_FILTER_OPTIONS.filter(label => values.indexOf(label)>=0);
+  return uniqSorted(values);
 }
 function closeXlDrops(except){
   document.querySelectorAll('.xl-filter-drop').forEach(el=>{
@@ -3617,6 +3629,7 @@ function moveXlActive(box, dir){
   btns[i].scrollIntoView({block:'nearest'});
 }
 function pickXlValue(input, val){
+  input.dataset.xlTyping = '';
   input.value = val;
   closeXlDrops();
   renderAll();
@@ -3636,25 +3649,39 @@ function syncXlFilterClears(){
 function clearXlFilter(wrap){
   const input = wrap && wrap.querySelector('.xl-filter-input');
   if(!input) return;
+  const focused = document.activeElement;
+  input.dataset.xlTyping = '';
   input.value = '';
   closeXlDrops();
   renderAll();
+  const reopen = (focused && focused.classList.contains('xl-filter-input')) ? focused : input;
+  if(reopen) openXlDrop(reopen, {typed:false});
 }
-function openXlDrop(input){
+function refreshOpenXlDrops(){
+  document.querySelectorAll('.xl-filter-input').forEach(input=>{
+    const box = input.closest('.xl-filter')?.querySelector('.xl-filter-drop');
+    if(box && !box.classList.contains('hidden')) openXlDrop(input);
+  });
+}
+function openXlDrop(input, opts){
   const wrap = input.closest('.xl-filter');
   const box = wrap && wrap.querySelector('.xl-filter-drop');
   if(!box) return;
   const key = input.dataset.filter || input.id;
-  const q = input.value.trim().toLowerCase();
-  const opts = FILTER_OPTIONS[key] || [];
-  const filtered = q ? opts.filter(o => o.toLowerCase().indexOf(q) >= 0) : opts;
+  const typing = opts && 'typed' in opts ? !!opts.typed : input.dataset.xlTyping === '1';
+  const q = typing ? input.value.trim().toLowerCase() : '';
+  const list = filterOptionsFor(key);
+  const filtered = q ? list.filter(o => o.toLowerCase().indexOf(q) >= 0) : list;
   const shown = filtered.slice(0, 50);
   const rows = [];
   if(!q) rows.push('<button type="button" data-val="">(Все)</button>');
   shown.forEach(o => rows.push(`<button type="button" data-val="${esc(o)}">${esc(o)}</button>`));
   box.innerHTML = rows.join('') || '<div class="xl-empty">Нет совпадений</div>';
-  const first = box.querySelector('button[data-val]');
-  if(first) first.classList.add('active');
+  const current = input.value.trim();
+  const btns = xlDropButtons(box);
+  const match = current ? btns.find(b => b.dataset.val === current) : null;
+  const active = match || btns[0];
+  if(active) active.classList.add('active');
   closeXlDrops(box);
   box.classList.remove('hidden');
 }
@@ -3662,8 +3689,9 @@ function bindExcelFilters(){
   if(window.__xlFiltersBound) return;
   window.__xlFiltersBound = true;
   document.querySelectorAll('.xl-filter-input').forEach(input=>{
-    input.addEventListener('focus', ()=>openXlDrop(input));
-    input.addEventListener('input', ()=>{ openXlDrop(input); renderAll(); });
+    input.addEventListener('focus', ()=>{ input.dataset.xlTyping = ''; openXlDrop(input, {typed:false}); });
+    input.addEventListener('click', ()=>openXlDrop(input));
+    input.addEventListener('input', ()=>{ input.dataset.xlTyping = '1'; openXlDrop(input, {typed:true}); renderAll(); });
     input.addEventListener('keydown', e=>{
       const box = input.closest('.xl-filter').querySelector('.xl-filter-drop');
       const open = box && !box.classList.contains('hidden');
@@ -3777,6 +3805,7 @@ function toggleAllFilters(){
 
 function renderAll(){
   syncXlFilterClears();
+  refreshOpenXlDrops();
   if(!DB) return;
   const fc = document.getElementById('fClient').value.trim().toLowerCase();
   const fbasis = document.getElementById('fBasis').value.trim().toLowerCase();
