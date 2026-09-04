@@ -3559,9 +3559,15 @@ function deleteService(clientId, svcId){
 
 /* ====================== ВКЛАДКА «ВСЕ УСЛУГИ» ====================== */
 function uniqSorted(values){
-  const uniq = [...new Set((values||[]).map(v=>String(v||'').trim()).filter(Boolean))];
-  uniq.sort((a,b)=>a.localeCompare(b,'ru',{sensitivity:'base'}));
-  return uniq;
+  const seen = [];
+  (values||[]).forEach(v=>{
+    const s = String(v||'').trim();
+    if(!s) return;
+    if(seen.some(x => x.localeCompare(s,'ru',{sensitivity:'accent'})===0)) return;
+    seen.push(s);
+  });
+  seen.sort((a,b)=>a.localeCompare(b,'ru',{sensitivity:'base'}));
+  return seen;
 }
 const PAY_FILTER_OPTIONS = ['Не оплачено','Оплачено','Оплачено частично','С зачётом предоплаты'];
 function payLabelsForService(s){
@@ -3593,18 +3599,17 @@ function filterOptionsFor(key){
   const values = [];
   eachFilteredService(key, (c,s,ct)=>{
     if(key==='fClient' && c.name) values.push(c.name);
-    else if(key==='fBasis') contractFilterLabels(ct).forEach(l=>values.push(l));
+    else if(key==='fBasis'){
+      const label = contractLabel(ct);
+      if(label) values.push(label);
+    }
     else if(key==='fFrom' || key==='fTo'){
-      if(s.date){
-        values.push(s.date);
-        const d = fmtDate(s.date);
-        if(d) values.push(d);
-      }
+      if(s.date) values.push(fmtDate(s.date) || s.date);
     }
     else if(key==='fPay') payLabelsForService(s).forEach(l=>values.push(l));
     else if(key==='fText'){
       const desc = String(s.desc||'').trim();
-      if(desc) values.push(desc.length>120 ? desc.slice(0,120) : desc);
+      if(desc) values.push(desc);
     }
   });
   if(key==='fPay') return PAY_FILTER_OPTIONS.filter(label => values.indexOf(label)>=0);
