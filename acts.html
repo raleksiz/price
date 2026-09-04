@@ -79,6 +79,18 @@ tr.locked td{background:#FAFAFC;}
 .clients-toolbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;}
 .contracts-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
 .contracts-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
+.client-list-actions{display:none;}
+@media (min-width:721px){
+  #view-clients > .card,
+  #view-client.list-narrow > .card{
+    max-width:1084px;
+  }
+  #view-client.list-narrow .client-list-actions{
+    display:flex;align-items:center;gap:8px;flex-shrink:0;
+  }
+  #view-client.list-narrow .contracts-toolbar,
+  #view-client.list-narrow .contracts-empty-add{display:none;}
+}
 .contract-card{margin:0;}
 .cl-card{
   width:100%;max-width:340px;border:1.5px solid var(--line);border-radius:14px;
@@ -776,6 +788,10 @@ details[open] summary::before{content:"▾ ";}
         <div class="client-meta-row">
           <span id="cDebtChip" class="client-debt-chip"></span>
           <span id="cLink" class="client-link"></span>
+          <span class="client-list-actions">
+            <button type="button" class="icon-btn-toggle" id="showHiddenContractsBtn" onclick="toggleShowHiddenContracts()" title="Показывать скрытые" aria-pressed="false">👁</button>
+            <button type="button" class="btn sm" onclick="openContractForm(currentClientId,null)">+ Договор</button>
+          </span>
         </div>
       </div>
 
@@ -3531,11 +3547,14 @@ function renderClientCard(){
   const t = currentContractId ? contractTotals(c, currentContractId) : clientAllTotals(c);
   document.getElementById('cDebtChip').innerHTML = 'Предстоящие оплаты: <b style="color:' + (t.debt ? '#dc2626' : '#16a34a') + '">' + money(t.debt) + '</b>';
 
+  const viewEl = document.getElementById('view-client');
   if(!currentContractId){
+    if(viewEl) viewEl.classList.add('list-narrow');
     document.getElementById('cContractsList').classList.remove('hidden');
     document.getElementById('cContractDetail').classList.add('hidden');
     renderContractsList(c);
   } else {
+    if(viewEl) viewEl.classList.remove('list-narrow');
     const ct = getContract(c, currentContractId);
     if(!ct){ currentContractId = null; renderClientCard(); return; }
     document.getElementById('cContractsList').classList.add('hidden');
@@ -3576,13 +3595,31 @@ function sortedContracts(c){
     return String(a.title || contractLabel(a)).localeCompare(String(b.title || contractLabel(b)), 'ru');
   });
 }
+function toggleShowHiddenContracts(){
+  const box = document.getElementById('cContractsList');
+  if(!box) return;
+  box.dataset.showHidden = box.dataset.showHidden ? '' : '1';
+  const c = getClient(currentClientId);
+  if(c) renderContractsList(c);
+}
+function syncHiddenContractsBtn(){
+  const box = document.getElementById('cContractsList');
+  const btn = document.getElementById('showHiddenContractsBtn');
+  if(!box || !btn) return;
+  const showHidden = !!box.dataset.showHidden;
+  btn.classList.toggle('active', showHidden);
+  btn.setAttribute('aria-pressed', showHidden ? 'true' : 'false');
+  btn.title = showHidden ? 'Скрыть скрытые' : 'Показывать скрытые';
+  btn.textContent = showHidden ? '🙈' : '👁';
+}
 function renderContractsList(c){
   const box = document.getElementById('cContractsList');
   const all = sortedContracts(c);
   const showHidden = !!box.dataset.showHidden;
   const list = all.filter(ct => showHidden || !ct.hidden);
   if(!all.length){
-    box.innerHTML = '<div class="muted" style="padding:12px 0">Договоров пока нет</div><button type="button" class="btn sm" onclick="openContractForm(currentClientId,null)">+ Договор</button>';
+    box.innerHTML = '<div class="muted" style="padding:12px 0">Договоров пока нет</div><button type="button" class="btn sm contracts-empty-add" onclick="openContractForm(currentClientId,null)">+ Договор</button>';
+    syncHiddenContractsBtn();
     return;
   }
   box.innerHTML = `
@@ -3608,6 +3645,7 @@ function renderContractsList(c){
         </div>`;
       }).join('') || '<div class="muted">Скрытых договоров нет.</div>'}
     </div>`;
+  syncHiddenContractsBtn();
 }
 
 function renderContractDetail(c, ct){
