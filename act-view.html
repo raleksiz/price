@@ -121,39 +121,24 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .comp-month h3{margin:0 0 6px;font-size:14px;text-transform:none;letter-spacing:0;}
 .comp-svc-scroll{
   display:block;width:100%;max-width:100%;min-width:0;
-  overflow:visible;
+  overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
   margin-top:8px;
 }
-.comp-svc{width:100%;min-width:0;border-collapse:collapse;font-size:12px;margin:0;table-layout:fixed;}
+.comp-svc{width:max-content;min-width:740px;border-collapse:collapse;font-size:12px;margin:0;table-layout:fixed;}
 .comp-svc th,.comp-svc td{padding:5px 8px;border-bottom:1px solid #e8e4f4;text-align:left;vertical-align:top;}
 .comp-svc th{font-size:10.5px;font-weight:700;text-transform:none;color:#6E3B8C;white-space:normal;line-height:1.25;letter-spacing:0;}
-.comp-svc td{overflow-wrap:anywhere;}
-.comp-svc th:nth-child(1),.comp-svc td:nth-child(1){width:4.6em;}
-.comp-svc th:nth-child(2),.comp-svc td:nth-child(2){width:3.2em;}
+.comp-col-date{width:104px;}
+.comp-col-code{width:56px;}
+.comp-col-desc{width:240px;}
+.comp-col-num{width:108px;}
+.comp-svc-date,.comp-svc-code,
+.comp-svc th:nth-child(1),.comp-svc th:nth-child(2){
+  white-space:nowrap;overflow:hidden;
+}
 .comp-svc-desc{white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.35;}
 .comp-svc .num{text-align:right;font-variant-numeric:tabular-nums;}
 .comp-svc td.num{white-space:nowrap;}
-.comp-svc th.num,.comp-svc td.num{width:5.4em;}
-@media (max-width:1280px){
-  .comp-svc,.comp-svc tbody{display:block;width:100%;min-width:0;table-layout:auto;}
-  .comp-svc thead{display:none;}
-  .comp-svc tr{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:4px 6px;
-    padding:10px 0;
-    border-bottom:1px solid #e8e4f4;
-  }
-  .comp-svc td{display:block;width:auto;padding:0;border:none;min-width:0;}
-  .comp-svc-date{grid-column:1/-1;font-size:12px;color:#888;}
-  .comp-svc-code{grid-column:1/-1;font-weight:700;}
-  .comp-svc-desc{grid-column:1/-1;}
-  .comp-svc td.num{white-space:normal;text-align:left;width:auto;}
-  .comp-svc td.num::before{
-    content:attr(data-label);display:block;
-    font-size:10px;font-weight:600;color:#6E3B8C;margin-bottom:2px;
-  }
-}
 .comp-up{color:#b42318;font-weight:700;}
 .comp-down{color:#167c3a;font-weight:700;}
 .comp-same{color:#777;}
@@ -641,7 +626,7 @@ function compensationActHtml(ct){
     return `<section class="comp-month">
       <h3>${esc(monthTitle(month.month))}</h3>
       <div class="muted">${lever}. Срок в формуле — ${t.term} мес. Тариф ${esc(t.tariff)}, скидка ${t.discountPct}%. Бюджет по договору ${money(t.agreedBudget)}. Не оплачено из бюджета ${money(month.unpaidBudget)}.</div>
-      ${rows?`<div class="comp-svc-scroll"><table class="comp-svc"><thead><tr><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">В акте</th><th class="num">При факт. параметрах</th><th class="num">Разница</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="muted" style="margin-top:6px">В этом месяце услуг нет.</div>'}
+      ${rows?`<div class="comp-svc-scroll"><table class="comp-svc"><colgroup><col class="comp-col-date"><col class="comp-col-code"><col class="comp-col-desc"><col class="comp-col-num"><col class="comp-col-num"><col class="comp-col-num"></colgroup><thead><tr><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">В акте</th><th class="num">При факт. параметрах</th><th class="num">Разница</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="muted" style="margin-top:6px">В этом месяце услуг нет.</div>'}
       <div class="muted" style="margin-top:8px">Абонентская плата ${money(month.subscriptionDue)} + сверх бюджета ${money(month.overage)} = ${money(month.accrued)}. Внесено ${money(month.paid)}.</div>
     </section>`;
   }).join('');
