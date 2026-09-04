@@ -298,7 +298,8 @@
       'Плательщик — не ФЛ (надбавка, в т.ч. для ИП)',
       'Выезд для консультирования (Мск и МО)',
       'Каждый выезд за пределы Мск и МО',
-      'Нерабочие дни и после 19:00 по Мск'
+      'Нерабочие дни и после 19:00 по Мск',
+      'Фактические расходы при выезде за пределы Мск и МО'
     ],
     contracts: [
       'Смешанный предмет договора',
@@ -319,7 +320,8 @@
       'Добровольное нотариальное удостоверение',
       'Каждый дополнительный критерий нестандартности сделки',
       'Каждый выезд сверх согласованного лимита',
-      'Каждый выезд за пределы Мск и МО'
+      'Каждый выезд за пределы Мск и МО',
+      'Фактические расходы при выезде за пределы Мск и МО'
     ],
     corporate: [
       'Если Акционерное общество',
@@ -333,13 +335,15 @@
       'Без переговорной сессии в составе претензии',
       'Встреча для обсуждения (Мск и МО)',
       'Нерабочие дни и после 19:00 по Мск',
-      'Каждый выезд за пределы Мск и МО'
+      'Каждый выезд за пределы Мск и МО',
+      'Фактические расходы при выезде за пределы Мск и МО'
     ],
     litigation_single: [
       'Доверитель — ЮЛ / ИП',
       'Представительство третьего лица',
       'Представительство ответчика',
-      'Каждый выезд за пределы Мск и МО'
+      'Каждый выезд за пределы Мск и МО',
+      'Фактические расходы при выезде за пределы Мск и МО'
     ],
     full_repr: [
       'Доверитель — юридическое лицо / ИП',
@@ -348,13 +352,15 @@
       'Упрощённый порядок (до вступления в законную силу)',
       'Каждое дополнительное заседание сверх лимита',
       'Каждый выезд за пределы Мск и МО',
-      'Зачёт при заказе претензии'
+      'Зачёт при заказе претензии',
+      'Фактические расходы при выезде за пределы Мск и МО'
     ],
     operations: [
+      'Каждый выезд за пределы Мск и МО',
       'Проверка органов управления контрагентом',
       'Каждый дополнительный час дистанционных мероприятий',
       'Нерабочие дни и после 19:00 по Мск',
-      'Фактические расходы при выезде из Мск и МО'
+      'Фактические расходы при выезде за пределы Мск и МО'
     ]
   };
 
@@ -412,6 +418,25 @@
     return /нестандартност/i.test(item && item.name);
   }
 
+  function isActualExpenseDefinition(definition) {
+    var kind = text(definition && (definition.type || definition.kind)).toLowerCase();
+    return !!(definition && definition.actualExpenses) || kind === 'actual_expenses';
+  }
+
+  function expenseAmounts(entry) {
+    var source = Array.isArray(entry && entry.expenseAmounts) ? entry.expenseAmounts : [];
+    var values = source.map(function (value) { return Math.max(0, n(value)); });
+    if (values.length) return values;
+    var fallback = Math.max(0, n(entry && (
+      entry.actualExpenseTotal != null ? entry.actualExpenseTotal : entry.extraAmount
+    )));
+    return fallback ? [fallback] : [];
+  }
+
+  function actualExpenseTotal(entry) {
+    return round(expenseAmounts(entry).reduce(function (sum, value) { return sum + value; }, 0));
+  }
+
   function applySurcharges(startPrice, definitions, selectedSurcharges) {
     var price = round(startPrice);
     var notes = [];
@@ -423,10 +448,13 @@
       var definition = found ? Object.assign({}, found, {
         count: entry.count,
         extraAmount: entry.extraAmount,
+        expenseAmounts: entry.expenseAmounts,
+        actualExpenseTotal: entry.actualExpenseTotal,
         comment: entry.comment,
         basePrice: entry.basePrice
       }) : entry;
       var name = surchargeName(definition) || surchargeName(entry);
+      var isActualExpenses = isActualExpenseDefinition(definition);
       var namedOrder = surchargeApplyOrder(name, catKey);
       var fallbackOrder = found && found.order != null
         ? n(found.order)
@@ -438,7 +466,9 @@
         name: name,
         order: namedOrder < 1000 ? namedOrder : fallbackOrder,
         count: selectedCount(entry, found || definition),
-        extraAmount: Math.max(0, n(entry.extraAmount))
+        extraAmount: isActualExpenses ? 0 : Math.max(0, n(entry.extraAmount)),
+        expenseAmounts: isActualExpenses ? expenseAmounts(entry) : [],
+        isActualExpenses: isActualExpenses
       };
     });
 
@@ -481,8 +511,12 @@
     }
 
     resolved.sort(function (a, b) { return a.order - b.order || a.index - b.index; });
+    // Фактические расходы всегда прибавляются после всех процентов, множителей
+    // и фиксированных надбавок: они не участвуют в промежуточной арифметике.
+    var ordered = resolved.filter(function (item) { return !item.isActualExpenses; })
+      .concat(resolved.filter(function (item) { return item.isActualExpenses; }));
 
-    resolved.forEach(function (item) {
+    ordered.forEach(function (item) {
       var def = item.definition || {};
       var before = price;
       var kind = text(def.type || def.kind || 'fix');
@@ -494,7 +528,11 @@
       var amount = 0;
       var delta = 0;
 
-      if (kind === 'pct') {
+      if (item.isActualExpenses) {
+        amount = actualExpenseTotal(item.entry);
+        price = round(price + amount);
+        delta = amount;
+      } else if (kind === 'pct') {
         var pctBase = price;
         if (needsBaseContractPrice(def)) {
           pctBase = Math.max(0, n(item.entry.basePrice));
@@ -519,7 +557,11 @@
         delta = amount;
       }
 
-      if (kind === 'fix' && !value && !item.extraAmount && !text(item.entry.comment)) {
+      if (item.isActualExpenses && !amount && !text(item.entry.comment)) {
+        return;
+      }
+
+      if (!item.isActualExpenses && kind === 'fix' && !value && !item.extraAmount && !text(item.entry.comment)) {
         return;
       }
 
@@ -541,6 +583,8 @@
           type: kind,
           value: value,
           extraAmount: item.extraAmount,
+          actualExpenses: item.isActualExpenses,
+          expenseAmounts: item.expenseAmounts.slice(),
           amount: amount,
           delta: delta,
           comment: appliedComment,
@@ -587,6 +631,17 @@
       var only = (found && (found.onlyCodes || found.codes)) || (entry && (entry.onlyCodes || entry.codes));
       if (!only || !only.length) return true;
       return only.map(String).indexOf(serviceCode) !== -1;
+    });
+    var selectedNames = selectedForCode.map(function (entry) {
+      var found = findSurcharge(definitions, entry);
+      return normSurchargeName(surchargeName(found || entry));
+    });
+    selectedForCode = selectedForCode.filter(function (entry) {
+      var found = findSurcharge(definitions, entry);
+      var definition = found || entry;
+      if (!isActualExpenseDefinition(definition)) return true;
+      var required = normSurchargeName(definition && definition.requiresSurcharge);
+      return !required || selectedNames.indexOf(required) !== -1;
     });
     var base = round(basePriceFromItem(priceItem, input.side));
     var stage1 = getStage1Price({

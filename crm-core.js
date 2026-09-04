@@ -640,11 +640,127 @@
     });
   }
 
+  function normalizedSurchargeName(value) {
+    return text(value).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
+  function surchargeIndexByName(list, name) {
+    var target = normalizedSurchargeName(name);
+    return (list || []).findIndex(function (item) {
+      return normalizedSurchargeName(item && (item.name || item.title || item.label)) === target;
+    });
+  }
+
+  function actualExpenseSurchargeIndex(list, baseName) {
+    var base = normalizedSurchargeName(baseName);
+    return (list || []).findIndex(function (item) {
+      return item && item.actualExpenses &&
+        normalizedSurchargeName(item.requiresSurcharge) === base;
+    });
+  }
+
+  function catalogItemByCode(list, code) {
+    return (list || []).find(function (item) {
+      return String(item && item.code) === String(code);
+    }) || null;
+  }
+
+  function migrationCategoryForService(service, previousPriceList) {
+    return text(service && service.catKey) || text(catalogItemByCode(previousPriceList, service && service.code)?.cat);
+  }
+
+  function migrateServiceSurcharges(service, previousList, nextList) {
+    if (!service || !Array.isArray(service.surcharges) || !previousList || !nextList) return false;
+    var beforeSurcharges = JSON.stringify(service.surcharges || []);
+    var beforeMeta = JSON.stringify(service.surchargeMeta || {});
+    var sourceMeta = service.surchargeMeta && typeof service.surchargeMeta === 'object' ? service.surchargeMeta : {};
+    var selected = [];
+    var nextMeta = {};
+
+    (service.surcharges || []).forEach(function (rawIndex) {
+      var oldIndex = Number(rawIndex);
+      var oldItem = previousList[oldIndex];
+      if (!oldItem) return;
+      var oldName = oldItem.name || oldItem.title || oldItem.label || '';
+      var nextIndex = surchargeIndexByName(nextList, oldName);
+      if (nextIndex < 0 && /фактические расходы/i.test(oldName)) {
+        nextIndex = (nextList || []).findIndex(function (item) { return item && item.actualExpenses; });
+      }
+      if (nextIndex < 0) return;
+      if (selected.indexOf(nextIndex) < 0) selected.push(nextIndex);
+      var meta = sourceMeta[String(oldIndex)];
+      if (meta && typeof meta === 'object') nextMeta[String(nextIndex)] = clone(meta);
+    });
+
+    selected.slice().forEach(function (nextIndex) {
+      var nextItem = nextList[nextIndex];
+      var meta = nextMeta[String(nextIndex)];
+      var actualIndex = actualExpenseSurchargeIndex(nextList, nextItem && nextItem.name);
+      var legacyExtra = Math.max(0, n(meta && meta.extraAmount));
+      if (actualIndex < 0 || !legacyExtra) return;
+      if (selected.indexOf(actualIndex) < 0) selected.push(actualIndex);
+      var actualMeta = nextMeta[String(actualIndex)] = clone(nextMeta[String(actualIndex)] || {});
+      var expenses = Array.isArray(actualMeta.expenseAmounts) ? actualMeta.expenseAmounts.slice() : [];
+      expenses.push(legacyExtra);
+      actualMeta.expenseAmounts = expenses;
+      delete meta.extraAmount;
+    });
+
+    service.surcharges = selected;
+    service.surchargeMeta = nextMeta;
+    return beforeSurcharges !== JSON.stringify(service.surcharges) ||
+      beforeMeta !== JSON.stringify(service.surchargeMeta);
+  }
+
+  function migrateCatalogServices(db, previousPriceList, previousSurcharges, catalogTime) {
+    var changed = false;
+    var old13_3 = catalogItemByCode(previousPriceList, '13.3');
+    var old13_3WasOutside = /выезд за пределы/i.test(text(old13_3 && old13_3.name));
+    var old1_4 = catalogItemByCode(previousPriceList, '1.4');
+    var old1_4WasMeeting = /сопровождение на встрече/i.test(text(old1_4 && old1_4.name));
+
+    (db.clients || []).forEach(function (client) {
+      (client.services || []).forEach(function (service) {
+        var serviceChanged = false;
+        var category = migrationCategoryForService(service, previousPriceList);
+        if (category && previousSurcharges[category] && db.surcharges[category]) {
+          if (migrateServiceSurcharges(service, previousSurcharges[category], db.surcharges[category])) {
+            changed = true;
+            serviceChanged = true;
+          }
+        }
+
+        if (old13_3WasOutside && String(service.code) === '13.3') {
+          service.legacyCatalogCode = '13.3';
+          service.legacyCatalogName = old13_3.name;
+          service.code = 'legacy-13.3-outside';
+          service.catKey = 'operations';
+          service.priceManual = true;
+          changed = true;
+          serviceChanged = true;
+        } else if (old1_4WasMeeting && String(service.code) === '1.4') {
+          service.code = '13.3';
+          service.catKey = 'operations';
+          // Старые корректировки из раздела «Консультации» не должны быть
+          // пересчитаны как корректировки из раздела 13.
+          if ((service.surcharges || []).length) service.priceManual = true;
+          changed = true;
+          serviceChanged = true;
+        }
+
+        if (serviceChanged) service.updatedAt = catalogTime;
+      });
+    });
+    return changed;
+  }
+
   function mergeCatalogIntoDB(db, catalog) {
     db = db || {};
     catalog = catalog || {};
     ensureSyncMeta(db);
     ensureCatalogMeta(db);
+    var previousPriceList = clone(db.priceList || []);
+    var previousSurcharges = clone(db.surcharges || {});
     var catalogTime = catalog.updated || isoNow();
     if (Array.isArray(catalog.priceList)) {
       db.priceList = clone(catalog.priceList);
@@ -671,6 +787,9 @@
       if (cat.title) db.catTitles[cat.key] = cat.title;
       if (cat.short) db.catShort[cat.key] = cat.short;
     });
+    if (migrateCatalogServices(db, previousPriceList, previousSurcharges, catalogTime)) {
+      db._catalogMigrationChanged = true;
+    }
     applyCatalog(catalog);
     ensureCatalogMeta(db);
     return db;
