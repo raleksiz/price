@@ -132,6 +132,7 @@ tr.locked td{background:#FAFAFC;}
 .icon-btn-toggle.active{border-color:var(--violet);background:var(--soft);color:var(--violet);}
 .clients-add-btn{margin-left:auto;flex-shrink:0;}
 @media (min-width:721px){.clients-add-btn{display:none;}}
+@media (max-width:720px){.clients-page-title{display:none;}}
 .contracts-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
 .contracts-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
 .client-list-actions{display:none;}
@@ -438,14 +439,23 @@ details[open] summary::before{content:"▾ ";}
 }
 .doc-menu-list button:hover{background:var(--soft);color:var(--violet);}
 @media (max-width:720px){
-  .client-meta-row{margin-left:0;width:100%;justify-content:flex-start;}
-  #view-client.list-narrow .client-head{flex-wrap:wrap;}
-  #view-client.list-narrow .client-meta-row{
-    width:100%;flex-wrap:nowrap;gap:4px;min-width:0;
+  .client-head{flex-wrap:nowrap;min-width:0;}
+  .client-title{
+    flex:1 1 0;min-width:0;margin-right:auto;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
+  .client-meta-row{
+    margin-left:0;width:auto;flex:0 0 auto;justify-content:flex-end;
+  }
+  #view-client.list-narrow .client-head{flex-wrap:wrap;}
+  #view-client.list-narrow .client-meta-row{display:contents;}
   #view-client.list-narrow .client-debt-chip{
-    flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    margin-left:auto;flex:0 1 auto;min-width:0;max-width:42%;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
     padding:5px 8px;font-size:12px;
+  }
+  #view-client.list-narrow .client-list-actions{
+    flex:1 0 100%;width:100%;justify-content:flex-end;margin-top:6px;
   }
   #view-client.list-narrow .client-list-actions .btn{
     padding:6px 8px;font-size:11.5px;white-space:nowrap;flex-shrink:0;
