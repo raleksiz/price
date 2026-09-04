@@ -191,10 +191,10 @@
   }
   /* ---------- Categories ---------- */
   main{max-width:980px;margin:0 auto;padding:18px 14px 0;}
-  .cat-controls{margin-bottom:12px;}
+  .cat-controls{display:flex;align-items:center;gap:7px;margin-bottom:12px;}
   .cat-nav{
     display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:7px;
-    width:100%;
+    flex:1 1 auto;min-width:0;
   }
   .nav-chip{
     background:var(--card);border:1px solid var(--line);border-radius:20px;
@@ -206,8 +206,8 @@
   .nav-chip.done{background:var(--purple);border-color:var(--purple);color:#fff;}
   .toolbar-btn{
     background:var(--card);border:1px solid var(--line);border-radius:8px;
-    padding:7px 14px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;
-    display:block;margin:8px auto 0;white-space:nowrap;
+    width:30px;height:30px;padding:0;font-size:18px;line-height:1;font-weight:600;color:var(--navy);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex:0 0 30px;
   }
   .toolbar-btn:hover{background:var(--purple-light);border-color:var(--purple);}
   section.category{
@@ -344,10 +344,12 @@
     header.brand h1{font-size:18px;}
     table{font-size:12.5px;}
   
-    .cat-nav .nav-chip{display:none;}
+    .cat-controls{display:block;}
+    .cat-nav{display:none;}
     .menu-icon-btn{width:30px;padding:0;}
     .menu-icon-btn-label{display:none;}
-    .toolbar-btn{margin-top:7px;padding:6px 10px;font-size:11px;}
+    .toolbar-btn{width:100%;height:auto;min-height:32px;margin:0;padding:7px 14px;font-size:0;}
+    .toolbar-btn::after{content:attr(data-mobile-label);font-size:12px;line-height:1;font-weight:700;}
   }
 
   @media (max-width:380px){
@@ -501,8 +503,8 @@
 
 <main id="categories">
   <div class="cat-controls">
+    <button type="button" id="toggleAllBtn" class="toolbar-btn" aria-label="Развернуть все" title="Развернуть все" data-mobile-label="Развернуть все">+</button>
     <nav class="cat-nav" id="catNav" aria-label="Разделы прайс-каталога"></nav>
-    <button type="button" id="toggleAllBtn" class="toolbar-btn">Развернуть все</button>
   </div>
   <div id="offerBanner" class="offer-banner is-hidden"></div>
   <div id="sectionsContainer"></div>
@@ -883,7 +885,11 @@ function anyOpen(){
 }
 
 function updateToggleAllBtn(){
-  toggleAllBtn.textContent = anyOpen() ? 'Свернуть все' : 'Развернуть все';
+  const label = anyOpen() ? 'Свернуть все' : 'Развернуть все';
+  toggleAllBtn.textContent = anyOpen() ? '−' : '+';
+  toggleAllBtn.title = label;
+  toggleAllBtn.setAttribute('aria-label', label);
+  toggleAllBtn.dataset.mobileLabel = label;
 }
 
 function updateNavChips(){
@@ -965,7 +971,7 @@ function buildNav(){
       chip.setAttribute('aria-pressed', 'false');
       const label = document.createElement('span');
       label.className = 'nav-chip-label';
-      label.textContent = closeDropdownAfter ? cat.title : cat.short;
+      label.textContent = cat.short;
       chip.appendChild(label);
       chip.addEventListener('click', () => {
         const section = document.querySelector(`section.category[data-idx="${ci}"]`);
@@ -973,6 +979,7 @@ function buildNav(){
         if (closeDropdownAfter){
           mobileDropdown.classList.remove('open');
           mobileMenuBtn.classList.remove('active');
+          mobileMenuBtn.setAttribute('aria-expanded', 'false');
         }
       });
       return chip;
@@ -1134,6 +1141,7 @@ async function bootPage(){
   buildPage();
   buildNav();
   updateCollapsedGroups();
+  updateNavChips();
   recompute();
   openFromHash();
 }
