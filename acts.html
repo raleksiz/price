@@ -138,6 +138,7 @@ tr.locked td{background:#FAFAFC;}
 .sur-extra{display:grid;grid-template-columns:90px 1fr;gap:6px;margin:3px 0 7px 25px;}
 .sur-extra input,.sur-extra select{font-size:12px;padding:7px 8px;border-radius:8px;width:100%;box-sizing:border-box;}
 .sur-extra .sur-comment{grid-column:1 / -1;}
+.sur-expense-list{display:grid;gap:6px;min-width:0;}
 .cf-row{border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-bottom:9px;background:#fff;}
 .cf-public{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:11.5px;color:#666;text-transform:none;letter-spacing:0;font-weight:500;}
 .cf-public input{width:16px;height:16px;accent-color:var(--violet);}
@@ -1189,6 +1190,29 @@ function surchargeAppliesToCode(x, code){
   if(!only || !Array.isArray(only) || !only.length) return true;
   return only.map(String).includes(String(code||''));
 }
+function surchargeNameKey(value){
+  return String(value || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+function isActualExpenseSurcharge(x){
+  return !!(x && (x.actualExpenses || String(x.type || x.kind || '').toLowerCase()==='actual_expenses'));
+}
+function expenseCountForMeta(meta){
+  const amounts = Array.isArray(meta && meta.expenseAmounts) ? meta.expenseAmounts : [];
+  return Math.max(1, Number(meta && meta.expenseCount) || amounts.length || 1);
+}
+function expenseAmountsForMeta(meta, count){
+  const source = Array.isArray(meta && meta.expenseAmounts) ? meta.expenseAmounts : [];
+  const amounts = source.map(value=>Math.max(0, Number(value)||0));
+  if(!amounts.length && Number(meta && meta.extraAmount)>0) amounts.push(Math.max(0, Number(meta.extraAmount)||0));
+  const length = Math.max(1, Number(count) || amounts.length || 1);
+  while(amounts.length < length) amounts.push(0);
+  return amounts.slice(0, length);
+}
+function surchargeRequiredIndex(list, x){
+  const required = surchargeNameKey(x && x.requiresSurcharge);
+  if(!required) return -1;
+  return (list || []).findIndex(item=>surchargeNameKey(item && item.name)===required);
+}
 function surchargeDisplayOrder(catKey, name, fallback){
   const list = (window.RaleksizCalculator && RaleksizCalculator.SURCHARGE_ORDERS && RaleksizCalculator.SURCHARGE_ORDERS[catKey]) || [];
   const key = String(name || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -1213,13 +1237,21 @@ function basePrice(item, side){
 function selectedSurchargesForService(item, surKeys, surMeta){
   const list = catSurcharges(item.cat);
   const meta = surMeta || {};
-  return (surKeys || []).map(i=>{
+  const selected = (surKeys || []).map(i=>Number(i));
+  const selectedNames = new Set(selected.map(i=>surchargeNameKey(list[i] && list[i].name)));
+  return selected.map(i=>{
     const idx = Number(i);
     const x=list[idx];
     const m=meta[String(idx)]||{};
+    const actualExpenses = isActualExpenseSurcharge(x);
+    const required = surchargeNameKey(x && x.requiresSurcharge);
+    if(actualExpenses && required && !selectedNames.has(required)) return null;
     const domCountEl = document.querySelector(`.sur-count[data-sur-index="${idx}"]`);
     const domCount = domCountEl ? Math.max(1, Number(domCountEl.value) || 1) : null;
-    const count = domCount != null ? domCount : Math.max(1, Number(m.count) || 1);
+    const count = actualExpenses
+      ? expenseCountForMeta(m)
+      : (domCount != null ? domCount : Math.max(1, Number(m.count) || 1));
+    const expenseAmounts = actualExpenses ? expenseAmountsForMeta(m, count) : [];
     return x && surchargeAppliesToCode(x, item.code) ? {
       id:x.name,
       name:x.name,
@@ -1228,7 +1260,10 @@ function selectedSurchargesForService(item, surKeys, surMeta){
       value:Number(x.value)||0,
       order:surchargeDisplayOrder(item.cat, x.name, idx),
       count,
-      extraAmount:Math.max(0,Number(m.extraAmount)||0),
+      extraAmount:actualExpenses ? 0 : Math.max(0,Number(m.extraAmount)||0),
+      actualExpenses,
+      expenseAmounts,
+      actualExpenseTotal:expenseAmounts.reduce((sum, value)=>sum+value, 0),
       comment:m.comment||'',
       basePrice: Math.max(0, Number(m.basePrice)||0),
       group:x.group,
@@ -1653,11 +1688,13 @@ async function init(){
     if(catalog && typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.mergeCatalogIntoDB){
       const before = new Set((DB.priceList||[]).map(item => String(item && item.code||'')));
       RaleksizCRMCore.applyCatalog(catalog);
-      RaleksizCRMCore.mergeCatalogIntoDB(DB, catalog);
+      const catalogMerge = RaleksizCRMCore.mergeCatalogIntoDB(DB, catalog);
       if(window.RaleksizCalculator && typeof RaleksizCalculator.setSurchargeOrders === 'function'){
         RaleksizCalculator.setSurchargeOrders(RaleksizCRMCore.surchargeOrdersFromCatalog(catalog));
       }
-      if((DB.priceList||[]).some(item => item && !before.has(String(item.code||'')))){
+      if((catalogMerge && catalogMerge._catalogMigrationChanged) ||
+        (DB.priceList||[]).some(item => item && !before.has(String(item.code||'')))){
+        delete DB._catalogMigrationChanged;
         window.__needsCloudPush = true;
       }
     }
@@ -2365,6 +2402,7 @@ function openContractForm(clientId, contractId){
 
 function saveContract(clientId, contractId){
   const client = getClient(clientId);
+  const contract = contractId ? getContract(client, contractId) : null;
   const basisType = document.getElementById('clBasisType').value;
 
   const getValue = function(id){
@@ -2507,7 +2545,11 @@ function openServiceForm(clientId, contractId, svcId){
         title: (DB.catShort && DB.catShort[k]) || DB.catTitles[k] || k,
         items: cats[k]
       }));
+  const legacyCodeOpts = s && s.legacyCatalogCode ? [
+    `<optgroup label="Архивные позиции"><option value="${esc(cur.code)}" selected>${esc(s.legacyCatalogCode)} — ${esc(s.legacyCatalogName || cur.desc || 'архивная услуга')}</option></optgroup>`
+  ] : [];
   const codeOpts = ['<option value="">— выбери код —</option>'].concat(
+    legacyCodeOpts,
     groups.map(group=>{
       const title = group.title || group.key;
       return `<optgroup label="${esc(title)}">` + (group.items||[]).map(p=>
@@ -2531,6 +2573,7 @@ function openServiceForm(clientId, contractId, svcId){
       <div class="field"><label>Дата оказания услуги</label><input type="date" id="svcDate" value="${esc(cur.date||'')}" onchange="onSvcDateChange()"></div>
       <div class="field"><label>Код услуги</label><select id="svcCode" onchange="onCodeChange()">${codeOpts}</select></div>
     </div>
+    ${s && s.legacyCatalogCode ? `<div class="muted" style="margin:-2px 0 10px">Архивная позиция сохранена с прежней стоимостью; для нового расчёта выберите актуальный код услуги.</div>` : ''}
     <div class="field hidden" id="sideField"><label>Сторона</label>
       <select id="svcSide" onchange="onSideChange()"><option value="1">—</option><option value="2">—</option></select></div>
     <div class="field"><label>Расшифровка услуги</label><textarea class="autogrow" id="svcDesc" placeholder="Заполнится автоматически по коду, текст можно менять" oninput="autoGrowTextarea(this)">${esc(cur.desc||'')}</textarea></div>
@@ -2787,6 +2830,14 @@ function onSurBaseCodeChange(surIndex){
   window.__ctx.manual = false;
   recalc();
 }
+function expenseInputsHtml(index, meta){
+  const count = expenseCountForMeta(meta);
+  const amounts = expenseAmountsForMeta(meta, count);
+  return `<input type="number" min="1" step="1" class="sur-expense-count" data-sur-expense-count="${index}" value="${count}" placeholder="Кол-во расходов" onchange="onExpenseCountChange(${index})">
+    <div class="sur-expense-list">${amounts.map((amount, expenseIndex)=>
+      `<input type="number" min="0" step="1" class="sur-expense-amount" data-sur-expense="${index}" data-expense-index="${expenseIndex}" value="${amount||''}" placeholder="Расход ${expenseIndex+1}, ₽" oninput="onSurMetaChange()">`
+    ).join('')}</div>`;
+}
 function renderSurcharges(){
   const code = document.getElementById('svcCode').value;
   const item = priceItem(code);
@@ -2799,20 +2850,27 @@ function renderSurcharges(){
   box.innerHTML = `<div class="sur-box"><h3 style="margin-bottom:4px">${esc((DB.catShort&&DB.catShort[item.cat])||item.cat)}</h3>
     <div class="muted" style="margin-bottom:6px">Отметь применимые корректировки. Количественные надбавки можно указать счетчиком.</div>
     ${display.map(({item:x, index:i})=>{
-      const checked = selected.has(Number(i));
+      const actualExpenses = isActualExpenseSurcharge(x);
+      const requiredIndex = actualExpenses ? surchargeRequiredIndex(list, x) : -1;
+      const requiredMissing = requiredIndex >= 0 && !selected.has(requiredIndex);
+      const checked = selected.has(Number(i)) && !requiredMissing;
       const m=surchargeMeta(i);
-      const needs=surchargeNeedsCount(x);
-      const showExtra = !!(x.extra || x.type==='manual');
+      const needs=!actualExpenses && surchargeNeedsCount(x);
+      const showExtra = !actualExpenses && !!(x.extra || x.type==='manual');
       const needsBase = surchargeNeedsBasePrice(x);
-      const extraOnly = showExtra && !needs && !needsBase;
-      const showDetails = (checked && (needs || showExtra || needsBase)) || (extraOnly && String(item.code)==='13.3');
+      const showDetails = checked && (needs || showExtra || needsBase || actualExpenses);
+      const requirementHint = requiredMissing
+        ? `<div class="muted" style="margin:-1px 0 5px 25px">Сначала отметь «${esc(x.requiresSurcharge)}».</div>`
+        : '';
       return `<div>
         <label class="sur-item">
-          <input type="checkbox" class="sur-cb" value="${i}" ${checked?'checked':''} onchange="onSurChange()">
+          <input type="checkbox" class="sur-cb" value="${i}" ${checked?'checked':''} ${requiredMissing?'disabled':''} onchange="onSurChange()">
           <span>${esc(x.name)}${x.type==='manual'?' <span class="muted">(вручную)</span>':''}</span>
           <span class="amt">${esc(x.amount)}${needs && Number(m.count)>1 ? ' × '+Number(m.count) : ''}</span>
         </label>
+        ${requirementHint}
         ${showDetails ? `<div class="sur-extra">
+          ${actualExpenses ? expenseInputsHtml(i, m) : ''}
           ${needs?`<input type="number" min="1" step="1" class="sur-count" data-sur-index="${i}" value="${Math.max(1,Number(m.count)||1)}" placeholder="Кол-во" oninput="onSurMetaChange()" onchange="onSurMetaChange()">`: ''}
           ${showExtra?`<input type="number" min="0" step="1" class="sur-extra-amount" data-sur-extra="${i}" value="${Number(m.extraAmount)||0}" placeholder="${x.type==='manual'?'Сумма зачёта, ₽':'Факт. расходы, ₽'}" oninput="onSurMetaChange()">`: ''}
           ${needsBase?`<div class="sur-base-contract">
@@ -2834,7 +2892,7 @@ function refreshSurchargeAmtLabels(){
     const x = list[i];
     if(!x) return;
     const m = surchargeMeta(i);
-    const needs = surchargeNeedsCount(x);
+    const needs = !isActualExpenseSurcharge(x) && surchargeNeedsCount(x);
     const amt = cb.closest('.sur-item')?.querySelector('.amt');
     if(amt) amt.textContent = String(x.amount || '') + (needs && Number(m.count) > 1 ? ' × ' + Number(m.count) : '');
   });
@@ -2847,6 +2905,25 @@ function syncSurMetaFromDom(){
     if(i == null) return;
     window.__ctx.surMeta[i] = window.__ctx.surMeta[i] || {};
     window.__ctx.surMeta[i].count = Math.max(1, Number(el.value) || 1);
+  });
+  document.querySelectorAll('.sur-expense-count').forEach(el=>{
+    const i = el.dataset.surExpenseCount;
+    if(i == null) return;
+    window.__ctx.surMeta[i] = window.__ctx.surMeta[i] || {};
+    const meta = window.__ctx.surMeta[i];
+    meta.expenseCount = Math.max(1, Number(el.value) || 1);
+    meta.expenseAmounts = expenseAmountsForMeta(meta, meta.expenseCount);
+  });
+  document.querySelectorAll('.sur-expense-amount').forEach(el=>{
+    const i = el.dataset.surExpense;
+    const expenseIndex = Number(el.dataset.expenseIndex);
+    if(i == null || !Number.isInteger(expenseIndex)) return;
+    window.__ctx.surMeta[i] = window.__ctx.surMeta[i] || {};
+    const meta = window.__ctx.surMeta[i];
+    const count = expenseCountForMeta(meta);
+    const amounts = expenseAmountsForMeta(meta, count);
+    amounts[expenseIndex] = Math.max(0, Number(el.value) || 0);
+    meta.expenseAmounts = amounts;
   });
   document.querySelectorAll('.sur-comment').forEach(el=>{
     const i = el.dataset.surComment;
@@ -2873,11 +2950,23 @@ function syncSurMetaFromDom(){
     window.__ctx.surMeta[i].baseCode = el.value;
   });
 }
+function onExpenseCountChange(index){
+  syncSurMetaFromDom();
+  window.__ctx.surMeta[index] = window.__ctx.surMeta[index] || {};
+  const meta = window.__ctx.surMeta[index];
+  meta.expenseCount = Math.max(1, Number(meta.expenseCount) || 1);
+  meta.expenseAmounts = expenseAmountsForMeta(meta, meta.expenseCount);
+  window.__ctx.manual=false;
+  renderSurcharges();
+  recalc();
+}
 function onSurMetaChange(){
   const active = document.activeElement;
   const activeIndex = active && active.classList && active.classList.contains('sur-count') ? active.dataset.surIndex : null;
   const extraActive = active && active.classList && active.classList.contains('sur-extra-amount') ? active.dataset.surExtra : null;
-  const selStart = active && (activeIndex != null || extraActive != null) ? active.selectionStart : null;
+  const expenseActive = active && active.classList && active.classList.contains('sur-expense-amount') ? active.dataset.surExpense : null;
+  const expensePosition = expenseActive != null ? active.dataset.expenseIndex : null;
+  const selStart = active && (activeIndex != null || extraActive != null || expenseActive != null) ? active.selectionStart : null;
   syncSurMetaFromDom();
   document.querySelectorAll('.sur-extra-amount').forEach(el=>{
     const amt = Math.max(0, Number(el.value)||0);
@@ -2885,13 +2974,21 @@ function onSurMetaChange(){
     const cb = document.querySelector(`.sur-cb[value="${el.dataset.surExtra}"]`);
     if(cb) cb.checked = true;
   });
+  document.querySelectorAll('.sur-expense-amount').forEach(el=>{
+    const amount = Math.max(0, Number(el.value)||0);
+    if(amount <= 0) return;
+    const cb = document.querySelector(`.sur-cb[value="${el.dataset.surExpense}"]`);
+    if(cb && !cb.disabled) cb.checked = true;
+  });
   window.__ctx.surSel = [...document.querySelectorAll('.sur-cb:checked')].map(cb=>Number(cb.value));
   window.__ctx.manual=false;
   refreshSurchargeAmtLabels();
   recalc();
-  const restoreSel = extraActive != null
-    ? document.querySelector(`.sur-extra-amount[data-sur-extra="${extraActive}"]`)
-    : (activeIndex != null ? document.querySelector(`.sur-count[data-sur-index="${activeIndex}"]`) : null);
+  const restoreSel = expenseActive != null
+    ? document.querySelector(`.sur-expense-amount[data-sur-expense="${expenseActive}"][data-expense-index="${expensePosition}"]`)
+    : (extraActive != null
+      ? document.querySelector(`.sur-extra-amount[data-sur-extra="${extraActive}"]`)
+      : (activeIndex != null ? document.querySelector(`.sur-count[data-sur-index="${activeIndex}"]`) : null));
   if(restoreSel){
     restoreSel.focus();
     if(selStart != null) try{ restoreSel.setSelectionRange(selStart, selStart); }catch(e){}
@@ -2899,7 +2996,15 @@ function onSurMetaChange(){
 }
 function onSurChange(){
   syncSurMetaFromDom();
-  window.__ctx.surSel = [...document.querySelectorAll('.sur-cb:checked')].map(cb=>Number(cb.value));
+  const item = priceItem(document.getElementById('svcCode')?.value);
+  const list = item ? catSurcharges(item.cat) : [];
+  const selected = new Set([...document.querySelectorAll('.sur-cb:checked')].map(cb=>Number(cb.value)));
+  list.forEach((x, index)=>{
+    if(!isActualExpenseSurcharge(x)) return;
+    const requiredIndex = surchargeRequiredIndex(list, x);
+    if(requiredIndex >= 0 && !selected.has(requiredIndex)) selected.delete(index);
+  });
+  window.__ctx.surSel = [...selected];
   window.__ctx.manual=false;
   renderSurcharges();
   recalc();
@@ -2940,7 +3045,7 @@ function recalc(keepPrice){
   if(item){
     const parts = [`база ${money(r.base)}`];
     r.applied.forEach(a=>{
-      const suffix = a.count > 1 ? ' × ' + Number(a.count) : '';
+      const suffix = !a.actualExpenses && a.count > 1 ? ' × ' + Number(a.count) : '';
       parts.push(esc(a.name) + ' (' + money(a.amount) + suffix + ')');
     });
     cl.innerHTML = parts.join(' → ') + ' = <b>' + money(r.price) + '</b>';
@@ -3011,6 +3116,8 @@ function onPayChange(silent){
 }
 function saveService(clientId, svcId){
   const c = getClient(clientId);
+  const existingService = svcId ? c.services.find(x=>x.id===svcId) : null;
+  if(svcId && !existingService){ alert('Услуга не найдена — возможно, база обновилась. Закрой окно и открой услугу заново.'); return; }
   const contractId = window.__ctx.contractId;
   const ct = getContract(c, contractId);
   const date = document.getElementById('svcDate').value;
@@ -3073,8 +3180,11 @@ function saveService(clientId, svcId){
   }
 
   const item = priceItem(code);
+  const isLegacyService = !!(!item && existingService && existingService.legacyCatalogCode);
   const discount = ct ? Number(ct.discount)||0 : 0;
-  const r = calcPrice(code, window.__ctx.side, window.__ctx.surSel, discount, window.__ctx.surMeta);
+  const r = isLegacyService
+    ? {applied: (existingService.applied || []).slice()}
+    : calcPrice(code, window.__ctx.side, window.__ctx.surSel, discount, window.__ctx.surMeta);
   const baseContractCode = String(code) === '4.3' ? (document.getElementById('baseContractSel')?.value || window.__ctx.baseContractCode || '') : '';
   const baseContractPrice = String(code) === '4.3' ? (Number(window.__ctx.baseContractPrice)||0) : 0;
 
@@ -3082,19 +3192,32 @@ function saveService(clientId, svcId){
     contractId, date, code, side: window.__ctx.side, desc, price, pay, payAmount: payAmt,
     actualPrepay: (pay==='full_prepay'||pay==='part_prepay') ? actualPrepay : 0,
     updatedAt: new Date().toISOString(),
-    surcharges: window.__ctx.surSel.slice(),
-    surchargeMeta: JSON.parse(JSON.stringify(window.__ctx.surMeta||{})),
-    applied: r.applied.map(a=>({name:a.name, amount:a.amount, delta:a.delta, count:a.count||1, comment:a.comment||'', extraAmount:Number(a.extraAmount)||0})),
-    catKey: item ? item.cat : '', custom,
-    priceManual: !!window.__ctx.manual,
+    surcharges: isLegacyService ? (existingService.surcharges || []).slice() : window.__ctx.surSel.slice(),
+    surchargeMeta: isLegacyService
+      ? JSON.parse(JSON.stringify(existingService.surchargeMeta||{}))
+      : JSON.parse(JSON.stringify(window.__ctx.surMeta||{})),
+    applied: r.applied.map(a=>({
+      name:a.name,
+      amount:a.amount,
+      delta:a.delta,
+      count:a.count||1,
+      comment:a.comment||'',
+      extraAmount:Number(a.extraAmount)||0,
+      actualExpenses:!!a.actualExpenses,
+      expenseAmounts:Array.isArray(a.expenseAmounts) ? a.expenseAmounts.slice() : []
+    })),
+    catKey: item ? item.cat : (isLegacyService ? existingService.catKey || '' : ''), custom,
+    priceManual: isLegacyService || !!window.__ctx.manual,
     baseContractCode,
     baseContractPrice
   };
   if(svcId){
-    const target = c.services.find(x=>x.id===svcId);
-    if(!target){ alert('Услуга не найдена — возможно, база обновилась. Закрой окно и открой услугу заново.'); return; }
-    Object.assign(target, data);
-    if(window.__ctx.unlockOnSave) target.locked = false;
+    Object.assign(existingService, data);
+    if(!isLegacyService){
+      delete existingService.legacyCatalogCode;
+      delete existingService.legacyCatalogName;
+    }
+    if(window.__ctx.unlockOnSave) existingService.locked = false;
   }
   else {
     c.services.push(Object.assign({id: uid(), createdAt: new Date().toISOString(), locked:false}, data));
@@ -3355,7 +3478,7 @@ function appliedHtml(s){
     const comment=String(a.comment||'').trim();
     const extra=Number(a.extraAmount)||0;
     const amountText = a.amount ? ' ('+money(a.amount)+')' : '';
-    return `<li>${esc(a.name||'')}${amountText}${Number(a.count)>1?' × '+Number(a.count):''}${comment?' — '+esc(comment):''}${extra?' — фактические расходы: '+money(extra):''}</li>`;
+    return `<li>${esc(a.name||'')}${amountText}${!a.actualExpenses && Number(a.count)>1?' × '+Number(a.count):''}${comment?' — '+esc(comment):''}${extra?' — фактические расходы: '+money(extra):''}</li>`;
   }).join('')}</ul></details>`;
 }
 
