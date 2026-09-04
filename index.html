@@ -94,9 +94,10 @@
   }
   .mobile-cat-dropdown .nav-chip{
     display:flex;width:100%;border-radius:8px;margin-top:4px;
-    background:transparent;border:none;padding:10px 12px;
+    background:transparent;border:none;padding:10px 12px;justify-content:flex-start;
     font-size:13px;color:var(--navy);text-align:left;
   }
+  .mobile-cat-dropdown .nav-chip-label{overflow:visible;text-overflow:clip;white-space:normal;}
   .mobile-cat-dropdown .nav-chip.done{background:var(--purple-light);color:var(--purple);font-weight:700;}
   .panel-sticky{
     position:sticky;top:0;z-index:30;
@@ -191,17 +192,22 @@
   /* ---------- Categories ---------- */
   main{max-width:980px;margin:0 auto;padding:18px 14px 0;}
   .cat-controls{margin-bottom:12px;}
-  .cat-nav{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;flex:1;}
+  .cat-nav{
+    display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:7px;
+    width:100%;
+  }
   .nav-chip{
     background:var(--card);border:1px solid var(--line);border-radius:20px;
-    padding:6px 13px;font-size:11.5px;font-weight:600;color:var(--navy);cursor:pointer;
-    display:flex;align-items:center;gap:5px;
+    min-width:0;padding:6px 8px;font-size:11.5px;font-weight:600;color:var(--navy);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
   }
+  .nav-chip-label{display:block;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .nav-chip:hover{border-color:var(--purple);}
   .nav-chip.done{background:var(--purple);border-color:var(--purple);color:#fff;}
   .toolbar-btn{
     background:var(--card);border:1px solid var(--line);border-radius:8px;
     padding:7px 14px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;
+    display:block;margin:8px auto 0;white-space:nowrap;
   }
   .toolbar-btn:hover{background:var(--purple-light);border-color:var(--purple);}
   section.category{
@@ -341,7 +347,7 @@
     .cat-nav .nav-chip{display:none;}
     .menu-icon-btn{width:30px;padding:0;}
     .menu-icon-btn-label{display:none;}
-    .toolbar-btn{width:100%;text-align:center;}
+    .toolbar-btn{margin-top:7px;padding:6px 10px;font-size:11px;}
   }
 
   @media (max-width:380px){
@@ -446,7 +452,7 @@
     <div class="panel-title-row">
       <div class="panel-title">Заполните параметры</div>
       <div class="menu-anchor">
-        <button type="button" class="menu-icon-btn" id="mobileMenuBtn" aria-label="Меню разделов">
+        <button type="button" class="menu-icon-btn" id="mobileMenuBtn" aria-label="Меню разделов" aria-controls="mobileCatDropdown" aria-expanded="false">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
           <span class="menu-icon-btn-label">Меню</span>
         </button>
@@ -494,7 +500,8 @@
 </div>
 
 <main id="categories">
-  <div class="cat-nav cat-controls" id="catNav">
+  <div class="cat-controls">
+    <nav class="cat-nav" id="catNav" aria-label="Разделы прайс-каталога"></nav>
     <button type="button" id="toggleAllBtn" class="toolbar-btn">Развернуть все</button>
   </div>
   <div id="offerBanner" class="offer-banner is-hidden"></div>
@@ -840,17 +847,6 @@ legendToggle.addEventListener('click', () => {
   legendToggleText.textContent = expanded ? 'Свернуть' : 'Показать всё';
 });
 
-function checkChipAlignment(){
-  const nav = document.getElementById('catNav');
-  if (!nav || !nav.children.length) return;
-  const firstTop = nav.children[0].getBoundingClientRect().top;
-  const wrapping = [...nav.children].some(c => c.getBoundingClientRect().top > firstTop + 2);
-  nav.style.justifyContent = wrapping ? 'flex-start' : 'center';
-}
-window.addEventListener('load', checkChipAlignment);
-window.addEventListener('resize', checkChipAlignment);
-
-
 function adjustFooterDash(){
   if (window.innerWidth > 640) return;
   const br = document.querySelector('.footer-br');
@@ -893,7 +889,9 @@ function updateToggleAllBtn(){
 function updateNavChips(){
   document.querySelectorAll('.nav-chip').forEach(chip => {
     const section = document.querySelector(`section.category[data-idx="${chip.dataset.idx}"]`);
-    chip.classList.toggle('done', section.classList.contains('open'));
+    const isOpen = Boolean(section && section.classList.contains('open'));
+    chip.classList.toggle('done', isOpen);
+    chip.setAttribute('aria-pressed', String(isOpen));
   });
   updateToggleAllBtn();
 }
@@ -954,13 +952,21 @@ function toggleCategory(section){
 
 function buildNav(){
   const mobileDropdown = document.getElementById('mobileCatDropdown');
+  catNav.replaceChildren();
+  mobileDropdown.replaceChildren();
   DATA.categories.forEach((cat, ci) => {
     function makeChip(closeDropdownAfter){
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'nav-chip';
       chip.dataset.idx = ci;
-      chip.textContent = cat.short;
+      chip.title = cat.title;
+      chip.setAttribute('aria-label', cat.title);
+      chip.setAttribute('aria-pressed', 'false');
+      const label = document.createElement('span');
+      label.className = 'nav-chip-label';
+      label.textContent = closeDropdownAfter ? cat.title : cat.short;
+      chip.appendChild(label);
       chip.addEventListener('click', () => {
         const section = document.querySelector(`section.category[data-idx="${ci}"]`);
         toggleCategory(section);
@@ -981,6 +987,7 @@ const mobileCatDropdown = document.getElementById('mobileCatDropdown');
 mobileMenuBtn.addEventListener('click', () => {
   const open = mobileCatDropdown.classList.toggle('open');
   mobileMenuBtn.classList.toggle('active', open);
+  mobileMenuBtn.setAttribute('aria-expanded', String(open));
 });
 
 document.addEventListener('click', (e) => {
@@ -988,6 +995,7 @@ document.addEventListener('click', (e) => {
   if (mobileCatDropdown.contains(e.target) || mobileMenuBtn.contains(e.target)) return;
   mobileCatDropdown.classList.remove('open');
   mobileMenuBtn.classList.remove('active');
+  mobileMenuBtn.setAttribute('aria-expanded', 'false');
 });
 
 const toggleAllBtn = document.getElementById('toggleAllBtn');
@@ -1021,8 +1029,6 @@ function openFromHash(){
   }
 }
 
-buildNav();
-checkChipAlignment();
 adjustFooterDash();
 
 // --- pre-fill from URL query params, e.g. ?budget=60000&prepay=30000&term=6 ---
@@ -1126,6 +1132,7 @@ async function bootPage(){
     return;
   }
   buildPage();
+  buildNav();
   updateCollapsedGroups();
   recompute();
   openFromHash();
