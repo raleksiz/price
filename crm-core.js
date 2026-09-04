@@ -659,6 +659,32 @@
     });
   }
 
+  function actualExpenseAmountFromMeta(meta) {
+    var direct = Math.max(0, n(meta && meta.actualExpenseAmount));
+    if (direct) return direct;
+    var amounts = Array.isArray(meta && meta.expenseAmounts) ? meta.expenseAmounts : [];
+    var total = amounts.reduce(function (sum, value) {
+      return sum + Math.max(0, n(value));
+    }, 0);
+    if (total) return total;
+    var legacyExtra = Math.max(0, n(meta && meta.extraAmount));
+    if (legacyExtra) return legacyExtra;
+    var accidentalCount = Math.max(0, n(meta && meta.expenseCount));
+    var allAmountsEmpty = amounts.length && amounts.every(function (value) { return !n(value); });
+    return accidentalCount >= 100 && allAmountsEmpty ? accidentalCount : 0;
+  }
+
+  function normalizeActualExpenseMeta(meta) {
+    if (!meta || typeof meta !== 'object') return meta;
+    var amount = actualExpenseAmountFromMeta(meta);
+    if (amount) meta.actualExpenseAmount = amount;
+    else delete meta.actualExpenseAmount;
+    delete meta.expenseAmounts;
+    delete meta.expenseCount;
+    delete meta.extraAmount;
+    return meta;
+  }
+
   function catalogItemByCode(list, code) {
     return (list || []).find(function (item) {
       return String(item && item.code) === String(code);
@@ -706,6 +732,14 @@
       delete meta.extraAmount;
     });
 
+    selected.forEach(function (nextIndex) {
+      var nextItem = nextList[nextIndex];
+      var key = String(nextIndex);
+      if (nextItem && nextItem.actualExpenses && nextMeta[key]) {
+        normalizeActualExpenseMeta(nextMeta[key]);
+      }
+    });
+
     service.surcharges = selected;
     service.surchargeMeta = nextMeta;
     return beforeSurcharges !== JSON.stringify(service.surcharges) ||
@@ -718,6 +752,10 @@
     var old13_3WasOutside = /выезд за пределы/i.test(text(old13_3 && old13_3.name));
     var old1_4 = catalogItemByCode(previousPriceList, '1.4');
     var old1_4WasMeeting = /сопровождение на встрече/i.test(text(old1_4 && old1_4.name));
+    var old1_5 = catalogItemByCode(previousPriceList, '1.5');
+    var old1_5WasWrittenConsult = /письменная консультация/i.test(text(old1_5 && old1_5.name));
+    var old1_6 = catalogItemByCode(previousPriceList, '1.6');
+    var old1_6WasSeminar = /семинар для группы лиц/i.test(text(old1_6 && old1_6.name));
 
     (db.clients || []).forEach(function (client) {
       (client.services || []).forEach(function (service) {
@@ -744,6 +782,19 @@
           // Старые корректировки из раздела «Консультации» не должны быть
           // пересчитаны как корректировки из раздела 13.
           if ((service.surcharges || []).length) service.priceManual = true;
+          changed = true;
+          serviceChanged = true;
+        } else if (old1_5WasWrittenConsult && String(service.code) === '1.5') {
+          // После переноса прежнего пункта 1.4 в раздел 13 консультации
+          // сдвинуты вверх: 1.5 → 1.4.
+          service.code = '1.4';
+          service.catKey = 'consult';
+          changed = true;
+          serviceChanged = true;
+        } else if (old1_6WasSeminar && String(service.code) === '1.6') {
+          // Следующий пункт также сдвигается на одну позицию: 1.6 → 1.5.
+          service.code = '1.5';
+          service.catKey = 'consult';
           changed = true;
           serviceChanged = true;
         }
