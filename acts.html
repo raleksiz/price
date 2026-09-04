@@ -420,17 +420,17 @@ details[open] summary::before{content:"▾ ";}
 .filters-toggle{display:none !important;flex:0 0 auto;margin-bottom:0;}
 .all-filters{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
-  gap:8px;flex:1 1 auto;min-width:0;overflow:visible;padding-bottom:3px;
+  column-gap:8px;row-gap:5px;flex:1 1 auto;min-width:0;overflow:visible;
 }
-.all-filters>div{min-width:0;}
 .all-filters.filters-collapsed{display:none;}
 .all-filters label{font-size:10.5px;}
 .all-filters input{height:36px;padding:7px 9px;font-size:12px;}
 .xl-filter{position:relative;min-width:0;}
+.xl-filter-head{display:flex;align-items:flex-end;align-self:end;gap:4px;margin-bottom:5px;min-width:0;min-height:18px;}
 @supports (grid-template-rows:subgrid){
   .xl-filter{display:grid;grid-template-rows:subgrid;grid-row:span 2;}
+  .xl-filter-head{margin-bottom:0;}
 }
-.xl-filter-head{display:flex;align-items:center;gap:4px;min-width:0;min-height:18px;}
 .xl-filter-head label{margin-bottom:0;min-width:0;}
 .xl-filter-clear{
   display:inline-flex;visibility:hidden;pointer-events:none;
@@ -454,10 +454,9 @@ details[open] summary::before{content:"▾ ";}
 }
 .xl-filter-drop button:hover,.xl-filter-drop button.active{background:var(--soft);color:var(--violet);}
 .xl-filter-drop .xl-empty{padding:8px 10px;font-size:12px;color:var(--muted);}
-@media (min-width:721px){.all-filters::-webkit-scrollbar{height:6px;}.all-filters{scrollbar-width:thin;}}
 @media(max-width:720px){
   .all-filters label{font-size:10px;}
-  .all-filters input,.all-filters select{font-size:11px;height:auto;min-height:32px;padding:6px 8px;}
+  .all-filters input{font-size:11px;height:auto;min-height:32px;padding:6px 8px;}
   .filters-toggle{font-size:11px;}
   .xl-filter-head{min-height:22px;}
   .xl-filter-clear{width:22px;height:22px;font-size:18px;}
@@ -472,8 +471,7 @@ details[open] summary::before{content:"▾ ";}
 @media (max-width:720px){
   .filters-toolbar{display:block;margin-bottom:12px;}
   .filters-toggle{display:block !important;width:100%;margin-bottom:8px;}
-  .all-filters{display:grid;grid-template-columns:1fr 1fr;overflow:visible;padding-bottom:0;}
-  .all-filters>div{width:100%;min-width:0;flex:1 1 auto;}
+  .all-filters{display:grid;grid-template-columns:1fr 1fr;overflow:visible;}
 }
 .client-head{min-width:0;width:100%;}
 .client-meta-row{display:flex;gap:8px;flex-wrap:nowrap;align-items:center;margin-left:auto;min-width:0;flex:0 0 auto;}
@@ -945,7 +943,7 @@ details[open] summary::before{content:"▾ ";}
             <input type="text" id="fBasis" class="xl-filter-input" data-filter="fBasis" placeholder="Все / начните вводить" autocomplete="off">
             <div class="xl-filter-drop hidden"></div>
           </div>
-          <div class="xl-filter filter-date">
+          <div class="xl-filter">
             <div class="xl-filter-head">
               <label for="fFrom">Дата с</label>
               <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр" aria-hidden="true" tabindex="-1">×</button>
@@ -953,7 +951,7 @@ details[open] summary::before{content:"▾ ";}
             <input type="text" id="fFrom" class="xl-filter-input" data-filter="fFrom" placeholder="Дата или фрагмент" autocomplete="off">
             <div class="xl-filter-drop hidden"></div>
           </div>
-          <div class="xl-filter filter-date">
+          <div class="xl-filter">
             <div class="xl-filter-head">
               <label for="fTo">Дата по</label>
               <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр" aria-hidden="true" tabindex="-1">×</button>
