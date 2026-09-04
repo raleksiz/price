@@ -424,6 +424,8 @@
   }
 
   function expenseAmounts(entry) {
+    var direct = Math.max(0, n(entry && entry.actualExpenseAmount));
+    if (direct) return [direct];
     var source = Array.isArray(entry && entry.expenseAmounts) ? entry.expenseAmounts : [];
     var values = source.map(function (value) { return Math.max(0, n(value)); });
     if (values.length) return values;
