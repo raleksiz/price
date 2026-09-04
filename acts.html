@@ -4157,13 +4157,20 @@ function renderContractDetail(c, ct){
     `Статус: <b>${esc(ct.status)}</b> · Тариф: <b>${esc(ct.tariff)}</b> · Скидка: <b>${Number(ct.discount)||0}%</b> · Предоплата: <b>${money(ct.prepay)}</b>${ct.status==='Абонемент'?' в месяц':''}${basisHtml ? ' · Основание: ' + basisHtml : ''}`;
 
   document.getElementById('sentFlag').checked = !!ct.sent;
-  document.getElementById('sentHint').textContent = ct.sent
+  const sentBase = ct.sent
     ? 'Заполненные услуги зафиксированы: изменения прайса на них не влияют.'
     : 'Поставь отметку после отправки акта — заполненные услуги будут зафиксированы.';
+  const hint = document.getElementById('sentHint');
   if(ct.compensation && ct.compensation.result){
-    const shown = ct.compensation.showInAct ? 'показана заказчику' : 'только в CRM';
-    document.getElementById('sentHint').textContent +=
-      ' Компенсация ' + money(ct.compensation.result.compensation) + ' по п. ' + (ct.compensation.result.clause||'') + ' (' + shown + ').';
+    const shown = !!ct.compensation.showInAct;
+    const extra = ' Компенсация ' + money(ct.compensation.result.compensation) + ' по п. ' + (ct.compensation.result.clause||'') + (shown ? ' сейчас на акте заказчика.' : ' только в CRM.');
+    if(shown){
+      hint.innerHTML = esc(sentBase + extra) + ' <button type="button" class="btn sm ghost" onclick="hideCompensationFromAct()">Убрать с акта заказчика</button>';
+    } else {
+      hint.textContent = sentBase + extra;
+    }
+  } else {
+    hint.textContent = sentBase;
   }
 
   const services = contractServices(c, ct.id);
@@ -4534,8 +4541,8 @@ function openCompensationDialog(){
     <div class="muted" style="margin-top:12px">«Показать на акте заказчика» добавляет этот разбор на страницу акта по ссылке заказчика. Цены услуг не меняются. «Сохранить только в CRM» оставляет расчёт у вас, заказчик его не увидит.</div>
     <div class="row" style="margin-top:14px">
       <button type="button" class="btn ghost" onclick="closeModal()">Закрыть</button>
-      <button type="button" class="btn ghost" onclick="saveCompensation(false)">${shown?'Убрать с акта заказчика':'Сохранить только в CRM'}</button>
-      <button type="button" class="btn" onclick="saveCompensation(true)">Показать на акте заказчика</button>
+      <button type="button" class="btn ghost" onclick="${shown?'hideCompensationFromAct()':'saveCompensation(false)'}">${shown?'Убрать с акта заказчика':'Сохранить только в CRM'}</button>
+      <button type="button" class="btn" onclick="saveCompensation(true)">${shown?'Сохранить на акте заказчика':'Показать на акте заказчика'}</button>
     </div>`, true, 'comp-wide');
   renderCompensationPaidRows();
   onCompensationModeChange();
@@ -4563,6 +4570,19 @@ function saveCompensation(showInAct){
   alert(showInAct
     ? 'Разбор сохранён. Заказчик увидит его на ссылке акта после обновления.'
     : 'Разбор скрыт с акта заказчика. Расчёт в договоре сохранён.');
+}
+function hideCompensationFromAct(){
+  const c = getClient(currentClientId);
+  const ct = getContract(c, currentContractId);
+  if(!ct || !ct.compensation){ alert('Расчёт компенсации не сохранён.'); return; }
+  ct.compensation.showInAct = false;
+  ct.compensation.updatedAt = new Date().toISOString();
+  touchContract(ct);
+  touchClient(c);
+  save({immediate:true});
+  closeModal();
+  renderClientCard();
+  alert('Разбор скрыт с акта заказчика. Расчёт в договоре сохранён.');
 }
 
 /* ====================== СЧЁТ ====================== */
