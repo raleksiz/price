@@ -63,8 +63,14 @@ textarea.autogrow{resize:none;overflow:hidden;}
   display:inline-flex;align-items:center;justify-content:center;
 }
 .tab-ico:hover{border-color:var(--violet);}
-.sync-line{margin:-6px 0 12px;min-height:0;}
-.sync-line:empty{display:none;margin:0;}
+.sync-line{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;
+  margin:0;padding:8px 14px calc(8px + env(safe-area-inset-bottom,0px));
+  text-align:center;font-size:12px;line-height:1.4;
+  background:rgba(244,240,250,.94);border-top:1px solid var(--line);
+  pointer-events:none;
+}
+.sync-line:empty{display:none;}
 .side-nav{display:none;}
 .app-shell{display:block;}
 .app-main{min-width:0;}
@@ -880,7 +886,6 @@ details[open] summary::before{content:"▾ ";}
   </div>
   </div>
   <div class="wrap crm-wrap">
-  <div class="muted sync-line" id="syncState"></div>
   <div class="app-shell">
     <nav class="side-nav" aria-label="Навигация">
       <button type="button" class="side-nav-btn active" data-view="clients" onclick="setView('clients')" title="Заказчики">
@@ -1073,6 +1078,7 @@ details[open] summary::before{content:"▾ ";}
 
 <div id="modalRoot"></div>
 <div id="printArea"></div>
+<div class="muted sync-line" id="syncState"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
