@@ -3534,7 +3534,7 @@ function renderClientCard(){
   document.getElementById('cLink').innerHTML =
     `<a href="${esc(link)}" target="_blank" style="color:var(--violet);word-break:break-all">Ссылка для заказчика</a>`;
 
-  const t = clientAllTotals(c);
+  const t = currentContractId ? contractTotals(c, currentContractId) : clientAllTotals(c);
   document.getElementById('cDebtChip').innerHTML = 'Предстоящие оплаты: <b style="color:' + (t.debt ? '#dc2626' : '#16a34a') + '">' + money(t.debt) + '</b>';
 
   if(!currentContractId){
