@@ -113,16 +113,32 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
   .svc-row .c-priceinfo .pay-stack{display:inline-flex;flex-direction:row;flex-wrap:nowrap;gap:6px;align-items:center;}
 }
 
-.comp-block{margin-top:18px;padding-top:14px;border-top:1.5px solid var(--line);}
+.comp-block{margin-top:18px;padding-top:14px;border-top:1.5px solid var(--line);min-width:0;max-width:100%;}
 .comp-block h2{font-size:16px;margin:0 0 8px;}
 .comp-formula{font-size:13px;line-height:1.6;margin-bottom:10px;}
 .comp-formula b{font-variant-numeric:tabular-nums;}
-.comp-month{background:var(--soft);border-radius:10px;padding:10px 12px;margin:10px 0;}
+.comp-month{background:var(--soft);border-radius:10px;padding:10px 12px;margin:10px 0;width:100%;max-width:100%;min-width:0;overflow:hidden;box-sizing:border-box;}
 .comp-month h3{margin:0 0 6px;font-size:14px;}
-.comp-svc{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
-.comp-svc th,.comp-svc td{padding:5px 7px;border-bottom:1px solid #e8e4f4;text-align:left;}
-.comp-svc th{font-size:10.5px;text-transform:uppercase;color:#6E3B8C;}
-.comp-svc .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.comp-svc-scroll{
+  display:block;width:100%;max-width:100%;min-width:0;
+  overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+  margin-top:8px;
+}
+.comp-svc{width:100%;min-width:100%;border-collapse:collapse;font-size:12px;margin:0;}
+.comp-svc th,.comp-svc td{padding:5px 8px;border-bottom:1px solid #e8e4f4;text-align:left;vertical-align:top;}
+.comp-svc th{font-size:10.5px;text-transform:uppercase;color:#6E3B8C;white-space:normal;line-height:1.25;letter-spacing:0;}
+.comp-svc td{overflow-wrap:anywhere;}
+.comp-svc .num{text-align:right;font-variant-numeric:tabular-nums;}
+.comp-svc td.num{white-space:nowrap;}
+.comp-col-if{white-space:normal;line-height:1.25;}
+@media (max-width:720px){
+  .comp-svc{width:max-content;min-width:640px;}
+  .comp-svc th:first-child,.comp-svc td:first-child{
+    position:sticky;left:0;z-index:1;background:var(--soft);
+    box-shadow:4px 0 6px -4px rgba(80,40,120,.18);
+  }
+}
 .comp-up{color:#b42318;font-weight:700;}
 .comp-down{color:#167c3a;font-weight:700;}
 .comp-same{color:#777;}
@@ -600,14 +616,17 @@ function compensationActHtml(ct){
       ? `аванс для скидки ${money(t.tariffPrepay)}`
       : `внесенная абонентская плата для скидки ${money(t.tariffBudget)}`;
     const rows=(month.services||[]).map(s=>`<tr>
-      <td>${fmtDate(s.date)}</td><td>${esc(s.code||'—')}</td><td>${esc(s.desc||'')}</td>
-      <td class="num">${money(s.actPrice)}</td><td class="num">${money(s.newPrice)}</td>
+      <td>${fmtDate(s.date)}</td>
+      <td>${esc(s.code||'—')}</td>
+      <td>${esc(s.desc||'')}</td>
+      <td class="num">${money(s.actPrice)}</td>
+      <td class="num">${money(s.newPrice)}</td>
       <td class="num ${compensationDeltaClass(s.delta)}">${compensationDeltaText(s.delta)}</td>
     </tr>`).join('');
     return `<section class="comp-month">
       <h3>${esc(monthTitle(month.month))}</h3>
       <div class="muted">${lever}. Срок в формуле — ${t.term} мес. Тариф ${esc(t.tariff)}, скидка ${t.discountPct}%. Бюджет по договору ${money(t.agreedBudget)}. Не оплачено из бюджета ${money(month.unpaidBudget)}.</div>
-      ${rows?`<table class="comp-svc"><thead><tr><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">В акте</th><th class="num">При фактических оплатах и сроке</th><th class="num">Разница</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="muted" style="margin-top:6px">В этом месяце услуг нет.</div>'}
+      ${rows?`<div class="comp-svc-scroll"><table class="comp-svc"><thead><tr><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">В акте</th><th class="num comp-col-if">При фактических<br>оплатах<br>и сроке</th><th class="num">Разница</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="muted" style="margin-top:6px">В этом месяце услуг нет.</div>'}
       <div class="muted" style="margin-top:8px">Абонентская плата ${money(month.subscriptionDue)} + сверх бюджета ${money(month.overage)} = ${money(month.accrued)}. Внесено ${money(month.paid)}.</div>
     </section>`;
   }).join('');

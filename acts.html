@@ -247,7 +247,7 @@ tr.locked td{background:#FAFAFC;}
   #allTotals .tot.tot-sm .v{font-size:11.5px;}
 }
 .modal{position:fixed;inset:0;background:rgba(30,20,60,.45);display:flex;align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;z-index:50;}
-.modal .card{max-width:640px;width:100%;margin:0 auto;}
+.modal .card{max-width:640px;width:100%;margin:0 auto;min-width:0;}
 .modal .card.wide{max-width:900px;}
 .sur-box{border:1.5px dashed #D6CCF0;border-radius:10px;padding:8px 10px;margin-bottom:14px;background:#FBF9FF;}
 .sur-item{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:3px 10px;align-items:start;padding:3px 0;font-size:12.5px;line-height:1.35;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink);margin-bottom:0;}
@@ -397,27 +397,61 @@ details summary::-webkit-details-marker{display:none;}
 details summary::before{content:"▸ ";}
 details[open] summary::before{content:"▾ ";}
 .calc-line{font-size:12px;color:#6E3B8C;background:var(--soft);border-radius:8px;padding:8px 10px;margin-bottom:12px;line-height:1.6;overflow-wrap:anywhere;word-break:break-word;}
+.grid-keep-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid-keep-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.grid-keep-3 .field{min-width:0;}
+@media (max-width:720px){
+  .grid-keep-3{gap:6px;}
+  .grid-keep-3 .field{margin-bottom:12px;}
+  .grid-keep-3 input{padding:8px 6px;min-width:0;}
+}
 .modal .card.comp-wide{max-width:1080px;}
-.comp-mode{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
-.comp-mode label{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;}
+.modal .card.comp-wide h3{font-size:13px;margin:16px 0 8px;}
+.comp-mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.comp-mode label{
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  gap:2px;margin:0;padding:10px 12px;min-height:44px;
+  border:1.5px solid var(--line);border-radius:10px;background:#fff;
+  font-size:13px;font-weight:700;line-height:1.2;text-transform:none;letter-spacing:0;
+  color:var(--ink);cursor:pointer;
+}
 .comp-mode label.active{border-color:var(--ink);background:var(--soft);}
-.comp-month-table{width:100%;border-collapse:collapse;font-size:12.5px;}
-.comp-month-table th,.comp-month-table td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;}
-.comp-month-table th{font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:#6E3B8C;}
-.comp-month-table .num,.comp-svc .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
-.comp-month-table input{width:110px;max-width:100%;}
-.comp-svc{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
-.comp-svc th,.comp-svc td{padding:5px 7px;border-bottom:1px solid var(--line);}
-.comp-svc th{font-size:10.5px;text-transform:uppercase;color:#6E3B8C;}
+.comp-mode input{position:absolute;opacity:0;width:0;height:0;}
+.comp-mode-title{font-size:13px;font-weight:700;}
+.comp-mode-sub{font-size:12px;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0;}
+.comp-month-table{width:100%;border-collapse:collapse;font-size:13px;}
+.comp-month-table th,.comp-month-table td,.comp-svc th,.comp-svc td{
+  padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;
+}
+.comp-month-table th,.comp-svc th{font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:#6E3B8C;white-space:normal;line-height:1.25;}
+.comp-svc .num{text-align:right;font-variant-numeric:tabular-nums;}
+.comp-svc td.num{white-space:nowrap;}
+.comp-month-table input{width:110px;max-width:100%;font-size:15px;}
+.comp-month{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;width:100%;max-width:100%;min-width:0;overflow:hidden;box-sizing:border-box;}
+.comp-month h3{margin:0 0 6px;font-size:13px;}
+.comp-svc-scroll{
+  display:block;width:100%;max-width:100%;min-width:0;
+  overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+  margin-top:8px;
+}
+.comp-svc{width:100%;min-width:100%;margin:0;border-collapse:collapse;font-size:13px;}
+.comp-col-if{white-space:normal;line-height:1.25;}
 .comp-up{color:#b42318;font-weight:700;}
 .comp-down{color:#167c3a;font-weight:700;}
 .comp-same{color:#777;}
-.comp-month{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;}
-.comp-month h3{margin:0 0 6px;font-size:14px;}
-.comp-formula{font-size:12.5px;line-height:1.6;}
+.comp-formula{font-size:12px;line-height:1.6;}
 .comp-formula b{font-variant-numeric:tabular-nums;}
 .comp-result-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:8px 0 4px;}
-.comp-result-head .big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
+.comp-result-head .big{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+#compResult{min-width:0;max-width:100%;}
+@media (max-width:720px){
+  .comp-svc{width:max-content;min-width:640px;}
+  .comp-svc th:first-child,.comp-svc td:first-child{
+    position:sticky;left:0;z-index:1;background:#fff;
+    box-shadow:4px 0 6px -4px rgba(80,40,120,.18);
+  }
+}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
 .toolbar .grow{flex:1;min-width:160px;}
 .client-head > .icon-btn{flex-shrink:0;}
@@ -4329,7 +4363,7 @@ function compensationResultHtml(result){
     return `<section class="comp-month">
       <h3>${esc(monthTitle(month.month))}</h3>
       <div class="muted">${lever}. Срок в формуле ${t.term} мес. → тариф ${esc(t.tariff)}, скидка ${t.discountPct}%. Потолок бюджета из договора: ${money(t.agreedBudget)}. Неоплата бюджета: ${money(month.unpaidBudget)}.</div>
-      ${rows?`<table class="comp-svc"><thead><tr><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">В акте</th><th class="num">Как если бы</th><th class="num">Разница</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="muted" style="margin-top:6px">Услуг в этом месяце нет — начисляется только абонентская плата.</div>'}
+      ${rows?`<div class="comp-svc-scroll"><table class="comp-svc"><thead><tr><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">В акте</th><th class="num comp-col-if">При фактических<br>оплатах<br>и сроке</th><th class="num">Разница</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="muted" style="margin-top:6px">Услуг в этом месяце нет — начисляется только абонентская плата.</div>'}
       <div class="muted" style="margin-top:8px">Услуги в акте ${money(month.actSum)} → после пересчёта ${money(month.servicesSum)}. Сверх договора ${money(month.overage)}. Абонентка ${money(month.subscriptionDue)} + сверх ${money(month.overage)} = начислено ${money(month.accrued)}. Внесено ${money(month.paid)}.</div>
     </section>`;
   }).join('');
@@ -4479,10 +4513,10 @@ function openCompensationDialog(){
     <div class="muted" style="margin-bottom:10px">Пересчёт «как если бы» по п. 9.3.1 или 10.3.1. Цены уже отправленного акта не меняются. Заказчик видит тот же разбор, если сохранить его в акт.</div>
     <div class="calc-line">Сейчас в договоре: бюджет ${money(ct.contractPrice)}, аванс ${money(ct.prepay)}, срок ${Number(ct.term)||0} мес., тариф ${esc(ct.tariff||'Base')}, скидка ${Number(ct.discount)||0}%.</div>
     <div class="comp-mode">
-      <label class="${mode!=='change'?'active':''}"><input type="radio" name="compMode" value="termination" ${mode!=='change'?'checked':''} onchange="onCompensationModeChange()"> Отказ · п. 10.3.1</label>
-      <label class="${mode==='change'?'active':''}"><input type="radio" name="compMode" value="change" ${mode==='change'?'checked':''} onchange="onCompensationModeChange()"> Изменение · п. 9.3.1</label>
+      <label class="${mode!=='change'?'active':''}"><input type="radio" name="compMode" value="termination" ${mode!=='change'?'checked':''} onchange="onCompensationModeChange()"><span class="comp-mode-title">Отказ</span><span class="comp-mode-sub">п. 10.3.1</span></label>
+      <label class="${mode==='change'?'active':''}"><input type="radio" name="compMode" value="change" ${mode==='change'?'checked':''} onchange="onCompensationModeChange()"><span class="comp-mode-title">Изменение</span><span class="comp-mode-sub">п. 9.3.1</span></label>
     </div>
-    <div class="grid3">
+    <div class="grid-keep-3">
       <div class="field"><label>Первый месяц</label><input type="month" id="compFrom" value="${esc(startMonth||'')}" onchange="renderCompensationPaidRows()"></div>
       <div class="field"><label>Последний месяц</label><input type="month" id="compTo" value="${esc(endMonth||'')}" onchange="renderCompensationPaidRows()"></div>
       <div class="field" id="compTermField"><label>Фактический срок, мес.</label><input type="number" min="1" step="1" id="compTerm" value="${Number(saved&&saved.inputs&&saved.inputs.actualTerm)||months.length||3}" oninput="runCompensationPreview()"></div>
@@ -4492,15 +4526,16 @@ function openCompensationDialog(){
       <div class="field"><label>Новый аванс, ₽</label><input type="number" min="0" step="1" id="compNewPrepay" value="${Number(saved&&saved.inputs&&saved.inputs.proposedPrepay)||0}" oninput="runCompensationPreview()"></div>
       <div class="field"><label>Новый срок, мес.</label><input type="number" min="3" step="1" id="compNewTerm" value="${Number(saved&&saved.inputs&&saved.inputs.proposedTerm)||3}" oninput="runCompensationPreview()"></div>
     </div>
-    <h3 style="margin:16px 0 8px;font-size:15px">Что реально получено</h3>
+    <h3>Что реально получено</h3>
     <div class="muted" style="margin-bottom:8px">Цифры подставлены из оплат в CRM. Их можно поправить, если абонентку проводили иначе.</div>
     <div id="compPaidBox"></div>
-    <h3 style="margin:16px 0 8px;font-size:15px">Проверка расчёта</h3>
+    <h3>Проверка расчёта</h3>
     <div id="compResult"></div>
+    <div class="muted" style="margin-top:12px">«Показать на акте заказчика» добавляет этот разбор на страницу акта по ссылке заказчика. Цены услуг не меняются. «Сохранить только в CRM» оставляет расчёт у вас, заказчик его не увидит.</div>
     <div class="row" style="margin-top:14px">
       <button type="button" class="btn ghost" onclick="closeModal()">Закрыть</button>
-      ${shown?'<button type="button" class="btn ghost" onclick="saveCompensation(false)">Убрать с акта заказчика</button>':''}
-      <button type="button" class="btn" onclick="saveCompensation(true)">Показать заказчику</button>
+      <button type="button" class="btn ghost" onclick="saveCompensation(false)">${shown?'Убрать с акта заказчика':'Сохранить только в CRM'}</button>
+      <button type="button" class="btn" onclick="saveCompensation(true)">Показать на акте заказчика</button>
     </div>`, true, 'comp-wide');
   renderCompensationPaidRows();
   onCompensationModeChange();
@@ -4774,14 +4809,16 @@ function openPdfDialog(){
   ct.sentDates = ct.sentDates || [];
   openModal(`<h1>Выгрузка акта · ${esc(c.name)}</h1>
     <div class="muted" style="margin-bottom:8px">${esc(contractLabel(ct))}</div>
-    <div class="field"><label>Период</label>
-      <select id="pdfMode" onchange="document.getElementById('pdfRange').classList.toggle('hidden', this.value!=='range')">
-        <option value="all">За весь период</option><option value="range">Указать период</option></select></div>
-    <div id="pdfRange" class="grid2 hidden">
+    <div class="grid-keep-2">
+      <div class="field"><label>Период</label>
+        <select id="pdfMode" onchange="document.getElementById('pdfRange').classList.toggle('hidden', this.value!=='range')">
+          <option value="all">За весь период</option><option value="range">Указать период</option></select></div>
+      <div class="field"><label>Номер акта</label><input id="pdfNo" value="${ct.sentDates.length+1}"></div>
+    </div>
+    <div id="pdfRange" class="grid-keep-2 hidden">
       <div class="field"><label>С</label><input type="date" id="pdfFrom"></div>
       <div class="field"><label>По</label><input type="date" id="pdfTo"></div>
     </div>
-    <div class="field"><label>Номер акта</label><input id="pdfNo" value="${ct.sentDates.length+1}"></div>
     <div class="err" id="pdfErr"></div>
     <div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button>
     <button type="button" class="btn" id="pdfBtn" onclick="makePdf()">Сформировать PDF</button></div>`);
