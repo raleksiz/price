@@ -717,15 +717,43 @@ details[open] summary::before{content:"▾ ";}
   }
 }
 @media (max-width:720px){
-  .contract-table-scroll{overflow-x:visible;}
-  #contractTableScroll .contract-table-inner{min-width:0;width:100%;}
+  .contract-table-scroll,
+  .all-table-scroll{
+    container-type:inline-size;
+    container-name:svcscroll;
+  }
+  .contract-table-scroll,
+  #contractTableScroll{
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    width:100%;max-width:100%;min-width:0;
+  }
+  #contractTableScroll .contract-table-inner{
+    width:max(100%, 900px);
+    min-width:900px;
+    max-width:none;
+  }
+  #contractTableScroll .svc-head,
+  #contractTableScroll .svc-list,
+  #contractTableScroll .svc-row{
+    width:100%;
+    box-sizing:border-box;
+  }
   #contractTableScroll .svc-row .c-edit,
   #contractTableScroll .svc-head .c-edit-col{
-    position:static;
-    box-shadow:none;
-    background:transparent;
+    position:sticky;
+    right:0;
+    z-index:2;
+    background:#fff;
+    justify-self:end;
+    box-shadow:-10px 0 10px -8px rgba(43,26,107,.16);
   }
-  #view-client .card{overflow-x:visible;}
+  #contractTableScroll .svc-row.locked .c-edit{background:#FAFAFC;}
+  #contractTableScroll .svc-row .c-edit{
+    align-self:start;
+    margin-top:2px;
+  }
+  #view-client .card{overflow-x:hidden;}
 }
 .svc-head{
   display:grid;
@@ -785,30 +813,31 @@ details[open] summary::before{content:"▾ ";}
   }
 }
 @media (max-width:720px){
-  .svc-head{display:none;}
+  .svc-head{display:grid;}
   .svc-list{overflow-x:visible;}
-}
-
-@media (max-width:720px){
-  .svc-row{
-    grid-template-columns:22px 1fr auto;
+  .svc-row .c-date::before{content:none;}
+  .svc-row .c-codedesc,
+  .svc-row .c-priceinfo{display:none;}
+  .svc-row .c-code,
+  .svc-row .c-desc,
+  .svc-row .c-price,
+  .svc-row .c-paid,
+  .svc-row .c-status{display:block;}
+  .svc-row .c-cf{
+    box-sizing:border-box;
     min-width:0;
-    grid-template-areas:
-      "num date edit"
-      "num codedesc codedesc"
-      "num priceinfo priceinfo";
-    row-gap:4px;padding:10px 6px;
+    width:100cqw;
+    max-width:100cqw;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    white-space:normal;
+    position:sticky;
+    left:0;
+    z-index:1;
+    background:#fff;
+    padding-right:12px;
   }
-  .svc-row .c-date{grid-area:date;}
-  .svc-row .c-date::before{content:"Дата оказания услуги: ";color:#aaa;font-weight:400;}
-  .svc-row .c-edit{grid-area:edit;}
-  .svc-row .c-codedesc{grid-area:codedesc;display:block;overflow-wrap:anywhere;word-break:break-word;line-height:1.5;}
-  .svc-row .c-priceinfo{grid-area:priceinfo;display:flex;flex-wrap:nowrap;align-items:center;gap:6px;font-size:12.5px;overflow-x:auto;min-width:0;white-space:nowrap;}
-  .svc-row .c-priceinfo .price-main{font-weight:700;white-space:nowrap;}
-  .svc-row .c-priceinfo .paid-amt{white-space:nowrap;color:#666;}
-  .svc-row .c-priceinfo .pill{white-space:nowrap;}
-  .svc-row .c-code,.svc-row .c-desc,.svc-row .c-price,.svc-row .c-paid,.svc-row .c-status{display:none;}
-  .svc-row .c-cf{padding-left:30px;}
+  .svc-row.locked .c-cf{background:#FAFAFC;}
 }
 
 .svc-row.all-row{
@@ -843,7 +872,28 @@ details[open] summary::before{content:"▾ ";}
 }
 @media (max-width:720px){
   .all-table-top-scroll{display:none !important;}
-  .all-table-scroll{overflow-x:visible;}
+  #view-all,
+  #view-all .card{
+    min-width:0;
+    max-width:100%;
+  }
+  .all-table-scroll,
+  #allTableScroll{
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    width:100%;max-width:100%;min-width:0;
+  }
+  #allTableScroll .all-table-inner{
+    width:max(100%, 1100px);
+    min-width:1100px;
+    max-width:none;
+  }
+  #allTableScroll .all-head,
+  #allTableScroll .svc-list,
+  #allTableScroll .svc-row.all-row{
+    width:100%;
+    box-sizing:border-box;
+  }
 }
 .svc-row.all-row .c-edit,
 .all-head .c-edit-col{
@@ -883,43 +933,24 @@ details[open] summary::before{content:"▾ ";}
   }
 }
 @media (max-width:720px){
-  .all-head{display:none;}
-  .svc-row.all-row .c-edit,
-  .all-head .c-edit-col{
-    position:static;
-    box-shadow:none;
-    background:transparent;
-  }
-  .svc-row.all-row{
-    width:auto;
-    min-width:0;
-    max-width:none;
-    grid-template-columns:22px 1fr auto;
-    min-width:0;
-    grid-template-areas:
-      "num client edit"
-      "num basis  basis"
-      "num date   date"
-      "num codedesc codedesc"
-      "num priceinfo priceinfo";
-    row-gap:4px;
-    padding:10px 6px;
-  }
-  .svc-row.all-row .c-client{display:block;font-weight:700;font-size:13px;}
-  .svc-row.all-row .c-basis{display:block;font-size:11.5px;color:#888;}
-  .svc-row.all-row .c-date{display:block;color:#888;font-size:12px;}
-  .svc-row.all-row .c-date::before{content:"Дата оказания услуги: ";color:#aaa;font-weight:400;}
-  .svc-row.all-row .c-codedesc{grid-area:codedesc;display:block;overflow-wrap:anywhere;word-break:break-word;line-height:1.5;}
-  .svc-row.all-row .c-priceinfo{grid-area:priceinfo;display:flex;flex-wrap:nowrap;align-items:center;gap:6px;font-size:12.5px;overflow-x:auto;min-width:0;white-space:nowrap;}
-  .svc-row.all-row .c-priceinfo .price-main{font-weight:700;white-space:nowrap;}
-  .svc-row.all-row .c-priceinfo .paid-amt{white-space:nowrap;color:#666;}
-  .svc-row.all-row .c-priceinfo .pill{white-space:nowrap;}
+  .all-head{display:grid;}
+  .svc-row.all-row .c-date::before{content:none;}
+  .svc-row.all-row .c-codedesc,
+  .svc-row.all-row .c-priceinfo{display:none;}
   .svc-row.all-row .c-code,
   .svc-row.all-row .c-desc,
   .svc-row.all-row .c-price,
   .svc-row.all-row .c-paid,
-  .svc-row.all-row .c-status{display:none;}
-  .svc-row.all-row .c-cf{padding-left:30px;}
+  .svc-row.all-row .c-status{display:block;}
+  .svc-row.all-row .c-edit,
+  .all-head .c-edit-col{
+    position:sticky;
+    right:0;
+    z-index:2;
+    background:#fff;
+    box-shadow:-10px 0 10px -8px rgba(43,26,107,.16);
+  }
+  .svc-row.all-row.locked .c-edit{background:#FAFAFC;}
 }
 
 </style>

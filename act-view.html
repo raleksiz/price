@@ -77,7 +77,14 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
   .svc-row .c-status .pill.part .part-rest{display:block;}
 }
 
+.svc-scroll{
+  display:block;width:100%;max-width:100%;min-width:0;
+  overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+.svc-scroll-inner{width:100%;min-width:0;}
 .svc-list{display:flex;flex-direction:column;overflow-x:visible;width:100%;}
+.contract-block{min-width:0;max-width:100%;overflow:hidden;}
 .svc-head{
   display:grid;
   grid-template-columns:28px 90px 55px minmax(215px,1fr) 90px 90px 150px;
@@ -114,36 +121,29 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .svc-row.abon-special .c-priceinfo{display:none;}
 
 @media (max-width:720px){
-  .svc-head{display:none;}
-  .svc-list{overflow-x:visible;}
+  .card,.wrap{min-width:0;max-width:100%;}
+  .svc-scroll-inner{
+    width:max(100%, 780px);
+    min-width:780px;
+    max-width:none;
+  }
+  .svc-head,
+  .svc-list,
   .svc-row{
-    display:grid;
-    grid-template-columns:22px 1fr;
-    grid-template-areas:
-      "num date"
-      "num codedesc"
-      "num priceinfo";
-    row-gap:4px;padding:10px 4px;
-    min-width:0;
     width:100%;
+    box-sizing:border-box;
   }
-  .svc-row.abon-special{
-    grid-template-columns:22px 1fr;
-    grid-template-areas:
-      "num date"
-      "num codedesc"
-      "num priceinfo";
-  }
-  .svc-row .c-date{grid-area:date;}
-  .svc-row .c-date::before{content:"Дата оказания услуги: ";color:#aaa;font-weight:400;}
-  .svc-row .c-code,.svc-row .c-desc,.svc-row .c-price,.svc-row .c-paid,.svc-row .c-status{display:none;}
-  .svc-row .c-codedesc{grid-area:codedesc;display:block;overflow-wrap:anywhere;word-break:break-word;line-height:1.5;min-width:0;width:100%;}
-  .svc-row .c-priceinfo{grid-area:priceinfo;display:flex;flex-wrap:nowrap;align-items:center;gap:6px;font-size:12.5px;overflow-x:auto;white-space:nowrap;}
-  .svc-row.abon-special .c-priceinfo{display:flex;}
-  .svc-row .c-priceinfo .price-main{font-weight:700;white-space:nowrap;}
-  .svc-row .c-priceinfo .paid-amt{white-space:nowrap;color:#666;}
-  .svc-row .c-priceinfo .pill{white-space:nowrap;}
-  .svc-row .c-priceinfo .pay-stack{display:inline-flex;flex-direction:row;flex-wrap:nowrap;gap:6px;align-items:center;}
+  .svc-head{display:grid;}
+  .svc-row .c-date::before{content:none;}
+  .svc-row .c-codedesc,
+  .svc-row .c-priceinfo{display:none;}
+  .svc-row .c-code,
+  .svc-row .c-desc,
+  .svc-row .c-price,
+  .svc-row .c-paid,
+  .svc-row .c-status{display:block;}
+  .svc-row.abon-special .c-price,
+  .svc-row.abon-special .c-paid{display:none !important;}
 }
 
 .comp-block{margin-top:18px;padding-top:14px;border-top:1.5px solid var(--line);min-width:0;max-width:100%;}
@@ -589,12 +589,15 @@ function renderServiceRow(s,num,special){
     <div class="c-priceinfo">${special?'':`<span class="price-main">${money(Number(s.price)||0)}</span><span class="paid-amt">Оплачено: ${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</span>`}${payPill(s)}</div>
   </div>`;
 }
+function wrapSvcTable(html){
+  return `<div class="svc-scroll"><div class="svc-scroll-inner">${html}</div></div>`;
+}
 function renderTable(list, special){
   const ordered=sortServices(list);
   const head = special
     ? `<div class="svc-head abon-special"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Статус оплаты</div></div>`
     : `<div class="svc-head"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div></div>`;
-  return `${head}<div class="svc-list">${ordered.length?ordered.map((s,i)=>renderServiceRow(s,ordered.length-i,special)).join(''):'<div class="empty-filter">По заданным фильтрам услуг нет.</div>'}</div>`;
+  return wrapSvcTable(`${head}<div class="svc-list">${ordered.length?ordered.map((s,i)=>renderServiceRow(s,ordered.length-i,special)).join(''):'<div class="empty-filter">По заданным фильтрам услуг нет.</div>'}</div>`);
 }
 function renderContract(c,ct,presetFilters){
   const id=ct.id;
@@ -622,7 +625,7 @@ function renderContract(c,ct,presetFilters){
     if(allSpecial) body=renderTable(list, true);
     else if(ct.status==='Абонемент'){
       const ordered=sortServices(list);
-      body=`<div class="svc-head"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div></div><div class="svc-list">${ordered.map((s,i)=>renderServiceRow(s,ordered.length-i,monthIsComplete(monthKey(s.date))&&isAbonementSpecialMonth(c,ct,monthKey(s.date),today))).join('')}</div>`;
+      body=wrapSvcTable(`<div class="svc-head"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div></div><div class="svc-list">${ordered.map((s,i)=>renderServiceRow(s,ordered.length-i,monthIsComplete(monthKey(s.date))&&isAbonementSpecialMonth(c,ct,monthKey(s.date),today))).join('')}</div>`);
     } else body=renderTable(list, false);
   }
   return `<div class="contract-block" id="contract-${esc(id)}">
