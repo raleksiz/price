@@ -69,7 +69,7 @@ tr.locked td{background:#FAFAFC;}
 .pill.part{background:#FFFDE7;color:#7A6000;}
 .pill.pre{background:#EDE9FE;color:#5B21B6;}
 .pill.lock{background:#EEE;color:#666;}
-.clients{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.clients,.contracts-grid{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;}
 .clients-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:14px;}
 .clients-toolbar .tot{margin:0;padding:6px 10px;min-width:0;}
 .clients-toolbar .tot .v{font-size:15px;margin-top:0;white-space:nowrap;}
@@ -77,38 +77,44 @@ tr.locked td{background:#FAFAFC;}
 .icon-btn-toggle:hover{border-color:var(--violet);color:var(--violet);}
 .icon-btn-toggle.active{border-color:var(--violet);background:var(--soft);color:var(--violet);}
 .clients-toolbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;}
-.contracts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
-.contracts-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;} .contracts-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
+.contracts-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.contracts-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
 .contract-card{margin:0;}
-.cl-card{border:1.5px solid var(--line);border-radius:12px;padding:14px;background:#fff;cursor:pointer;transition:border-color .15s;}
+.cl-card{
+  width:100%;max-width:340px;border:1.5px solid var(--line);border-radius:14px;
+  background:#fff;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;
+  padding:0;transition:border-color .15s;
+}
 .cl-card:hover{border-color:var(--violet);}
 .cl-card.pinned{border-color:#C4B5FD;background:#FBF9FF;}
 .cl-card.hiddenc{opacity:.55;}
-.cl-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;}
-.cl-name{font-weight:700;font-size:14px;margin-bottom:6px;word-break:break-word;}
-.client-list-name-editable{cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;}
-.cl-meta{font-size:12px;color:#666;line-height:1.7;}
-.contract-card .cl-top{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
-  gap:8px;
-  align-items:start;
+.cl-body{padding:10px 12px 8px;min-width:0;}
+.cl-name{font-weight:400;font-size:14px;line-height:1.35;margin:0;overflow-wrap:anywhere;word-break:break-word;min-width:0;}
+.cl-card.pinned .cl-name{font-weight:700;}
+.cl-bar{
+  display:flex;flex-wrap:nowrap;align-items:stretch;gap:3px;
+  padding:6px 8px 8px;border-top:1px solid var(--line);background:var(--soft);min-width:0;
 }
-.contract-card .cl-name{margin-bottom:0;min-width:0;}
-.contract-card .cl-meta{display:flex;align-items:center;justify-content:flex-start;gap:12px;flex-wrap:wrap;}
-.cl-act-flag{display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;}
-.cl-act-flag span{font-size:11px;color:#777;font-weight:700;white-space:nowrap;}
-.cl-actions{display:flex;gap:4px;flex-shrink:0;}
-.contract-card .cl-actions{width:auto;justify-content:flex-end;gap:2px;}
-.contract-card .icon-emoji{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:28px;min-width:28px;padding:4px 0;min-height:28px;font-size:15px;
+.cl-amt,.cl-ico{
+  min-height:38px;min-width:0;width:0;border:1.5px solid var(--line);border-radius:10px;
+  background:#fff;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;
+  box-sizing:border-box;
 }
+.cl-amt{
+  flex:1.6 1 0;padding:0 6px;font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.contract-card .cl-amt{flex:1.8 1 0;}
+.cl-amt.bad{color:var(--bad);}
+.cl-amt.ok{color:var(--ok);}
+.cl-ico{flex:1 1 0;cursor:pointer;font-size:16px;line-height:1;color:inherit;padding:0;opacity:1;overflow:hidden;flex-shrink:1;}
+.cl-ico.act-ico{font-size:12px;font-weight:800;color:#6E3B8C;}
+.cl-ico.act-ico.on{background:var(--violet);color:#fff;border-color:var(--violet);}
 @media (max-width:720px){
-  .contracts-grid{grid-template-columns:1fr;}
-  .contract-card .cl-top{grid-template-columns:63% 37%;gap:6px;}
-  .contract-card .cl-actions{width:100%;gap:3px;}
-  .contract-card .icon-emoji{width:30px;min-width:30px;padding:6px 0;min-height:32px;}
+  .cl-card{max-width:none;}
+  .cl-bar{gap:2px;padding:6px 6px 8px;}
+  .cl-amt{font-size:11.5px;padding:0 4px;}
+  .cl-ico{font-size:15px;}
 }
 .icon-btn{background:none;border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:11.5px;cursor:pointer;color:#666;font-family:inherit;}
 .icon-btn:hover{border-color:var(--violet);color:var(--violet);}
@@ -1922,25 +1928,13 @@ function renderClients(){
     box.innerHTML = list.map(c=>{
       const t = clientAllTotals(c);
       return `<div class="cl-card ${c.pinned?'pinned':''} ${c.hidden?'hiddenc':''}" onclick="openClientInTab('${c.id}', event)">
-        <div class="cl-top">
-          <div class="cl-name client-list-name-editable" role="button" tabindex="0" title="Дважды щёлкните, чтобы изменить название заказчика" aria-label="Изменить название заказчика"
-            onclick="event.stopPropagation()"
-            ondblclick="event.preventDefault();event.stopPropagation();openClientForm('${c.id}')"
-            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();openClientForm('${c.id}')}"
-            onpointerdown="beginClientListNameHold(event,'${c.id}')"
-            onpointermove="moveClientListNameHold(event)"
-            onpointerup="clearClientListNameHold(event)"
-            onpointercancel="clearClientListNameHold(event)"
-            onpointerleave="clearClientListNameHold(event)"
-            oncontextmenu="event.preventDefault()">${esc(c.name)||'Без наименования'}</div>
-          <div class="cl-actions" onclick="event.stopPropagation()">
-            <button type="button" class="icon-emoji" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}">${c.pinned?'📌':'📍'}</button>
-            <button type="button" class="icon-emoji" onclick="toggleHide('${c.id}')" title="${c.hidden?'Показать':'Скрыть'}">${c.hidden?'🙈':'👁'}</button>
-            <button type="button" class="icon-emoji" onclick="deleteClient('${c.id}')" title="Удалить">🗑</button>
-          </div>
-        </div>
-        <div class="cl-meta">
-          Предстоящие оплаты: <b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b>
+        <div class="cl-body"><div class="cl-name">${esc(c.name)||'Без наименования'}</div></div>
+        <div class="cl-bar" onclick="event.stopPropagation()">
+          <span class="cl-amt ${t.debt?'bad':'ok'}">${money(t.debt)}</span>
+          <button type="button" class="cl-ico" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}">${c.pinned?'📌':'📍'}</button>
+          <button type="button" class="cl-ico" onclick="toggleHide('${c.id}')" title="${c.hidden?'Показать':'Скрыть'}">${c.hidden?'🙈':'👁'}</button>
+          <button type="button" class="cl-ico" onclick="openClientForm('${c.id}')" title="Переименовать">✏️</button>
+          <button type="button" class="cl-ico" onclick="deleteClient('${c.id}')" title="Удалить">🗑</button>
         </div>
       </div>`;
     }).join('');
@@ -3602,21 +3596,14 @@ function renderContractsList(c){
       ${list.map(ct=>{
         const t = contractTotals(c, ct.id);
         return `<div class="cl-card contract-card ${ct.pinned?'pinned':''} ${ct.hidden?'hiddenc':''}" onclick="openContract('${ct.id}')">
-          <div class="cl-top">
-            <div class="cl-name">${esc(contractLabel(ct))}</div>
-            <div class="cl-actions" onclick="event.stopPropagation()">
-              <button type="button" class="icon-emoji" onclick="toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}">${ct.pinned?'📌':'📍'}</button>
-              <button type="button" class="icon-emoji" onclick="toggleContractHide('${c.id}','${ct.id}')" title="${ct.hidden?'Показать':'Скрыть'}">${ct.hidden?'🙈':'👁'}</button>
-              <button type="button" class="icon-emoji" onclick="openContractForm('${c.id}','${ct.id}')" title="Редактировать">✏️</button>
-              <button type="button" class="icon-emoji" onclick="deleteContract('${c.id}','${ct.id}')" title="Удалить">🗑</button>
-            </div>
-          </div>
-          <div class="cl-meta">
-            <span>Предстоящие оплаты: <b style="color:${t.debt?'#dc2626':'#16a34a'}">${money(t.debt)}</b></span>
-            <label class="cl-act-flag" title="Показывать этот договор в акте для заказчика" onclick="event.stopPropagation()">
-              <input type="checkbox" ${ct.showInAct!==false?'checked':''} onclick="event.stopPropagation()" onchange="toggleContractShowInAct('${c.id}','${ct.id}')">
-              <span>акт</span>
-            </label>
+          <div class="cl-body"><div class="cl-name">${esc(contractLabel(ct))}</div></div>
+          <div class="cl-bar" onclick="event.stopPropagation()">
+            <span class="cl-amt ${t.debt?'bad':'ok'}">${money(t.debt)}</span>
+            <button type="button" class="cl-ico" onclick="toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}">${ct.pinned?'📌':'📍'}</button>
+            <button type="button" class="cl-ico" onclick="toggleContractHide('${c.id}','${ct.id}')" title="${ct.hidden?'Показать':'Скрыть'}">${ct.hidden?'🙈':'👁'}</button>
+            <button type="button" class="cl-ico" onclick="openContractForm('${c.id}','${ct.id}')" title="Редактировать">✏️</button>
+            <button type="button" class="cl-ico" onclick="deleteContract('${c.id}','${ct.id}')" title="Удалить">🗑</button>
+            <button type="button" class="cl-ico act-ico ${ct.showInAct!==false?'on':''}" onclick="toggleContractShowInAct('${c.id}','${ct.id}')" title="Показывать в акте">А</button>
           </div>
         </div>`;
       }).join('') || '<div class="muted">Скрытых договоров нет.</div>'}
