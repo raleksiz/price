@@ -3403,7 +3403,7 @@ function renderAll(){
         ${appliedHtml(s)}
       </div>
       <div class="c-priceinfo">
-        <span class="price-main">Стоимость - ${fmtSvcPrice(s)}</span>
+        <span class="price-main">Стоимость: ${fmtSvcPrice(s)}</span>
         <span class="paid-amt">Оплачено: ${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</span>
         ${payPill(s)}
         ${s.locked?'<span class="pill lock">отправлено</span>':''}
@@ -3668,7 +3668,7 @@ function renderContractDetail(c, ct){
         ${appliedHtml(s)}
       </div>
       <div class="c-priceinfo">
-        <span class="price-main">Стоимость - ${fmtSvcPrice(s)}</span>
+        <span class="price-main">Стоимость: ${fmtSvcPrice(s)}</span>
         <span class="paid-amt">Оплачено: ${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</span>
         ${payPill(s)}
         ${s.locked?'<span class="pill lock">отправлено</span>':''}
