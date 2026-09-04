@@ -173,7 +173,11 @@ tr.locked td{background:#FAFAFC;}
 .icon-btn-toggle.active{border-color:var(--violet);background:var(--soft);color:var(--violet);}
 .clients-add-btn{margin-left:auto;flex-shrink:0;}
 @media (min-width:721px){.clients-add-btn{display:none;}}
-@media (max-width:720px){.clients-page-title{display:none;}}
+@media (max-width:720px){
+  .clients-page-title{display:none;}
+  #view-all > .card > h2,
+  #view-fields > .card > h2{display:none;}
+}
 .contracts-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
 .contracts-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
 .client-list-actions{display:none;}
@@ -474,8 +478,8 @@ details[open] summary::before{content:"▾ ";}
   min-width:0;height:auto;padding:6px 7px;font-size:11px;line-height:1.25;
   white-space:normal;border-radius:8px;
 }
-@media (max-width:720px){
-  .comp-svc,.comp-svc tbody{display:block;width:100%;min-width:0;}
+@media (max-width:1280px){
+  .comp-svc,.comp-svc tbody{display:block;width:100%;min-width:0;table-layout:auto;}
   .comp-svc thead{display:none;}
   .comp-svc tr{
     display:grid;
@@ -4427,7 +4431,7 @@ function compensationResultHtml(result){
       </div>
       <div class="big">${money(result.compensation)}</div>
     </div>
-    <div class="muted" style="margin-bottom:8px">Компенсация = max(${money(result.minCompensation)}, начислено − внесено). Цены в акте не меняются — колонка «как если бы» только для проверки.</div>
+    <div class="muted" style="margin-bottom:8px">Компенсация = max(${money(result.minCompensation)}, начислено − внесено). Цены в акте не меняются — колонка «При факт. параметрах» только для проверки.</div>
     ${months}`;
 }
 function defaultCompensationPaidByMonth(c, ct, months){
