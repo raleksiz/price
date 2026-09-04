@@ -439,26 +439,25 @@ details[open] summary::before{content:"▾ ";}
 }
 .doc-menu-list button:hover{background:var(--soft);color:var(--violet);}
 @media (max-width:720px){
-  .client-head{flex-wrap:nowrap;min-width:0;}
-  .client-title{
-    flex:1 1 0;min-width:0;margin-right:auto;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  }
-  .client-meta-row{
-    margin-left:0;width:auto;flex:0 0 auto;justify-content:flex-end;
-  }
+  .client-meta-row{margin-left:0;width:100%;justify-content:flex-start;}
   #view-client.list-narrow .client-head{flex-wrap:wrap;}
-  #view-client.list-narrow .client-meta-row{display:contents;}
-  #view-client.list-narrow .client-debt-chip{
-    margin-left:auto;flex:0 1 auto;min-width:0;max-width:42%;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-    padding:5px 8px;font-size:12px;
+  #view-client.list-narrow .client-meta-row{
+    width:100%;flex-wrap:nowrap;gap:4px;min-width:0;
   }
-  #view-client.list-narrow .client-list-actions{
-    flex:1 0 100%;width:100%;justify-content:flex-end;margin-top:6px;
+  #view-client.list-narrow .client-debt-chip{
+    flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    padding:5px 8px;font-size:12px;
   }
   #view-client.list-narrow .client-list-actions .btn{
     padding:6px 8px;font-size:11.5px;white-space:nowrap;flex-shrink:0;
+  }
+  #view-client:not(.list-narrow) .client-head{flex-wrap:nowrap;min-width:0;}
+  #view-client:not(.list-narrow) .client-title{
+    flex:1 1 0;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  #view-client:not(.list-narrow) .client-meta-row{
+    margin-left:auto;width:auto;flex:0 0 auto;justify-content:flex-end;
   }
 }
 @media (min-width:721px){
