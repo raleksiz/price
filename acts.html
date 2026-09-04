@@ -398,15 +398,27 @@ details summary::before{content:"▸ ";}
 details[open] summary::before{content:"▾ ";}
 .calc-line{font-size:12px;color:#6E3B8C;background:var(--soft);border-radius:8px;padding:8px 10px;margin-bottom:12px;line-height:1.6;overflow-wrap:anywhere;word-break:break-word;}
 .grid-keep-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.grid-keep-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
-.grid-keep-3 .field{min-width:0;}
+.grid-keep-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:8px;row-gap:0;}
+.grid-keep-3 .field{min-width:0;display:flex;flex-direction:column;margin-bottom:12px;}
+.grid-keep-3 .field>label{
+  min-height:2.6em;display:flex;align-items:flex-end;
+  margin-bottom:5px;line-height:1.25;
+}
+@supports (grid-template-rows:subgrid){
+  .grid-keep-3{grid-template-rows:auto auto;}
+  .grid-keep-3 .field{display:grid;grid-template-rows:subgrid;grid-row:span 2;}
+  .grid-keep-3 .field>label{min-height:0;display:block;align-self:end;}
+}
 @media (max-width:720px){
-  .grid-keep-3{gap:6px;}
-  .grid-keep-3 .field{margin-bottom:12px;}
+  .grid-keep-3{column-gap:6px;}
   .grid-keep-3 input{padding:8px 6px;min-width:0;}
 }
 .modal .card.comp-wide{max-width:1080px;}
-.modal .card.comp-wide h3{font-size:13px;margin:16px 0 8px;}
+.modal .card.comp-wide h3{font-size:13px;margin:16px 0 8px;text-transform:none;letter-spacing:0;}
+.modal .card.comp-wide label,
+.modal .card.comp-wide th{
+  text-transform:none;letter-spacing:0;
+}
 .comp-mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .comp-mode label{
   display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
@@ -423,20 +435,22 @@ details[open] summary::before{content:"▾ ";}
 .comp-month-table th,.comp-month-table td,.comp-svc th,.comp-svc td{
   padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;
 }
-.comp-month-table th,.comp-svc th{font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:#6E3B8C;white-space:normal;line-height:1.25;}
+.comp-month-table th,.comp-svc th{font-size:11px;font-weight:700;text-transform:none;letter-spacing:0;color:#6E3B8C;white-space:normal;line-height:1.25;}
 .comp-svc .num{text-align:right;font-variant-numeric:tabular-nums;}
 .comp-svc td.num{white-space:nowrap;}
 .comp-month-table input{width:110px;max-width:100%;font-size:15px;}
 .comp-month{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;width:100%;max-width:100%;min-width:0;overflow:hidden;box-sizing:border-box;}
-.comp-month h3{margin:0 0 6px;font-size:13px;}
+.comp-month h3{margin:0 0 6px;font-size:13px;text-transform:none;letter-spacing:0;}
 .comp-svc-scroll{
   display:block;width:100%;max-width:100%;min-width:0;
-  overflow-x:auto;overflow-y:hidden;
-  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+  overflow:visible;
   margin-top:8px;
 }
-.comp-svc{width:100%;min-width:100%;margin:0;border-collapse:collapse;font-size:13px;}
-.comp-col-if{white-space:normal;line-height:1.25;}
+.comp-svc{width:100%;min-width:0;margin:0;border-collapse:collapse;font-size:13px;table-layout:fixed;}
+.comp-svc th:nth-child(1),.comp-svc td:nth-child(1){width:4.6em;}
+.comp-svc th:nth-child(2),.comp-svc td:nth-child(2){width:3.2em;}
+.comp-svc-desc{white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.35;}
+.comp-svc th.num,.comp-svc td.num{width:5.4em;}
 .comp-up{color:#b42318;font-weight:700;}
 .comp-down{color:#167c3a;font-weight:700;}
 .comp-same{color:#777;}
@@ -445,11 +459,41 @@ details[open] summary::before{content:"▾ ";}
 .comp-result-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:8px 0 4px;}
 .comp-result-head .big{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
 #compResult{min-width:0;max-width:100%;}
+.comp-actions{
+  display:grid;grid-template-columns:34px 1fr 1fr;gap:6px;
+  align-items:stretch;margin-top:14px;
+}
+.comp-close{
+  width:34px;height:34px;padding:0;border:1.5px solid #C4B5FD;border-radius:8px;
+  background:var(--soft);color:#6E3B8C;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.comp-close svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;}
+.comp-close:hover{border-color:var(--violet);color:var(--violet);}
+.comp-actions .btn{
+  min-width:0;height:auto;padding:6px 7px;font-size:11px;line-height:1.25;
+  white-space:normal;border-radius:8px;
+}
 @media (max-width:720px){
-  .comp-svc{width:max-content;min-width:640px;}
-  .comp-svc th:first-child,.comp-svc td:first-child{
-    position:sticky;left:0;z-index:1;background:#fff;
-    box-shadow:4px 0 6px -4px rgba(80,40,120,.18);
+  .comp-svc,.comp-svc tbody{display:block;width:100%;min-width:0;}
+  .comp-svc thead{display:none;}
+  .comp-svc tr{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:4px 6px;
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .comp-svc td{display:block;width:auto;padding:0;border:none;min-width:0;}
+  .comp-svc-date{grid-column:1/-1;font-size:12px;color:#888;}
+  .comp-svc-code{grid-column:1/-1;font-weight:700;}
+  .comp-svc-desc{grid-column:1/-1;}
+  .comp-svc td.num{
+    white-space:normal;text-align:left;width:auto;
+  }
+  .comp-svc td.num::before{
+    content:attr(data-label);display:block;
+    font-size:10px;font-weight:600;color:#6E3B8C;margin-bottom:2px;
   }
 }
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
@@ -3876,7 +3920,7 @@ function renderAll(){
   const paid= rows.reduce((a,r)=>a+paidOf(r.s),0);
   const pre = rows.reduce((a,r)=>a+prepayOf(r.s),0);
   document.getElementById('allTotals').innerHTML =
-    totSm('Общая стоимость услуг', money(sum)) + totSm('Оплачено', money(paid)) +
+    totSm('Общая цена услуг', money(sum)) + totSm('Оплачено', money(paid)) +
     totSm('Не оплачено', money(Math.max(0,sum-paid)));
 
   document.getElementById('allTable').innerHTML = rows.map((r,i)=>{
@@ -4360,17 +4404,17 @@ function compensationResultHtml(result){
       ? `аванс для скидки ${money(t.tariffPrepay)} из договорных ${money(t.agreedPrepay)}`
       : `бюджет для скидки ${money(t.tariffBudget)} из внесённых ${money(t.paid)}`;
     const rows = (month.services||[]).map(s=>`<tr>
-      <td>${fmtDate(s.date)}</td>
-      <td>${esc(s.code||'—')}</td>
-      <td>${esc(s.desc||'')}</td>
-      <td class="num">${money(s.actPrice)}</td>
-      <td class="num">${money(s.newPrice)}</td>
-      <td class="num ${compensationDeltaClass(s.delta)}">${compensationDeltaText(s.delta)}</td>
+      <td class="comp-svc-date">${fmtDate(s.date)}</td>
+      <td class="comp-svc-code">${esc(s.code||'—')}</td>
+      <td class="comp-svc-desc">${esc(s.desc||'')}</td>
+      <td class="num" data-label="В акте">${money(s.actPrice)}</td>
+      <td class="num" data-label="При факт. параметрах">${money(s.newPrice)}</td>
+      <td class="num ${compensationDeltaClass(s.delta)}" data-label="Разница">${compensationDeltaText(s.delta)}</td>
     </tr>`).join('');
     return `<section class="comp-month">
       <h3>${esc(monthTitle(month.month))}</h3>
       <div class="muted">${lever}. Срок в формуле ${t.term} мес. → тариф ${esc(t.tariff)}, скидка ${t.discountPct}%. Потолок бюджета из договора: ${money(t.agreedBudget)}. Неоплата бюджета: ${money(month.unpaidBudget)}.</div>
-      ${rows?`<div class="comp-svc-scroll"><table class="comp-svc"><thead><tr><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">В акте</th><th class="num comp-col-if">При фактических<br>оплатах<br>и сроке</th><th class="num">Разница</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="muted" style="margin-top:6px">Услуг в этом месяце нет — начисляется только абонентская плата.</div>'}
+      ${rows?`<div class="comp-svc-scroll"><table class="comp-svc"><thead><tr><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">В акте</th><th class="num">При факт. параметрах</th><th class="num">Разница</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="muted" style="margin-top:6px">Услуг в этом месяце нет — начисляется только абонентская плата.</div>'}
       <div class="muted" style="margin-top:8px">Услуги в акте ${money(month.actSum)} → после пересчёта ${money(month.servicesSum)}. Сверх договора ${money(month.overage)}. Абонентка ${money(month.subscriptionDue)} + сверх ${money(month.overage)} = начислено ${money(month.accrued)}. Внесено ${money(month.paid)}.</div>
     </section>`;
   }).join('');
@@ -4528,7 +4572,7 @@ function openCompensationDialog(){
       <div class="field"><label>Последний месяц</label><input type="month" id="compTo" value="${esc(endMonth||'')}" onchange="renderCompensationPaidRows()"></div>
       <div class="field" id="compTermField"><label>Фактический срок, мес.</label><input type="number" min="1" step="1" id="compTerm" value="${Number(saved&&saved.inputs&&saved.inputs.actualTerm)||months.length||3}" oninput="runCompensationPreview()"></div>
     </div>
-    <div id="compChangeFields" class="grid3 ${mode==='change'?'':'hidden'}">
+    <div id="compChangeFields" class="grid-keep-3 ${mode==='change'?'':'hidden'}">
       <div class="field"><label>Новый бюджет, ₽</label><input type="number" min="0" step="1" id="compNewBudget" value="${Number(saved&&saved.inputs&&saved.inputs.proposedBudget)||Number(ct.contractPrice)||0}" oninput="runCompensationPreview()"></div>
       <div class="field"><label>Новый аванс, ₽</label><input type="number" min="0" step="1" id="compNewPrepay" value="${Number(saved&&saved.inputs&&saved.inputs.proposedPrepay)||0}" oninput="runCompensationPreview()"></div>
       <div class="field"><label>Новый срок, мес.</label><input type="number" min="3" step="1" id="compNewTerm" value="${Number(saved&&saved.inputs&&saved.inputs.proposedTerm)||3}" oninput="runCompensationPreview()"></div>
@@ -4539,8 +4583,8 @@ function openCompensationDialog(){
     <h3>Проверка расчёта</h3>
     <div id="compResult"></div>
     <div class="muted" style="margin-top:12px">«Показать на акте заказчика» добавляет этот разбор на страницу акта по ссылке заказчика. Цены услуг не меняются. «Сохранить только в CRM» оставляет расчёт у вас, заказчик его не увидит.</div>
-    <div class="row" style="margin-top:14px">
-      <button type="button" class="btn ghost" onclick="closeModal()">Закрыть</button>
+    <div class="comp-actions">
+      <button type="button" class="comp-close" onclick="closeModal()" title="Закрыть" aria-label="Закрыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <button type="button" class="btn ghost" onclick="${shown?'hideCompensationFromAct()':'saveCompensation(false)'}">${shown?'Убрать с акта заказчика':'Сохранить только в CRM'}</button>
       <button type="button" class="btn" onclick="saveCompensation(true)">${shown?'Сохранить на акте заказчика':'Показать на акте заказчика'}</button>
     </div>`, true, 'comp-wide');
