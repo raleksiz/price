@@ -947,7 +947,7 @@ details[open] summary::before{content:"▾ ";}
     <div class="brand-row">
       <img class="brand-logo" id="crmBrandLogo" src="brand-logo.png" alt="RALEKSIZ HOUSE">
       <div class="contacts">
-        <div class="name">Рузлев Алексей Иванович</div>
+        <div class="name">ИП Рузлев Алексей Иванович</div>
         <div class="inn">ОГРНИП 326330000056115</div>
         <div class="handles"><span class="handle-item"><a class="icon-link" href="https://t.me/aruzlev" target="_blank" rel="noopener"><svg class="icon-svg" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> @aruzlev</a></span><span class="handle-item"><a class="icon-link" href="mailto:raleksiz.law@gmail.com"><svg class="icon-svg" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg> raleksiz.law@gmail.com</a></span></div>
       </div>
@@ -4976,7 +4976,7 @@ function buildPrintHtml(c, ct, from, to, no){
     <h1>АКТ № ${esc(no)} оказанных услуг</h1>
     <div class="pa-sub">${esc(period)}</div>
     <div class="pa-pre">
-      <b>Исполнитель:</b> Рузлев Алексей Иванович (ОГРНИП 326330000056115)<br>
+      <b>Исполнитель:</b>ИП Рузлев Алексей Иванович (ОГРНИП 326330000056115)<br>
       <b>Заказчик:</b> ${esc(c.name)}<br>
       <b>Статус:</b> ${esc(ct.status)} &nbsp;·&nbsp; <b>Тариф:</b> ${esc(ct.tariff)} &nbsp;·&nbsp; <b>Скидка:</b> ${Number(ct.discount)||0}%<br>
       <b>Предоплата:</b> ${money(prepay)}${ct.status==='Абонемент'?' ежемесячно':''}
