@@ -1496,10 +1496,17 @@ function recalculateContractServices(client, contractId){
   services.forEach(s=>{
     if(s.locked || s.priceManual) return;
     const r = fn(s, Infinity);
+    const nextApplied = r.applied || [];
+    const changed =
+      Number(s.price) !== Number(r.price) ||
+      JSON.stringify(s.applied || []) !== JSON.stringify(nextApplied) ||
+      Number(s.basePrice) !== Number(r.basePrice) ||
+      Number(s.discountPrice) !== Number(r.discountPrice);
     s.price = r.price;
-    s.applied = r.applied || [];
+    s.applied = nextApplied;
     s.basePrice = r.basePrice;
     s.discountPrice = r.discountPrice;
+    if(changed) s.updatedAt = new Date().toISOString();
   });
 }
 function paidOf(s){
@@ -1710,6 +1717,9 @@ async function init(){
       }
     }
     if(refreshAbonementDiscountsFromTariffs(DB)){
+      window.__needsCloudPush = true;
+    }
+    if(refreshUnlockedServicePrices(DB)){
       window.__needsCloudPush = true;
     }
     if(window.__needsCloudPush){
@@ -2074,6 +2084,21 @@ function refreshAbonementDiscountsFromTariffs(db){
       ct.updatedAt = new Date().toISOString();
       changed = true;
       recalculateContractServices(client, ct.id);
+    });
+  });
+  return changed;
+}
+function refreshUnlockedServicePrices(db){
+  if(!db || typeof Calculator==='undefined') return false;
+  let changed = false;
+  (db.clients||[]).forEach(client => {
+    (client.contracts||[]).forEach(ct => {
+      const related = (client.services||[]).filter(s=>s.contractId===ct.id);
+      if(!related.length) return;
+      const before = JSON.stringify(related.map(s=>[s.id, s.price, s.applied, s.basePrice, s.discountPrice, s.updatedAt]));
+      recalculateContractServices(client, ct.id);
+      const after = JSON.stringify(related.map(s=>[s.id, s.price, s.applied, s.basePrice, s.discountPrice, s.updatedAt]));
+      if(before !== after) changed = true;
     });
   });
   return changed;
@@ -3378,7 +3403,7 @@ function renderAll(){
         ${appliedHtml(s)}
       </div>
       <div class="c-priceinfo">
-        <span class="price-main">${fmtSvcPrice(s)}</span>
+        <span class="price-main">Стоимость - ${fmtSvcPrice(s)}</span>
         <span class="paid-amt">Оплачено: ${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</span>
         ${payPill(s)}
         ${s.locked?'<span class="pill lock">отправлено</span>':''}
@@ -3643,7 +3668,7 @@ function renderContractDetail(c, ct){
         ${appliedHtml(s)}
       </div>
       <div class="c-priceinfo">
-        <span class="price-main">${fmtSvcPrice(s)}</span>
+        <span class="price-main">Стоимость - ${fmtSvcPrice(s)}</span>
         <span class="paid-amt">Оплачено: ${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</span>
         ${payPill(s)}
         ${s.locked?'<span class="pill lock">отправлено</span>':''}
