@@ -130,17 +130,19 @@ tr.locked td{background:#FAFAFC;}
 .modal{position:fixed;inset:0;background:rgba(30,20,60,.45);display:flex;align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;z-index:50;}
 .modal .card{max-width:640px;width:100%;margin:0 auto;}
 .modal .card.wide{max-width:900px;}
-.sur-box{border:1.5px dashed #D6CCF0;border-radius:10px;padding:10px 12px;margin-bottom:14px;background:#FBF9FF;}
-.sur-item{display:grid;grid-template-columns:16px minmax(0,1fr) minmax(0,1fr);gap:8px 10px;align-items:start;padding:5px 0;font-size:12.5px;line-height:1.45;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink);margin-bottom:0;}
+.sur-box{border:1.5px dashed #D6CCF0;border-radius:10px;padding:8px 10px;margin-bottom:14px;background:#FBF9FF;}
+.sur-item{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:3px 10px;align-items:start;padding:3px 0;font-size:12.5px;line-height:1.35;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink);margin-bottom:0;}
 .sur-item input{width:16px;height:16px;flex:0 0 auto;margin-top:1px;accent-color:var(--violet);}
-.sur-item span{min-width:0;overflow-wrap:break-word;word-break:break-word;}
-.sur-item .amt{margin-left:0;font-weight:700;white-space:normal;text-align:right;padding-left:4px;}
-.sur-extra{display:grid;grid-template-columns:90px 1fr;gap:6px;margin:3px 0 7px 25px;}
+.sur-item span{min-width:0;}
+.sur-item span:not(.amt){overflow-wrap:break-word;}
+.sur-item .amt{margin-left:0;font-weight:700;white-space:nowrap;text-align:right;padding-left:8px;}
+.sur-extra{display:grid;grid-template-columns:90px minmax(0,1fr);gap:6px;margin:2px 0 5px 25px;align-items:stretch;}
 .sur-extra input,.sur-extra select,.sur-extra textarea{font-size:12px;padding:7px 8px;border-radius:8px;width:100%;box-sizing:border-box;}
-.sur-extra .sur-comment{grid-column:1 / -1;}
-.sur-extra.sur-expense-extra{grid-template-columns:90px minmax(0,1fr);align-items:stretch;}
-.sur-extra.sur-expense-extra .sur-comment{grid-column:auto;min-height:34px;height:34px;line-height:16px;}
-.sur-extra.sur-expense-extra .sur-expense-amount{min-height:34px;align-self:stretch;}
+.sur-extra .sur-comment{grid-column:auto;min-width:0;min-height:34px;resize:none;overflow:hidden;line-height:1.35;}
+.sur-extra:not(:has(.sur-count)):not(:has(.sur-expense-amount)) .sur-comment{grid-column:1 / -1;}
+.sur-extra .sur-count,
+.sur-extra .sur-expense-amount{width:90px;min-width:90px;max-width:90px;min-height:34px;height:100%;align-self:stretch;}
+.sur-extra .sur-extra-amount{grid-column:1 / -1;}
 .cf-row{border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-bottom:9px;background:#fff;}
 .cf-public{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:11.5px;color:#666;text-transform:none;letter-spacing:0;font-weight:500;}
 .cf-public input{width:16px;height:16px;accent-color:var(--violet);}
@@ -149,7 +151,12 @@ tr.locked td{background:#FAFAFC;}
 .offer-cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
 .offer-cat{display:flex;align-items:center;gap:6px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:500;color:#444;}
 .offer-cat input{width:15px;height:15px;accent-color:var(--violet);}
-@media(max-width:720px){.offer-cats-grid{grid-template-columns:1fr;}.sur-extra{grid-template-columns:80px 1fr;}.sur-extra.sur-expense-extra{grid-template-columns:80px minmax(0,1fr);}}
+@media(max-width:720px){
+  .offer-cats-grid{grid-template-columns:1fr;}
+  .sur-extra{grid-template-columns:80px minmax(0,1fr);}
+  .sur-extra .sur-count,
+  .sur-extra .sur-expense-amount{width:80px;min-width:80px;max-width:80px;}
+}
 .contract-date-row,
 .contract-params-row,
 .contract-result-row,
@@ -2633,11 +2640,12 @@ function openServiceForm(clientId, contractId, svcId){
   document.querySelectorAll('#modalRoot textarea.autogrow').forEach(autoGrowTextarea);
 }
 function autoGrowTextarea(el){
+  if(!el) return;
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
-  const expenseRow = el.closest('.sur-extra.sur-expense-extra');
-  const amountInput = expenseRow && expenseRow.querySelector('.sur-expense-amount');
-  if(amountInput) amountInput.style.height = el.offsetHeight + 'px';
+  const row = el.closest('.sur-extra');
+  const twin = row && row.querySelector('.sur-count, .sur-expense-amount');
+  if(twin) twin.style.height = el.offsetHeight + 'px';
 }
 function ctxClient(){ return getClient(window.__ctx.clientId); }
 function ctxContract(){ const c = ctxClient(); return c ? getContract(c, window.__ctx.contractId) : null; }
@@ -2851,7 +2859,7 @@ function renderSurcharges(){
   const selected = new Set((window.__ctx.surSel || []).map(i => Number(i)));
   const display = catSurchargesForDisplay(item.cat, item.code);
   box.innerHTML = `<div class="sur-box"><h3 style="margin-bottom:4px">${esc((DB.catShort&&DB.catShort[item.cat])||item.cat)}</h3>
-    <div class="muted" style="margin-bottom:6px">Отметь применимые корректировки. Количественные надбавки указываются счётчиком, фактические расходы — одной суммой.</div>
+    <div class="muted" style="margin-bottom:4px">Отметь применимые корректировки. Количественные надбавки указываются счётчиком, фактические расходы — одной суммой.</div>
     ${display.map(({item:x, index:i})=>{
       const actualExpenses = isActualExpenseSurcharge(x);
       const requiredIndex = actualExpenses ? surchargeRequiredIndex(list, x) : -1;
@@ -2875,15 +2883,13 @@ function renderSurcharges(){
         ${showDetails ? `<div class="sur-extra${actualExpenses?' sur-expense-extra':''}">
           ${actualExpenses ? expenseInputsHtml(i, m) : ''}
           ${needs?`<input type="number" min="1" step="1" class="sur-count" data-sur-index="${i}" value="${Math.max(1,Number(m.count)||1)}" placeholder="Кол-во" oninput="onSurMetaChange()" onchange="onSurMetaChange()">`: ''}
+          <textarea class="sur-comment autogrow" data-sur-comment="${i}" rows="1" placeholder="${actualExpenses?'Комментарий к расходам':'Комментарий'}" oninput="autoGrowTextarea(this);onSurMetaChange()">${esc(m.comment||'')}</textarea>
           ${showExtra?`<input type="number" min="0" step="1" class="sur-extra-amount" data-sur-extra="${i}" value="${Number(m.extraAmount)||0}" placeholder="${x.type==='manual'?'Сумма зачёта, ₽':'Факт. расходы, ₽'}" oninput="onSurMetaChange()">`: ''}
           ${needsBase?`<div class="sur-base-contract">
             <div class="muted">Базовый договор — 50% считается от его цены, не от накопленной суммы</div>
             <select class="sur-base-code" data-sur-base-code="${i}" onchange="onSurBaseCodeChange('${i}')">${baseContractOptionsHtml(m.baseCode)}</select>
             <input type="number" min="0" step="100" class="sur-base-price" data-sur-base="${i}" value="${Number(m.basePrice)||0}" placeholder="Стоимость базового договора, ₽" oninput="onSurMetaChange()">
           </div>`: ''}
-          ${actualExpenses
-            ? `<textarea class="sur-comment autogrow" data-sur-comment="${i}" rows="1" placeholder="Комментарий к расходам" oninput="autoGrowTextarea(this);onSurMetaChange()">${esc(m.comment||'')}</textarea>`
-            : `<input class="sur-comment" data-sur-comment="${i}" value="${esc(m.comment||'')}" placeholder="Комментарий" oninput="onSurMetaChange()">`}
         </div>` : ''}
       </div>`;
     }).join('')}</div>`;
