@@ -445,12 +445,23 @@ details[open] summary::before{content:"▾ ";}
 .comp-month-table input{width:110px;max-width:100%;font-size:15px;}
 .comp-month{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;width:100%;max-width:100%;min-width:0;overflow:hidden;box-sizing:border-box;}
 .comp-month h3{margin:0 0 6px;font-size:13px;text-transform:none;letter-spacing:0;}
-.comp-svc-scroll{
+.comp-svc-scroll,
+.comp-svc-head-scroll,
+.comp-svc-body-scroll{
   display:block;width:100%;max-width:100%;min-width:0;
   overflow-x:auto;overflow-y:hidden;
   -webkit-overflow-scrolling:touch;
-  margin-top:8px;
 }
+.comp-svc-scroll,
+.comp-svc-head-scroll{margin-top:8px;}
+.comp-svc-body-scroll{margin-top:0;}
+.comp-svc-head-scroll{background:#fff;}
+.comp-svc-head-scroll::-webkit-scrollbar,
+.comp-svc-body-scroll::-webkit-scrollbar,
+.comp-svc-scroll::-webkit-scrollbar{height:8px;}
+.comp-svc-head-scroll,
+.comp-svc-body-scroll,
+.comp-svc-scroll{scrollbar-width:thin;}
 .comp-svc{width:max-content;min-width:740px;margin:0;border-collapse:collapse;font-size:13px;table-layout:fixed;}
 .comp-col-date{width:104px;}
 .comp-col-code{width:56px;}
@@ -677,25 +688,42 @@ details[open] summary::before{content:"▾ ";}
 .svc-list{display:flex;flex-direction:column;margin-bottom:6px;overflow-x:visible;}
 .all-table-scroll .svc-list{overflow-x:visible;}
 #cContractDetail{min-width:0;max-width:100%;}
-#view-client .card{min-width:0;max-width:100%;overflow-x:hidden;}
-.contract-table-scroll{overflow-x:auto;position:relative;max-width:100%;-webkit-overflow-scrolling:touch;}
-.contract-table-inner{width:100%;}
+#view-client .card,
+#view-all .card{min-width:0;max-width:100%;overflow:visible;}
+.contract-table-scroll,
+.all-table-scroll,
+.svc-head-scroll{
+  overflow-x:auto;overflow-y:hidden;
+  position:relative;
+  width:100%;max-width:100%;min-width:0;
+  -webkit-overflow-scrolling:touch;
+}
+.svc-head-scroll{background:#fff;}
+.svc-head-scroll.is-sticky{position:sticky;top:0;z-index:8;}
+.svc-head-scroll::-webkit-scrollbar,
+.contract-table-scroll::-webkit-scrollbar,
+.all-table-scroll::-webkit-scrollbar{height:8px;}
+.svc-head-scroll,
+.contract-table-scroll,
+.all-table-scroll{scrollbar-width:thin;}
+.contract-table-inner,
+.all-table-inner{width:100%;}
 @media (min-width:721px){
-  #contractTableScroll{overflow-x:auto;overflow-y:hidden;}
-  #contractTableScroll .contract-table-inner{
+  #contractTableScroll .contract-table-inner,
+  #contractTableTopScroll .contract-table-inner{
     width:max(100%, 900px) !important;
     min-width:900px !important;
     max-width:none !important;
   }
-  #contractTableScroll .svc-head,
   #contractTableScroll .svc-list,
-  #contractTableScroll .svc-row{
+  #contractTableScroll .svc-row,
+  #contractTableTopScroll .svc-head{
     width:100% !important;
     min-width:0 !important;
     box-sizing:border-box;
   }
   #contractTableScroll .svc-row .c-edit,
-  #contractTableScroll .svc-head .c-edit-col{
+  #contractTableTopScroll .svc-head .c-edit-col{
     position:sticky;
     right:0;
     z-index:2;
@@ -717,30 +745,21 @@ details[open] summary::before{content:"▾ ";}
   }
 }
 @media (max-width:720px){
-  .contract-table-scroll,
-  .all-table-scroll{
-    container-type:inline-size;
-    container-name:svcscroll;
-  }
-  .contract-table-scroll,
-  #contractTableScroll{
-    overflow-x:auto;overflow-y:hidden;
-    -webkit-overflow-scrolling:touch;
-    width:100%;max-width:100%;min-width:0;
-  }
-  #contractTableScroll .contract-table-inner{
+  .svc-head-scroll.is-sticky{top:46px;}
+  #contractTableScroll .contract-table-inner,
+  #contractTableTopScroll .contract-table-inner{
     width:max(100%, 900px);
     min-width:900px;
     max-width:none;
   }
-  #contractTableScroll .svc-head,
   #contractTableScroll .svc-list,
-  #contractTableScroll .svc-row{
+  #contractTableScroll .svc-row,
+  #contractTableTopScroll .svc-head{
     width:100%;
     box-sizing:border-box;
   }
   #contractTableScroll .svc-row .c-edit,
-  #contractTableScroll .svc-head .c-edit-col{
+  #contractTableTopScroll .svc-head .c-edit-col{
     position:sticky;
     right:0;
     z-index:2;
@@ -753,7 +772,6 @@ details[open] summary::before{content:"▾ ";}
     align-self:start;
     margin-top:2px;
   }
-  #view-client .card{overflow-x:hidden;}
 }
 .svc-head{
   display:grid;
@@ -781,37 +799,19 @@ details[open] summary::before{content:"▾ ";}
 .svc-row .c-status{grid-area:status;white-space:normal;text-align:left;}
 .svc-row .c-status .pay-stack{display:flex;flex-direction:column;gap:3px;align-items:flex-start;}
 .svc-row .c-edit{grid-area:edit;justify-self:end;}
-.svc-row .c-cf{grid-column:1 / -1;font-size:12px;color:#666;overflow-wrap:anywhere;padding-left:36px;}
-.svc-row .c-codedesc,.svc-row .c-priceinfo{display:none;}
-@media (min-width:721px){
-  /* Доп. графы переносятся по ширине видимой области таблицы, а не по min-width строки */
-  .contract-table-scroll,
-  .all-table-scroll{
-    container-type:inline-size;
-    container-name:svcscroll;
-  }
-  .svc-row .c-cf{
-    box-sizing:border-box;
-    min-width:0;
-    width:100cqw;
-    max-width:100cqw;
-    overflow-wrap:anywhere;
-    word-break:break-word;
-    white-space:normal;
-    position:sticky;
-    left:0;
-    z-index:1;
-    background:#fff;
-    padding-right:12px;
-  }
-  .svc-row.locked .c-cf{background:#FAFAFC;}
-  .svc-row .c-cf ul,
-  .svc-row .c-cf li{
-    max-width:100%;
-    overflow-wrap:anywhere;
-    word-break:break-word;
-  }
+.svc-row .c-cf{
+  display:block;
+  font-size:12px;color:#666;
+  overflow-wrap:anywhere;word-break:break-word;white-space:normal;
+  margin-top:4px;
 }
+.svc-row .c-cf ul,
+.svc-row .c-cf li{
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.svc-row .c-codedesc,.svc-row .c-priceinfo{display:none;}
 @media (max-width:720px){
   .svc-head{display:grid;}
   .svc-list{overflow-x:visible;}
@@ -823,21 +823,6 @@ details[open] summary::before{content:"▾ ";}
   .svc-row .c-price,
   .svc-row .c-paid,
   .svc-row .c-status{display:block;}
-  .svc-row .c-cf{
-    box-sizing:border-box;
-    min-width:0;
-    width:100cqw;
-    max-width:100cqw;
-    overflow-wrap:anywhere;
-    word-break:break-word;
-    white-space:normal;
-    position:sticky;
-    left:0;
-    z-index:1;
-    background:#fff;
-    padding-right:12px;
-  }
-  .svc-row.locked .c-cf{background:#FAFAFC;}
 }
 
 .svc-row.all-row{
@@ -856,41 +841,21 @@ details[open] summary::before{content:"▾ ";}
   border-bottom:1.5px solid var(--line);
 }
 .all-head > div:nth-child(7),.all-head > div:nth-child(8){text-align:left;justify-self:start;}
-.all-table-scroll{overflow-x:auto;position:relative;}
-.all-table-top-scroll{
-  overflow-x:auto;
-  overflow-y:hidden;
-  height:12px;
-  margin-top:4px;
-  margin-bottom:10px;
-  -webkit-overflow-scrolling:touch;
-}
-.all-table-top-scroll>div{height:1px;}
-@media (min-width:721px){
-  .all-table-top-scroll::-webkit-scrollbar{height:6px;}
-  .all-table-top-scroll{scrollbar-width:thin;}
-}
 @media (max-width:720px){
-  .all-table-top-scroll{display:none !important;}
   #view-all,
   #view-all .card{
     min-width:0;
     max-width:100%;
   }
-  .all-table-scroll,
-  #allTableScroll{
-    overflow-x:auto;overflow-y:hidden;
-    -webkit-overflow-scrolling:touch;
-    width:100%;max-width:100%;min-width:0;
-  }
-  #allTableScroll .all-table-inner{
+  #allTableScroll .all-table-inner,
+  #allTableTopScroll .all-table-inner{
     width:max(100%, 1100px);
     min-width:1100px;
     max-width:none;
   }
-  #allTableScroll .all-head,
   #allTableScroll .svc-list,
-  #allTableScroll .svc-row.all-row{
+  #allTableScroll .svc-row.all-row,
+  #allTableTopScroll .all-head{
     width:100%;
     box-sizing:border-box;
   }
@@ -909,17 +874,16 @@ details[open] summary::before{content:"▾ ";}
   align-self:start;
   margin-top:2px;
 }
-.all-table-inner{width:100%;}
 @media (min-width:721px){
-  #allTableScroll{overflow-x:auto;overflow-y:hidden;}
-  #allTableScroll .all-table-inner{
+  #allTableScroll .all-table-inner,
+  #allTableTopScroll .all-table-inner{
     width:max(100%, 1100px) !important;
     min-width:1100px !important;
     max-width:none !important;
   }
-  #allTableScroll .all-head,
   #allTableScroll .svc-list,
-  #allTableScroll .svc-row.all-row{
+  #allTableScroll .svc-row.all-row,
+  #allTableTopScroll .all-head{
     width:100% !important;
     min-width:0 !important;
     box-sizing:border-box;
@@ -1096,10 +1060,13 @@ details[open] summary::before{content:"▾ ";}
         </div>
       </div>
       <div class="totals" id="allTotals"></div>
-      <div id="allTableTopScroll" class="all-table-top-scroll"><div></div></div>
-      <div id="allTableScroll" class="all-table-scroll">
+      <div id="allTableTopScroll" class="svc-head-scroll is-sticky">
         <div class="all-table-inner">
           <div class="all-head"><div>№</div><div>Заказчик</div><div>Основание</div><div>Дата оказания услуги</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div><div class="c-edit-col"></div></div>
+        </div>
+      </div>
+      <div id="allTableScroll" class="all-table-scroll">
+        <div class="all-table-inner">
           <div id="allTable" class="svc-list"></div>
         </div>
       </div>
@@ -1174,10 +1141,13 @@ details[open] summary::before{content:"▾ ";}
           <label for="sentFlag" class="sent-flag-label">Отправлено заказчику</label>
           <span class="muted muted-status" id="sentHint"></span>
         </div>
-        <div id="contractTableTopScroll" class="all-table-top-scroll"><div></div></div>
-        <div id="contractTableScroll" class="contract-table-scroll">
+        <div id="contractTableTopScroll" class="svc-head-scroll is-sticky">
           <div class="contract-table-inner">
             <div class="svc-head"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div><div class="c-edit-col"></div></div>
+          </div>
+        </div>
+        <div id="contractTableScroll" class="contract-table-scroll">
+          <div class="contract-table-inner">
             <div id="cTable" class="svc-list"></div>
           </div>
         </div>
@@ -2144,7 +2114,6 @@ async function init(){
     restoreNav();
     renderAllViews();
     setView(currentView, currentClientId, true);
-    bindSwipeNav();
     bindClientNameEdit();
     bindExcelFilters();
     if(!window.__actsHashBound){
@@ -2206,23 +2175,6 @@ function onHashChange(){
 function openClientInTab(id, ev){
   if(ev){ ev.preventDefault(); ev.stopPropagation(); }
   window.open(location.pathname + location.search + '#client/' + encodeURIComponent(id), '_blank');
-}
-function bindSwipeNav(){
-  if(window.__swipeBound) return;
-  window.__swipeBound = true;
-  let x0 = null, y0 = null;
-  document.addEventListener('touchstart', e=>{
-    if(currentView!=='client' || !currentContractId){ x0 = null; return; }
-    x0 = e.changedTouches[0].clientX;
-    y0 = e.changedTouches[0].clientY;
-  }, {passive:true});
-  document.addEventListener('touchend', e=>{
-    if(x0==null) return;
-    const dx = e.changedTouches[0].clientX - x0;
-    const dy = e.changedTouches[0].clientY - y0;
-    x0 = null;
-    if(dx > 72 && Math.abs(dx) > Math.abs(dy) * 1.4) openContract(null);
-  }, {passive:true});
 }
 function bindClientNameEdit(){
   const title = document.getElementById('cName');
@@ -3969,7 +3921,7 @@ function renderAll(){
       <div class="c-basis">${basisLabel ? contractLinkHtml(ct) : '<span class="pill no">нет</span>'}</div>
       <div class="c-date">${fmtDate(s.date)||'<span class="pill no">нет</span>'}</div>
       <div class="c-code">${fmtSvcCode(s)}</div>
-      <div class="c-desc">${esc(s.desc)||'<span class="pill no">нет</span>'}${appliedHtml(s)}</div>
+      <div class="c-desc">${esc(s.desc)||'<span class="pill no">нет</span>'}${appliedHtml(s)}${serviceCustomFieldsHtml(s)}</div>
       <div class="c-price">${fmtSvcPrice(s)}</div>
       <div class="c-paid">${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</div>
       <div class="c-status">${payPill(s)}${s.locked?' <span class="pill lock">отправлено</span>':''}</div>
@@ -3984,26 +3936,19 @@ function renderAll(){
         ${s.locked?'<span class="pill lock">отправлено</span>':''}
       </div>
       <button type="button" class="icon-btn c-edit" onclick="openServiceForm('${c.id}','${s.contractId}','${s.id}')" title="Изменить" style="font-size:13px;padding:2px 5px;line-height:1;">✏️</button>
-      ${DB.customFields
-        .filter(f=>String(((s.custom||{})[f.id] && typeof (s.custom||{})[f.id]==='object' ? (s.custom||{})[f.id].value : (s.custom||{})[f.id])||'').trim())
-        .map(f=>{
-          const v = ((s.custom||{})[f.id] && typeof (s.custom||{})[f.id]==='object')
-            ? (s.custom||{})[f.id].value
-            : (s.custom||{})[f.id];
-          return customFieldUiHtml(f, v);
-        }).join('')}
     </div>`;
   }).join('') || '<div class="muted" style="padding:12px">Ничего не найдено</div>';
   initAllTableScroll();
 }
-function initAllTableScroll(){
-  const top = document.getElementById('allTableTopScroll');
-  const bot = document.getElementById('allTableScroll');
+function bindSyncedHScroll(top, bot){
   if(!top || !bot) return;
-  const inner = top.firstElementChild;
-  if(!inner) return;
+  const topInner = top.firstElementChild;
   const syncWidth = () => {
-    inner.style.width = bot.scrollWidth + 'px';
+    const w = bot.scrollWidth;
+    if(topInner){
+      topInner.style.width = w + 'px';
+      topInner.style.minWidth = w + 'px';
+    }
     top.scrollLeft = bot.scrollLeft;
   };
   if(!bot.dataset.scrollBound){
@@ -4014,45 +3959,38 @@ function initAllTableScroll(){
       lock = true;
       bot.scrollLeft = top.scrollLeft;
       lock = false;
-    });
+    }, {passive:true});
     bot.addEventListener('scroll', () => {
       if(lock) return;
       lock = true;
       top.scrollLeft = bot.scrollLeft;
       lock = false;
-    });
+    }, {passive:true});
     window.addEventListener('resize', syncWidth);
   }
   requestAnimationFrame(syncWidth);
 }
+function initAllTableScroll(){
+  bindSyncedHScroll(document.getElementById('allTableTopScroll'), document.getElementById('allTableScroll'));
+}
 function initContractTableScroll(){
-  const top = document.getElementById('contractTableTopScroll');
-  const bot = document.getElementById('contractTableScroll');
-  if(!top || !bot) return;
-  const inner = top.firstElementChild;
-  if(!inner) return;
-  const syncWidth = () => {
-    inner.style.width = bot.scrollWidth + 'px';
-    top.scrollLeft = bot.scrollLeft;
-  };
-  if(!bot.dataset.scrollBound){
-    bot.dataset.scrollBound = '1';
-    let lock = false;
-    top.addEventListener('scroll', () => {
-      if(lock) return;
-      lock = true;
-      bot.scrollLeft = top.scrollLeft;
-      lock = false;
-    });
-    bot.addEventListener('scroll', () => {
-      if(lock) return;
-      lock = true;
-      top.scrollLeft = bot.scrollLeft;
-      lock = false;
-    });
-    window.addEventListener('resize', syncWidth);
-  }
-  requestAnimationFrame(syncWidth);
+  bindSyncedHScroll(document.getElementById('contractTableTopScroll'), document.getElementById('contractTableScroll'));
+}
+function bindCompScrollPairs(root){
+  (root || document).querySelectorAll('.comp-svc-scroll-pair').forEach(pair=>{
+    bindSyncedHScroll(pair.querySelector('.comp-svc-head-scroll'), pair.querySelector('.comp-svc-body-scroll'));
+  });
+}
+function serviceCustomFieldsHtml(s, fields){
+  const list = fields || (DB && DB.customFields) || [];
+  return list
+    .filter(f=>String(((s.custom||{})[f.id] && typeof (s.custom||{})[f.id]==='object' ? (s.custom||{})[f.id].value : (s.custom||{})[f.id])||'').trim())
+    .map(f=>{
+      const v = ((s.custom||{})[f.id] && typeof (s.custom||{})[f.id]==='object')
+        ? (s.custom||{})[f.id].value
+        : (s.custom||{})[f.id];
+      return customFieldUiHtml(f, v);
+    }).join('');
 }
 function customFieldUiHtml(fieldDef, rawValue){
   const value = rawValue == null ? '' : String(rawValue);
@@ -4257,7 +4195,7 @@ function renderContractDetail(c, ct){
       <div class="c-num">${list.length-i}</div>
       <div class="c-date">${fmtDate(s.date)||'<span class="pill no">нет</span>'}</div>
       <div class="c-code">${fmtSvcCode(s)}</div>
-      <div class="c-desc">${esc(s.desc)||'<span class="pill no">нет</span>'}${appliedHtml(s)}</div>
+      <div class="c-desc">${esc(s.desc)||'<span class="pill no">нет</span>'}${appliedHtml(s)}${serviceCustomFieldsHtml(s, usedCF)}</div>
       <div class="c-price">${fmtSvcPrice(s)}</div>
       <div class="c-paid">${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</div>
       <div class="c-status">${payPill(s)}${s.locked?' <span class="pill lock">отправлено</span>':''}</div>
@@ -4272,14 +4210,6 @@ function renderContractDetail(c, ct){
         ${s.locked?'<span class="pill lock">отправлено</span>':''}
       </div>
       <button type="button" class="icon-btn c-edit" onclick="openServiceForm('${c.id}','${ct.id}','${s.id}')" title="Изменить" style="font-size:13px;padding:2px 5px;line-height:1;">✏️</button>
-      ${usedCF
-        .filter(f=>String(((s.custom||{})[f.id] && typeof (s.custom||{})[f.id]==='object' ? (s.custom||{})[f.id].value : (s.custom||{})[f.id])||'').trim())
-        .map(f=>{
-          const v = ((s.custom||{})[f.id] && typeof (s.custom||{})[f.id]==='object')
-            ? (s.custom||{})[f.id].value
-            : (s.custom||{})[f.id];
-          return customFieldUiHtml(f, v);
-        }).join('')}
     </div>`).join('') || '<div class="muted" style="padding:12px">Услуг пока нет</div>';
   initContractTableScroll();
 }
@@ -4425,6 +4355,14 @@ function compensationDeltaText(delta){
   if(n<0) return money(n);
   return 'без изменения';
 }
+function wrapCompSvcTable(rows){
+  const cols = '<colgroup><col class="comp-col-date"><col class="comp-col-code"><col class="comp-col-desc"><col class="comp-col-num"><col class="comp-col-num"><col class="comp-col-num"></colgroup>';
+  const head = '<thead><tr><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">В акте</th><th class="num">При факт. параметрах</th><th class="num">Разница</th></tr></thead>';
+  return `<div class="comp-svc-scroll-pair">
+    <div class="comp-svc-head-scroll"><table class="comp-svc">${cols}${head}</table></div>
+    <div class="comp-svc-body-scroll"><table class="comp-svc">${cols}<tbody>${rows}</tbody></table></div>
+  </div>`;
+}
 function compensationResultHtml(result){
   if(!result) return '<div class="muted">Заполни период и платежи — расчёт появится здесь.</div>';
   const clause = result.clause === '9.3.1'
@@ -4446,7 +4384,7 @@ function compensationResultHtml(result){
     return `<section class="comp-month">
       <h3>${esc(monthTitle(month.month))}</h3>
       <div class="muted">${lever}. Срок в формуле ${t.term} мес. → тариф ${esc(t.tariff)}, скидка ${t.discountPct}%. Потолок бюджета из договора: ${money(t.agreedBudget)}. Неоплата бюджета: ${money(month.unpaidBudget)}.</div>
-      ${rows?`<div class="comp-svc-scroll"><table class="comp-svc"><colgroup><col class="comp-col-date"><col class="comp-col-code"><col class="comp-col-desc"><col class="comp-col-num"><col class="comp-col-num"><col class="comp-col-num"></colgroup><thead><tr><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">В акте</th><th class="num">При факт. параметрах</th><th class="num">Разница</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="muted" style="margin-top:6px">Услуг в этом месяце нет — начисляется только абонентская плата.</div>'}
+      ${rows?wrapCompSvcTable(rows):'<div class="muted" style="margin-top:6px">Услуг в этом месяце нет — начисляется только абонентская плата.</div>'}
       <div class="muted" style="margin-top:8px">Услуги в акте ${money(month.actSum)} → после пересчёта ${money(month.servicesSum)}. Сверх договора ${money(month.overage)}. Абонентка ${money(month.subscriptionDue)} + сверх ${money(month.overage)} = начислено ${money(month.accrued)}. Внесено ${money(month.paid)}.</div>
     </section>`;
   }).join('');
@@ -4529,6 +4467,7 @@ function runCompensationPreview(){
   window.__compCtx.result = result;
   window.__compCtx.form = form;
   box.innerHTML = compensationResultHtml(result);
+  bindCompScrollPairs(box);
 }
 function renderCompensationPaidRows(){
   const ctx = window.__compCtx;
@@ -5127,6 +5066,7 @@ async function makePdf(){
 function openModal(html, wide, cardClass){
   document.getElementById('modalRoot').innerHTML =
     `<div class="modal" onclick="if(event.target===this)closeModal()"><div class="card ${wide?'wide':''} ${cardClass||''}">${html}</div></div>`;
+  bindCompScrollPairs(document.getElementById('modalRoot'));
 }
 function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
 </script>
