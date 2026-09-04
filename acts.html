@@ -226,13 +226,9 @@ tr.locked td{background:#FAFAFC;}
 @media (min-width:721px){
   .clients,.contracts-grid{justify-content:flex-start;}
   .cl-card{flex:0 0 340px;width:340px;max-width:340px;}
-  #view-clients > .card{container-name:clients-card;container-type:inline-size;}
-  #cContractsList{container-name:contracts-list;container-type:inline-size;}
 }
-@container clients-card (min-width:692px){
-  #view-clients .clients{row-gap:24px;}
-}
-@container contracts-list (min-width:692px){
+@media (min-width:829px){
+  #view-clients .clients,
   #cContractsList .contracts-grid{row-gap:24px;}
 }
 @media (max-width:720px){
@@ -240,6 +236,9 @@ tr.locked td{background:#FAFAFC;}
   .cl-bar{gap:2px;padding:6px 6px 8px;}
   .cl-amt{font-size:11.5px;padding:0 4px;}
   .cl-ico{font-size:15px;}
+}
+@media (max-width:720px) and (any-hover:hover) and (any-pointer:fine){
+  .cl-card{flex:0 0 340px;width:340px;max-width:340px;}
 }
 .icon-btn{background:none;border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:11.5px;cursor:pointer;color:#666;font-family:inherit;}
 .icon-btn:hover{border-color:var(--violet);color:var(--violet);}
