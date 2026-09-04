@@ -136,9 +136,11 @@ tr.locked td{background:#FAFAFC;}
 .sur-item span{min-width:0;overflow-wrap:break-word;word-break:break-word;}
 .sur-item .amt{margin-left:0;font-weight:700;white-space:normal;text-align:right;padding-left:4px;}
 .sur-extra{display:grid;grid-template-columns:90px 1fr;gap:6px;margin:3px 0 7px 25px;}
-.sur-extra input,.sur-extra select{font-size:12px;padding:7px 8px;border-radius:8px;width:100%;box-sizing:border-box;}
+.sur-extra input,.sur-extra select,.sur-extra textarea{font-size:12px;padding:7px 8px;border-radius:8px;width:100%;box-sizing:border-box;}
 .sur-extra .sur-comment{grid-column:1 / -1;}
-.sur-expense-list{display:grid;gap:6px;min-width:0;}
+.sur-extra.sur-expense-extra{grid-template-columns:90px minmax(0,1fr);align-items:stretch;}
+.sur-extra.sur-expense-extra .sur-comment{grid-column:auto;min-height:34px;height:34px;line-height:16px;}
+.sur-extra.sur-expense-extra .sur-expense-amount{min-height:34px;align-self:stretch;}
 .cf-row{border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-bottom:9px;background:#fff;}
 .cf-public{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:11.5px;color:#666;text-transform:none;letter-spacing:0;font-weight:500;}
 .cf-public input{width:16px;height:16px;accent-color:var(--violet);}
@@ -147,7 +149,7 @@ tr.locked td{background:#FAFAFC;}
 .offer-cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
 .offer-cat{display:flex;align-items:center;gap:6px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:500;color:#444;}
 .offer-cat input{width:15px;height:15px;accent-color:var(--violet);}
-@media(max-width:720px){.offer-cats-grid{grid-template-columns:1fr;}.sur-extra{grid-template-columns:80px 1fr;}}
+@media(max-width:720px){.offer-cats-grid{grid-template-columns:1fr;}.sur-extra{grid-template-columns:80px 1fr;}.sur-extra.sur-expense-extra{grid-template-columns:80px minmax(0,1fr);}}
 .contract-date-row,
 .contract-params-row,
 .contract-result-row,
@@ -1196,17 +1198,19 @@ function surchargeNameKey(value){
 function isActualExpenseSurcharge(x){
   return !!(x && (x.actualExpenses || String(x.type || x.kind || '').toLowerCase()==='actual_expenses'));
 }
-function expenseCountForMeta(meta){
+function actualExpenseAmountForMeta(meta){
+  const direct = Math.max(0, Number(meta && meta.actualExpenseAmount) || 0);
+  if(direct) return direct;
   const amounts = Array.isArray(meta && meta.expenseAmounts) ? meta.expenseAmounts : [];
-  return Math.max(1, Number(meta && meta.expenseCount) || amounts.length || 1);
-}
-function expenseAmountsForMeta(meta, count){
-  const source = Array.isArray(meta && meta.expenseAmounts) ? meta.expenseAmounts : [];
-  const amounts = source.map(value=>Math.max(0, Number(value)||0));
-  if(!amounts.length && Number(meta && meta.extraAmount)>0) amounts.push(Math.max(0, Number(meta.extraAmount)||0));
-  const length = Math.max(1, Number(count) || amounts.length || 1);
-  while(amounts.length < length) amounts.push(0);
-  return amounts.slice(0, length);
+  const legacyTotal = amounts.reduce((sum, value)=>sum + Math.max(0, Number(value) || 0), 0);
+  if(legacyTotal) return legacyTotal;
+  const legacyExtra = Math.max(0, Number(meta && meta.extraAmount) || 0);
+  if(legacyExtra) return legacyExtra;
+  const accidentalCount = Math.max(0, Number(meta && meta.expenseCount) || 0);
+  const allAmountsEmpty = amounts.length && amounts.every(value=>!Number(value));
+  // Исправляет сохранённый результат прежнего ошибочного поля «количество»:
+  // сумма вроде 2 356 не должна превращаться в тысячи пустых расходов.
+  return accidentalCount >= 100 && allAmountsEmpty ? accidentalCount : 0;
 }
 function surchargeRequiredIndex(list, x){
   const required = surchargeNameKey(x && x.requiresSurcharge);
@@ -1248,10 +1252,9 @@ function selectedSurchargesForService(item, surKeys, surMeta){
     if(actualExpenses && required && !selectedNames.has(required)) return null;
     const domCountEl = document.querySelector(`.sur-count[data-sur-index="${idx}"]`);
     const domCount = domCountEl ? Math.max(1, Number(domCountEl.value) || 1) : null;
-    const count = actualExpenses
-      ? expenseCountForMeta(m)
-      : (domCount != null ? domCount : Math.max(1, Number(m.count) || 1));
-    const expenseAmounts = actualExpenses ? expenseAmountsForMeta(m, count) : [];
+    const count = actualExpenses ? 1 : (domCount != null ? domCount : Math.max(1, Number(m.count) || 1));
+    const actualExpenseAmount = actualExpenses ? actualExpenseAmountForMeta(m) : 0;
+    const expenseAmounts = actualExpenses && actualExpenseAmount ? [actualExpenseAmount] : [];
     return x && surchargeAppliesToCode(x, item.code) ? {
       id:x.name,
       name:x.name,
@@ -1262,8 +1265,9 @@ function selectedSurchargesForService(item, surKeys, surMeta){
       count,
       extraAmount:actualExpenses ? 0 : Math.max(0,Number(m.extraAmount)||0),
       actualExpenses,
+      actualExpenseAmount,
       expenseAmounts,
-      actualExpenseTotal:expenseAmounts.reduce((sum, value)=>sum+value, 0),
+      actualExpenseTotal:actualExpenseAmount,
       comment:m.comment||'',
       basePrice: Math.max(0, Number(m.basePrice)||0),
       group:x.group,
@@ -2631,6 +2635,9 @@ function openServiceForm(clientId, contractId, svcId){
 function autoGrowTextarea(el){
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
+  const expenseRow = el.closest('.sur-extra.sur-expense-extra');
+  const amountInput = expenseRow && expenseRow.querySelector('.sur-expense-amount');
+  if(amountInput) amountInput.style.height = el.offsetHeight + 'px';
 }
 function ctxClient(){ return getClient(window.__ctx.clientId); }
 function ctxContract(){ const c = ctxClient(); return c ? getContract(c, window.__ctx.contractId) : null; }
@@ -2831,12 +2838,8 @@ function onSurBaseCodeChange(surIndex){
   recalc();
 }
 function expenseInputsHtml(index, meta){
-  const count = expenseCountForMeta(meta);
-  const amounts = expenseAmountsForMeta(meta, count);
-  return `<input type="number" min="1" step="1" class="sur-expense-count" data-sur-expense-count="${index}" value="${count}" placeholder="Кол-во расходов" onchange="onExpenseCountChange(${index})">
-    <div class="sur-expense-list">${amounts.map((amount, expenseIndex)=>
-      `<input type="number" min="0" step="1" class="sur-expense-amount" data-sur-expense="${index}" data-expense-index="${expenseIndex}" value="${amount||''}" placeholder="Расход ${expenseIndex+1}, ₽" oninput="onSurMetaChange()">`
-    ).join('')}</div>`;
+  const amount = actualExpenseAmountForMeta(meta);
+  return `<input type="number" min="0" step="1" class="sur-expense-amount" data-sur-expense="${index}" value="${amount||''}" placeholder="Фактические расходы, ₽" oninput="onSurMetaChange()">`;
 }
 function renderSurcharges(){
   const code = document.getElementById('svcCode').value;
@@ -2848,7 +2851,7 @@ function renderSurcharges(){
   const selected = new Set((window.__ctx.surSel || []).map(i => Number(i)));
   const display = catSurchargesForDisplay(item.cat, item.code);
   box.innerHTML = `<div class="sur-box"><h3 style="margin-bottom:4px">${esc((DB.catShort&&DB.catShort[item.cat])||item.cat)}</h3>
-    <div class="muted" style="margin-bottom:6px">Отметь применимые корректировки. Количественные надбавки можно указать счетчиком.</div>
+    <div class="muted" style="margin-bottom:6px">Отметь применимые корректировки. Количественные надбавки указываются счётчиком, фактические расходы — одной суммой.</div>
     ${display.map(({item:x, index:i})=>{
       const actualExpenses = isActualExpenseSurcharge(x);
       const requiredIndex = actualExpenses ? surchargeRequiredIndex(list, x) : -1;
@@ -2869,7 +2872,7 @@ function renderSurcharges(){
           <span class="amt">${esc(x.amount)}${needs && Number(m.count)>1 ? ' × '+Number(m.count) : ''}</span>
         </label>
         ${requirementHint}
-        ${showDetails ? `<div class="sur-extra">
+        ${showDetails ? `<div class="sur-extra${actualExpenses?' sur-expense-extra':''}">
           ${actualExpenses ? expenseInputsHtml(i, m) : ''}
           ${needs?`<input type="number" min="1" step="1" class="sur-count" data-sur-index="${i}" value="${Math.max(1,Number(m.count)||1)}" placeholder="Кол-во" oninput="onSurMetaChange()" onchange="onSurMetaChange()">`: ''}
           ${showExtra?`<input type="number" min="0" step="1" class="sur-extra-amount" data-sur-extra="${i}" value="${Number(m.extraAmount)||0}" placeholder="${x.type==='manual'?'Сумма зачёта, ₽':'Факт. расходы, ₽'}" oninput="onSurMetaChange()">`: ''}
@@ -2878,10 +2881,13 @@ function renderSurcharges(){
             <select class="sur-base-code" data-sur-base-code="${i}" onchange="onSurBaseCodeChange('${i}')">${baseContractOptionsHtml(m.baseCode)}</select>
             <input type="number" min="0" step="100" class="sur-base-price" data-sur-base="${i}" value="${Number(m.basePrice)||0}" placeholder="Стоимость базового договора, ₽" oninput="onSurMetaChange()">
           </div>`: ''}
-          <input class="sur-comment" data-sur-comment="${i}" value="${esc(m.comment||'')}" placeholder="Комментарий" oninput="onSurMetaChange()">
+          ${actualExpenses
+            ? `<textarea class="sur-comment autogrow" data-sur-comment="${i}" rows="1" placeholder="Комментарий к расходам" oninput="autoGrowTextarea(this);onSurMetaChange()">${esc(m.comment||'')}</textarea>`
+            : `<input class="sur-comment" data-sur-comment="${i}" value="${esc(m.comment||'')}" placeholder="Комментарий" oninput="onSurMetaChange()">`}
         </div>` : ''}
       </div>`;
     }).join('')}</div>`;
+  box.querySelectorAll('textarea.autogrow').forEach(autoGrowTextarea);
 }
 function refreshSurchargeAmtLabels(){
   const item = priceItem(document.getElementById('svcCode')?.value);
@@ -2906,24 +2912,15 @@ function syncSurMetaFromDom(){
     window.__ctx.surMeta[i] = window.__ctx.surMeta[i] || {};
     window.__ctx.surMeta[i].count = Math.max(1, Number(el.value) || 1);
   });
-  document.querySelectorAll('.sur-expense-count').forEach(el=>{
-    const i = el.dataset.surExpenseCount;
+  document.querySelectorAll('.sur-expense-amount').forEach(el=>{
+    const i = el.dataset.surExpense;
     if(i == null) return;
     window.__ctx.surMeta[i] = window.__ctx.surMeta[i] || {};
     const meta = window.__ctx.surMeta[i];
-    meta.expenseCount = Math.max(1, Number(el.value) || 1);
-    meta.expenseAmounts = expenseAmountsForMeta(meta, meta.expenseCount);
-  });
-  document.querySelectorAll('.sur-expense-amount').forEach(el=>{
-    const i = el.dataset.surExpense;
-    const expenseIndex = Number(el.dataset.expenseIndex);
-    if(i == null || !Number.isInteger(expenseIndex)) return;
-    window.__ctx.surMeta[i] = window.__ctx.surMeta[i] || {};
-    const meta = window.__ctx.surMeta[i];
-    const count = expenseCountForMeta(meta);
-    const amounts = expenseAmountsForMeta(meta, count);
-    amounts[expenseIndex] = Math.max(0, Number(el.value) || 0);
-    meta.expenseAmounts = amounts;
+    meta.actualExpenseAmount = Math.max(0, Number(el.value) || 0);
+    delete meta.expenseAmounts;
+    delete meta.expenseCount;
+    delete meta.extraAmount;
   });
   document.querySelectorAll('.sur-comment').forEach(el=>{
     const i = el.dataset.surComment;
@@ -2950,22 +2947,11 @@ function syncSurMetaFromDom(){
     window.__ctx.surMeta[i].baseCode = el.value;
   });
 }
-function onExpenseCountChange(index){
-  syncSurMetaFromDom();
-  window.__ctx.surMeta[index] = window.__ctx.surMeta[index] || {};
-  const meta = window.__ctx.surMeta[index];
-  meta.expenseCount = Math.max(1, Number(meta.expenseCount) || 1);
-  meta.expenseAmounts = expenseAmountsForMeta(meta, meta.expenseCount);
-  window.__ctx.manual=false;
-  renderSurcharges();
-  recalc();
-}
 function onSurMetaChange(){
   const active = document.activeElement;
   const activeIndex = active && active.classList && active.classList.contains('sur-count') ? active.dataset.surIndex : null;
   const extraActive = active && active.classList && active.classList.contains('sur-extra-amount') ? active.dataset.surExtra : null;
   const expenseActive = active && active.classList && active.classList.contains('sur-expense-amount') ? active.dataset.surExpense : null;
-  const expensePosition = expenseActive != null ? active.dataset.expenseIndex : null;
   const selStart = active && (activeIndex != null || extraActive != null || expenseActive != null) ? active.selectionStart : null;
   syncSurMetaFromDom();
   document.querySelectorAll('.sur-extra-amount').forEach(el=>{
@@ -2985,7 +2971,7 @@ function onSurMetaChange(){
   refreshSurchargeAmtLabels();
   recalc();
   const restoreSel = expenseActive != null
-    ? document.querySelector(`.sur-expense-amount[data-sur-expense="${expenseActive}"][data-expense-index="${expensePosition}"]`)
+    ? document.querySelector(`.sur-expense-amount[data-sur-expense="${expenseActive}"]`)
     : (extraActive != null
       ? document.querySelector(`.sur-extra-amount[data-sur-extra="${extraActive}"]`)
       : (activeIndex != null ? document.querySelector(`.sur-count[data-sur-index="${activeIndex}"]`) : null));
@@ -3204,7 +3190,7 @@ function saveService(clientId, svcId){
       comment:a.comment||'',
       extraAmount:Number(a.extraAmount)||0,
       actualExpenses:!!a.actualExpenses,
-      expenseAmounts:Array.isArray(a.expenseAmounts) ? a.expenseAmounts.slice() : []
+      actualExpenseAmount:a.actualExpenses ? Math.max(0, Number(a.amount)||0) : 0
     })),
     catKey: item ? item.cat : (isLegacyService ? existingService.catKey || '' : ''), custom,
     priceManual: isLegacyService || !!window.__ctx.manual,
