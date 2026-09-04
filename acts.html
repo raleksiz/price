@@ -418,21 +418,28 @@ details[open] summary::before{content:"▾ ";}
 
 .filters-toolbar{display:flex;align-items:flex-end;gap:8px;margin-bottom:22px;min-width:0;}
 .filters-toggle{display:none !important;flex:0 0 auto;margin-bottom:0;}
-.all-filters{display:flex;gap:8px;flex:1 1 auto;min-width:0;overflow:visible;flex-wrap:wrap;padding-bottom:3px;}
-.all-filters>div{flex:1 1 0;min-width:155px;}
+.all-filters{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
+  gap:8px;flex:1 1 auto;min-width:0;overflow:visible;padding-bottom:3px;
+}
+.all-filters>div{min-width:0;}
 .all-filters.filters-collapsed{display:none;}
 .all-filters label{font-size:10.5px;}
 .all-filters input{height:36px;padding:7px 9px;font-size:12px;}
 .xl-filter{position:relative;min-width:0;}
-.xl-filter-head{display:flex;align-items:center;gap:4px;margin-bottom:5px;min-width:0;}
-.xl-filter-head label{margin-bottom:0;}
+@supports (grid-template-rows:subgrid){
+  .xl-filter{display:grid;grid-template-rows:subgrid;grid-row:span 2;}
+}
+.xl-filter-head{display:flex;align-items:center;gap:4px;min-width:0;min-height:18px;}
+.xl-filter-head label{margin-bottom:0;min-width:0;}
 .xl-filter-clear{
-  display:none;flex-shrink:0;align-items:center;justify-content:center;
+  display:inline-flex;visibility:hidden;pointer-events:none;
+  flex-shrink:0;align-items:center;justify-content:center;
   width:18px;height:18px;padding:0;border:none;border-radius:4px;
   background:transparent;color:#888;cursor:pointer;
   font-size:16px;line-height:1;font-family:inherit;
 }
-.xl-filter.has-value .xl-filter-clear{display:inline-flex;}
+.xl-filter.has-value .xl-filter-clear{visibility:visible;pointer-events:auto;}
 .xl-filter-clear:hover{color:var(--violet);background:var(--soft);}
 .xl-filter-drop{
   position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:25;
@@ -452,6 +459,7 @@ details[open] summary::before{content:"▾ ";}
   .all-filters label{font-size:10px;}
   .all-filters input,.all-filters select{font-size:11px;height:auto;min-height:32px;padding:6px 8px;}
   .filters-toggle{font-size:11px;}
+  .xl-filter-head{min-height:22px;}
   .xl-filter-clear{width:22px;height:22px;font-size:18px;}
 }
 .applied-details{font-size:11.5px;color:#777;margin-top:3px;line-height:1.5;}
@@ -924,7 +932,7 @@ details[open] summary::before{content:"▾ ";}
           <div class="xl-filter">
             <div class="xl-filter-head">
               <label for="fClient">Заказчик</label>
-              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр">×</button>
+              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр" aria-hidden="true" tabindex="-1">×</button>
             </div>
             <input type="text" id="fClient" class="xl-filter-input" data-filter="fClient" placeholder="Все / начните вводить" autocomplete="off">
             <div class="xl-filter-drop hidden"></div>
@@ -932,7 +940,7 @@ details[open] summary::before{content:"▾ ";}
           <div class="xl-filter">
             <div class="xl-filter-head">
               <label for="fBasis">Основание</label>
-              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр">×</button>
+              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр" aria-hidden="true" tabindex="-1">×</button>
             </div>
             <input type="text" id="fBasis" class="xl-filter-input" data-filter="fBasis" placeholder="Все / начните вводить" autocomplete="off">
             <div class="xl-filter-drop hidden"></div>
@@ -940,7 +948,7 @@ details[open] summary::before{content:"▾ ";}
           <div class="xl-filter filter-date">
             <div class="xl-filter-head">
               <label for="fFrom">Дата с</label>
-              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр">×</button>
+              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр" aria-hidden="true" tabindex="-1">×</button>
             </div>
             <input type="text" id="fFrom" class="xl-filter-input" data-filter="fFrom" placeholder="Дата или фрагмент" autocomplete="off">
             <div class="xl-filter-drop hidden"></div>
@@ -948,7 +956,7 @@ details[open] summary::before{content:"▾ ";}
           <div class="xl-filter filter-date">
             <div class="xl-filter-head">
               <label for="fTo">Дата по</label>
-              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр">×</button>
+              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр" aria-hidden="true" tabindex="-1">×</button>
             </div>
             <input type="text" id="fTo" class="xl-filter-input" data-filter="fTo" placeholder="Дата или фрагмент" autocomplete="off">
             <div class="xl-filter-drop hidden"></div>
@@ -956,7 +964,7 @@ details[open] summary::before{content:"▾ ";}
           <div class="xl-filter">
             <div class="xl-filter-head">
               <label for="fPay">Статус оплаты</label>
-              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр">×</button>
+              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр" aria-hidden="true" tabindex="-1">×</button>
             </div>
             <input type="text" id="fPay" class="xl-filter-input" data-filter="fPay" placeholder="Любой / начните вводить" autocomplete="off">
             <div class="xl-filter-drop hidden"></div>
@@ -964,7 +972,7 @@ details[open] summary::before{content:"▾ ";}
           <div class="xl-filter">
             <div class="xl-filter-head">
               <label for="fText">Поиск по расшифровке</label>
-              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр">×</button>
+              <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр" aria-hidden="true" tabindex="-1">×</button>
             </div>
             <input type="text" id="fText" class="xl-filter-input" data-filter="fText" placeholder="Текст / начните вводить" autocomplete="off">
             <div class="xl-filter-drop hidden"></div>
@@ -3618,7 +3626,13 @@ function pickXlValue(input, val){
 function syncXlFilterClears(){
   document.querySelectorAll('.xl-filter').forEach(wrap=>{
     const input = wrap.querySelector('.xl-filter-input');
-    wrap.classList.toggle('has-value', !!(input && input.value.trim()));
+    const btn = wrap.querySelector('.xl-filter-clear');
+    const has = !!(input && input.value.trim());
+    wrap.classList.toggle('has-value', has);
+    if(btn){
+      btn.setAttribute('aria-hidden', has ? 'false' : 'true');
+      btn.tabIndex = has ? 0 : -1;
+    }
   });
 }
 function clearXlFilter(wrap){
