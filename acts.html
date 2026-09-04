@@ -226,6 +226,14 @@ tr.locked td{background:#FAFAFC;}
 @media (min-width:721px){
   .clients,.contracts-grid{justify-content:flex-start;}
   .cl-card{flex:0 0 340px;width:340px;max-width:340px;}
+  #view-clients > .card{container-name:clients-card;container-type:inline-size;}
+  #cContractsList{container-name:contracts-list;container-type:inline-size;}
+}
+@container clients-card (min-width:692px){
+  #view-clients .clients{row-gap:24px;}
+}
+@container contracts-list (min-width:692px){
+  #cContractsList .contracts-grid{row-gap:24px;}
 }
 @media (max-width:720px){
   .cl-card{max-width:none;width:100%;flex:1 1 auto;}
