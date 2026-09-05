@@ -273,10 +273,25 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .filter-form{display:none;margin-top:0;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:end;}
 .filter-form.open{display:grid;}
 .filter-form label{display:block;font-size:9px;text-transform:uppercase;color:#888;font-weight:700;margin-bottom:4px;}
-.filter-form input,.filter-form select{width:100%;border:1px solid #DDD;border-radius:7px;padding:7px 8px;font:12px inherit;color:var(--ink);background:#fff;min-width:0;}
+.filter-form input{width:100%;border:1px solid #DDD;border-radius:7px;padding:7px 8px;font:12px inherit;color:var(--ink);background:#fff;min-width:0;}
+.act-filter{position:relative;min-width:0;}
+.act-filter-drop{
+  position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:30;
+  max-height:220px;overflow-y:auto;
+  background:#fff;border:1px solid #DDD;border-radius:8px;
+  box-shadow:0 8px 24px rgba(80,40,120,.12);
+}
+.act-filter-drop.hidden{display:none;}
+.act-filter-drop button{
+  display:block;width:100%;padding:7px 9px;border:0;background:#fff;
+  color:var(--ink);font:12px inherit;text-align:left;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.act-filter-drop button:hover,.act-filter-drop button.active{background:#F8F6FF;color:var(--violet);}
+.act-filter-drop .filter-empty-option{padding:8px 9px;color:#888;font-size:12px;}
 @media(max-width:720px){
   .filter-form label{font-size:10px;}
-  .filter-form input,.filter-form select{font-size:11px;padding:6px 7px;}
+  .filter-form input{font-size:11px;padding:6px 7px;}
   .filter-toggle{height:40px;font-size:11px;padding:6px 9px;}
 }
 .filter-actions{display:flex;gap:6px;}
@@ -579,10 +594,10 @@ function filtersTemplate(id, f){
   const idArg=esc(JSON.stringify(String(id)));
   return `<div class="filter-box ${openClass}">
     <div class="filter-form ${openClass}" id="filters-${idAttr}">
-      <div><label for="filter-from-${idAttr}">Дата с</label><input id="filter-from-${idAttr}" type="date" data-filter="from" value="${esc(f.from||'')}" onchange="renderContractById(${idArg})"></div>
-      <div><label for="filter-to-${idAttr}">Дата по</label><input id="filter-to-${idAttr}" type="date" data-filter="to" value="${esc(f.to||'')}" onchange="renderContractById(${idArg})"></div>
-      <div><label for="filter-code-${idAttr}">Код услуги</label><input id="filter-code-${idAttr}" type="text" data-filter="code" value="${esc(f.code||'')}" placeholder="Например, 3.8" oninput="renderContractById(${idArg})"></div>
-      <div><label for="filter-pay-${idAttr}">Статус оплаты</label><select id="filter-pay-${idAttr}" data-filter="pay" onchange="renderContractById(${idArg})"><option value="" ${!f.pay?'selected':''}>Любой</option><option value="none" ${f.pay==='none'?'selected':''}>Не оплачено</option><option value="paid" ${f.pay==='paid'?'selected':''}>Оплачено</option><option value="partial" ${f.pay==='partial'?'selected':''}>Оплачено частично</option><option value="prepay" ${f.pay==='prepay'?'selected':''}>С предоплатой</option></select></div>
+      <div class="act-filter" data-contract-id="${idAttr}"><label for="filter-from-${idAttr}">Дата с</label><input id="filter-from-${idAttr}" type="text" inputmode="numeric" maxlength="10" autocomplete="off" data-filter="from" value="${esc(f.from||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
+      <div class="act-filter" data-contract-id="${idAttr}"><label for="filter-to-${idAttr}">Дата по</label><input id="filter-to-${idAttr}" type="text" inputmode="numeric" maxlength="10" autocomplete="off" data-filter="to" value="${esc(f.to||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
+      <div class="act-filter" data-contract-id="${idAttr}"><label for="filter-code-${idAttr}">Код услуги</label><input id="filter-code-${idAttr}" type="text" autocomplete="off" data-filter="code" value="${esc(f.code||'')}" placeholder="Все / начните вводить"><div class="act-filter-drop hidden"></div></div>
+      <div class="act-filter" data-contract-id="${idAttr}"><label for="filter-pay-${idAttr}">Статус оплаты</label><input id="filter-pay-${idAttr}" type="text" autocomplete="off" data-filter="pay" value="${esc(f.pay||'')}" placeholder="Любой / начните вводить"><div class="act-filter-drop hidden"></div></div>
       <div class="filter-actions"><button class="filter-reset" type="button" onclick="resetFilters(${idArg})">Сбросить</button></div>
     </div>
   </div>`;
@@ -590,19 +605,163 @@ function filtersTemplate(id, f){
 function getFilters(id){
   const box=document.getElementById('filters-'+id); if(!box) return {};
   const g=k=>box.querySelector(`[data-filter="${k}"]`)?.value.trim()||'';
-  return {from:g('from'),to:g('to'),code:g('code').toLowerCase(),pay:g('pay')};
+  return {from:g('from'),to:g('to'),code:g('code'),pay:g('pay')};
+}
+function filterDateISO(raw){
+  const value=String(raw||'').trim();
+  if(!value) return '';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const parsed=RaleksizCRMCore.parseDateParts ? RaleksizCRMCore.parseDateParts(value) : null;
+  return parsed ? parsed.iso : '';
+}
+const PUBLIC_PAY_FILTER_OPTIONS=['Не оплачено','Оплачено','Оплачено частично','С предоплатой'];
+function matchPublicPayFilter(s, raw){
+  const q=String(raw||'').trim().toLowerCase();
+  if(!q||q==='любой'||q==='все') return true;
+  const paid=paidOf(s),price=Number(s.price)||0;
+  const isPaid=isPayFull(s)||(price>0&&paid>=price);
+  const isNone=!isPaid&&paid<=0;
+  const isPart=!isPaid&&paid>0&&paid<price;
+  const isPre=prepayOf(s)>0;
+  if(q==='none'||q==='неоплачено'||q.includes('не оплач')) return isNone;
+  if(q==='partial'||q.includes('частич')) return isPart;
+  if(q==='prepay'||q.includes('предоплат')) return isPre;
+  if(q==='paid'||q==='оплачено'||q==='оплачено полностью') return isPaid;
+  const labels=[];
+  if(isNone) labels.push('не оплачено');
+  else if(isPart) labels.push('оплачено частично');
+  else if(isPaid) labels.push('оплачено');
+  if(isPre) labels.push('с предоплатой');
+  return labels.some(label=>label.includes(q));
 }
 function filterServices(list,f){
+  const from=filterDateISO(f.from),to=filterDateISO(f.to),code=String(f.code||'').toLowerCase();
   return list.filter(s=>{
-    if(f.from&&(!s.date||s.date<f.from)) return false;
-    if(f.to&&(!s.date||s.date>f.to)) return false;
-    if(f.code&&String(s.code||'').toLowerCase().indexOf(f.code)<0) return false;
-    const paid=paidOf(s),price=Number(s.price)||0;
-    if(f.pay==='none'&&(paid>0||isPayFull(s))) return false;
-    if(f.pay==='paid'&&!(isPayFull(s)||(price>0&&paid>=price))) return false;
-    if(f.pay==='partial'&&!(paid>0&&paid<price)) return false;
-    if(f.pay==='prepay'&&prepayOf(s)<=0) return false;
+    if(from&&(!s.date||s.date<from)) return false;
+    if(to&&(!s.date||s.date>to)) return false;
+    if(code&&String(s.code||'').toLowerCase().indexOf(code)<0) return false;
+    if(!matchPublicPayFilter(s,f.pay)) return false;
     return true;
+  });
+}
+function publicPayLabels(s){
+  return PUBLIC_PAY_FILTER_OPTIONS.filter(label=>matchPublicPayFilter(s,label));
+}
+function uniqueFilterValues(values, key){
+  const out=[];
+  values.forEach(value=>{
+    const s=String(value||'').trim();
+    if(s&&!out.some(x=>x.localeCompare(s,'ru',{sensitivity:'accent'})===0)) out.push(s);
+  });
+  if(key==='from'||key==='to') return out.sort((a,b)=>filterDateISO(a).localeCompare(filterDateISO(b)));
+  if(key==='code') return out.sort((a,b)=>a.localeCompare(b,'ru',{numeric:true,sensitivity:'base'}));
+  if(key==='pay') return PUBLIC_PAY_FILTER_OPTIONS.filter(label=>out.includes(label));
+  return out;
+}
+function actFilterOptions(id,key){
+  if(!CURRENT_CLIENT) return [];
+  const ct=getContract(CURRENT_CLIENT,id); if(!ct) return [];
+  const f=getFilters(id); f[key]='';
+  const values=[];
+  filterServices(contractServices(CURRENT_CLIENT,id).filter(s=>isProvided(s)),f).forEach(s=>{
+    if((key==='from'||key==='to')&&s.date) values.push(fmtDate(s.date));
+    else if(key==='code'&&String(s.code||'').trim()) values.push(String(s.code).trim());
+    else if(key==='pay') publicPayLabels(s).forEach(label=>values.push(label));
+  });
+  return uniqueFilterValues(values,key);
+}
+function closeActFilterDrops(except){
+  document.querySelectorAll('.act-filter-drop').forEach(box=>{
+    if(box!==except) box.classList.add('hidden');
+  });
+}
+function actFilterButtons(box){ return box?[...box.querySelectorAll('button[data-val]')]:[]; }
+function moveActFilterActive(box,dir){
+  const buttons=actFilterButtons(box); if(!buttons.length) return;
+  let index=buttons.findIndex(button=>button.classList.contains('active'));
+  if(index<0) index=dir>0?0:buttons.length-1;
+  else index=Math.max(0,Math.min(buttons.length-1,index+dir));
+  buttons.forEach(button=>button.classList.remove('active'));
+  buttons[index].classList.add('active');
+  buttons[index].scrollIntoView({block:'nearest'});
+}
+function openActFilterDrop(input,opts){
+  const wrap=input.closest('.act-filter'),box=wrap&&wrap.querySelector('.act-filter-drop');
+  if(!wrap||!box) return;
+  const key=input.dataset.filter,id=wrap.dataset.contractId;
+  const typing=opts&&'typed' in opts?!!opts.typed:input.dataset.filterTyping==='1';
+  const q=typing?input.value.trim().toLowerCase():'';
+  const list=actFilterOptions(id,key);
+  const filtered=q?list.filter(value=>value.toLowerCase().includes(q)):list;
+  const rows=[];
+  if(!q) rows.push('<button type="button" data-val="">(Все)</button>');
+  if((key==='from'||key==='to')&&q&&filterDateISO(input.value)&&!list.includes(input.value.trim())){
+    const value=input.value.trim();
+    rows.push(`<button type="button" data-val="${esc(value)}">Использовать: ${esc(value)}</button>`);
+  }
+  filtered.slice(0,50).forEach(value=>rows.push(`<button type="button" data-val="${esc(value)}">${esc(value)}</button>`));
+  box.innerHTML=rows.join('')||'<div class="filter-empty-option">Нет совпадений</div>';
+  const current=input.value.trim();
+  const buttons=actFilterButtons(box);
+  const active=buttons.find(button=>button.dataset.val===current)||buttons[0];
+  if(active) active.classList.add('active');
+  closeActFilterDrops(box);
+  box.classList.remove('hidden');
+}
+function rerenderFromActFilter(input){
+  const wrap=input.closest('.act-filter'); if(!wrap) return;
+  const caret=input.selectionStart;
+  renderContractById(wrap.dataset.contractId,{focusFilter:input.dataset.filter,typing:true,caret});
+}
+function pickActFilterValue(input,value){
+  const wrap=input.closest('.act-filter'); if(!wrap) return;
+  input.value=value;
+  input.dataset.filterTyping='';
+  closeActFilterDrops();
+  renderContractById(wrap.dataset.contractId);
+}
+function bindActFilters(){
+  if(window.__actFiltersBound) return;
+  window.__actFiltersBound=true;
+  document.addEventListener('focusin',event=>{
+    const input=event.target.closest&&event.target.closest('.act-filter input[data-filter]');
+    if(!input) return;
+    input.dataset.filterTyping='';
+    openActFilterDrop(input,{typed:false});
+  });
+  document.addEventListener('click',event=>{
+    const input=event.target.closest&&event.target.closest('.act-filter input[data-filter]');
+    if(input) openActFilterDrop(input);
+  });
+  document.addEventListener('input',event=>{
+    const input=event.target.closest&&event.target.closest('.act-filter input[data-filter]');
+    if(!input) return;
+    input.dataset.filterTyping='1';
+    rerenderFromActFilter(input);
+  });
+  document.addEventListener('keydown',event=>{
+    const input=event.target.closest&&event.target.closest('.act-filter input[data-filter]');
+    if(!input) return;
+    const box=input.closest('.act-filter').querySelector('.act-filter-drop');
+    const open=box&&!box.classList.contains('hidden');
+    if(event.key==='Escape'){ closeActFilterDrops(); input.blur(); return; }
+    if(!open) return;
+    if(event.key==='ArrowDown'){ event.preventDefault(); moveActFilterActive(box,1); }
+    if(event.key==='ArrowUp'){ event.preventDefault(); moveActFilterActive(box,-1); }
+    if(event.key==='Enter'){
+      const pick=box.querySelector('button.active[data-val]')||box.querySelector('button[data-val]');
+      if(pick){ event.preventDefault(); pickActFilterValue(input,pick.dataset.val); }
+    }
+  });
+  document.addEventListener('mousedown',event=>{
+    const pick=event.target.closest&&event.target.closest('.act-filter-drop button[data-val]');
+    if(pick){
+      const input=pick.closest('.act-filter').querySelector('input[data-filter]');
+      pickActFilterValue(input,pick.dataset.val);
+      event.preventDefault();
+      return;
+    }
+    if(!(event.target.closest&&event.target.closest('.act-filter'))) closeActFilterDrops();
   });
 }
 function toggleFilters(id){
@@ -621,12 +780,12 @@ function toggleFilters(id){
 function resetFilters(id){
   const box=document.getElementById('filters-'+id); if(!box) return;
   box.querySelectorAll('input').forEach(x=>x.value='');
-  box.querySelectorAll('select').forEach(x=>x.value='');
+  closeActFilterDrops();
   renderContractById(id);
 }
 let FILTER_OPEN = {};
 let CURRENT_CLIENT=null, CURRENT_DB=null;
-function renderContractById(id){
+function renderContractById(id,opts){
   if(!CURRENT_CLIENT||!CURRENT_DB) return;
   const ct=getContract(CURRENT_CLIENT,id);
   if(!ct) return;
@@ -636,6 +795,17 @@ function renderContractById(id){
   const box = document.getElementById('filters-'+id);
   if(box && open) box.classList.add('open');
   bindActScrollPairs(document.getElementById('contract-'+id));
+  if(opts&&opts.focusFilter){
+    requestAnimationFrame(()=>{
+      const form=document.getElementById('filters-'+id);
+      const input=form&&form.querySelector(`[data-filter="${opts.focusFilter}"]`);
+      if(!input) return;
+      input.dataset.filterTyping=opts.typing?'1':'';
+      input.focus({preventScroll:true});
+      if(typeof opts.caret==='number'&&input.setSelectionRange) input.setSelectionRange(opts.caret,opts.caret);
+      openActFilterDrop(input,{typed:!!opts.typing});
+    });
+  }
 }
 function renderServiceRow(s,num,special){
   const extra = special ? renderCustomFields(s,CURRENT_DB) : (appliedHtml(s)+renderCustomFields(s,CURRENT_DB));
@@ -871,6 +1041,7 @@ async function loadAndRender(){
     renderClient(c,db);
   }catch(e){console.error(e);root.innerHTML='<div class="state err">Не удалось загрузить данные. Проверьте интернет-соединение и обновите страницу.</div>';}
 }
+bindActFilters();
 loadAndRender();
 </script>
 </body>
