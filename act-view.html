@@ -68,7 +68,7 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .contract-title{grid-column:1;grid-row:1;font-size:15px;font-weight:800;color:var(--ink);}
 .contract-meta{grid-column:1;grid-row:2;font-size:12px;color:#666;line-height:1.6;overflow-wrap:anywhere;}
 .contract-basis{grid-column:1;grid-row:3;font-size:12px;color:#666;line-height:1.6;overflow-wrap:anywhere;}
-.contract-filter-control{grid-column:2;grid-row:3;align-self:end;justify-self:end;}
+.contract-filter-control{grid-column:2;grid-row:2 / 4;align-self:end;justify-self:end;}
 .contract-meta b{color:var(--ink);}
 
 .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
@@ -216,6 +216,7 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .comp-same{color:#777;}
 .comp-total{font-size:20px;font-weight:800;margin:8px 0 10px;font-variant-numeric:tabular-nums;}
 .mtot{font-size:12px;color:#666;margin:4px 0 4px;padding-left:2px;}
+.mtot + .svc-month-title{margin-top:22px;}
 
 .totals{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
 .tot{background:var(--soft);border-radius:10px;padding:7px 9px;min-width:0;flex:1 1 0;text-align:center;}
@@ -679,7 +680,7 @@ function renderContract(c,ct,presetFilters){
       const special=monthIsComplete(k)&&isAbonementSpecialMonth(c, ct, k, today);
       const gs=special ? contractPriceForMonth(ct, k) : g.reduce((a,s)=>a+(Number(s.price)||0),0);
       const gp=monthIsComplete(k)?displayPaidForMonth(ct, k, g, special):g.reduce((total,s)=>total+paidOf(s),0);
-      return `<h3>${esc(monthTitle(k))}</h3>${renderTable(g, special)}<div class="mtot">За ${esc(monthTitleInText(k))}: оказано на ${money(gs)}, оплачено ${money(gp)}, к оплате ${money(Math.max(0,gs-gp))}</div>`;
+      return `<h3 class="svc-month-title">${esc(monthTitle(k))}</h3>${renderTable(g, special)}<div class="mtot">За ${esc(monthTitleInText(k))}: оказано на ${money(gs)}, оплачено ${money(gp)}, к оплате ${money(Math.max(0,gs-gp))}</div>`;
     }).join('');
   }else{
     const months=[...new Set(list.map(s=>monthKey(s.date)))];
