@@ -57,9 +57,18 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .applied{font-size:11.5px;color:#777;margin-top:3px;line-height:1.5;}
 
 .contract-block{border:1.5px solid var(--line);border-radius:14px;padding:16px 16px 8px;margin-bottom:18px;}
-.contract-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
-.contract-title{font-size:15px;font-weight:800;color:var(--ink);}
-.contract-meta{font-size:12px;color:#666;line-height:1.6;margin-top:2px;}
+.contract-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-rows:auto auto auto;
+  column-gap:10px;row-gap:2px;
+  align-items:start;margin-bottom:10px;
+}
+.contract-head > *{min-width:0;}
+.contract-title{grid-column:1;grid-row:1;font-size:15px;font-weight:800;color:var(--ink);}
+.contract-meta{grid-column:1;grid-row:2;font-size:12px;color:#666;line-height:1.6;overflow-wrap:anywhere;}
+.contract-basis{grid-column:1;grid-row:3;font-size:12px;color:#666;line-height:1.6;overflow-wrap:anywhere;}
+.contract-filter-control{grid-column:2;grid-row:3;align-self:end;justify-self:end;}
 .contract-meta b{color:var(--ink);}
 
 .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
@@ -81,9 +90,12 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .svc-head-scroll,
 .svc-body-scroll{
   display:block;width:100%;max-width:100%;min-width:0;
-  overflow-x:auto;overflow-y:hidden;
+  overflow-y:hidden;
   -webkit-overflow-scrolling:touch;
 }
+.svc-scroll{overflow-x:auto;}
+.svc-head-scroll,.svc-body-scroll{overflow-x:hidden;}
+.svc-head-scroll.has-x-overflow,.svc-body-scroll.has-x-overflow{overflow-x:auto;}
 .svc-head-scroll{background:#fff;}
 .svc-head-scroll::-webkit-scrollbar,
 .svc-body-scroll::-webkit-scrollbar,
@@ -165,9 +177,12 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .comp-svc-head-scroll,
 .comp-svc-body-scroll{
   display:block;width:100%;max-width:100%;min-width:0;
-  overflow-x:auto;overflow-y:hidden;
+  overflow-y:hidden;
   -webkit-overflow-scrolling:touch;
 }
+.comp-svc-scroll{overflow-x:auto;}
+.comp-svc-head-scroll,.comp-svc-body-scroll{overflow-x:hidden;}
+.comp-svc-head-scroll.has-x-overflow,.comp-svc-body-scroll.has-x-overflow{overflow-x:auto;}
 .comp-svc-scroll,
 .comp-svc-head-scroll{margin-top:8px;}
 .comp-svc-body-scroll{margin-top:0;}
@@ -251,16 +266,17 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 }
 .act-footer-link:hover{text-decoration:underline;}
 
-.filter-box{margin:10px 0 12px;padding:10px 12px;background:#F8F6FF;border:1px solid #E7DFF7;border-radius:10px;}
-.filter-toggle{border:1px solid #C4B5FD;background:#fff;color:#6E3B8C;border-radius:8px;padding:7px 10px;font:600 12px inherit;cursor:pointer;}
-.filter-form{display:none;margin-top:10px;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:end;}
+.filter-box{display:none;margin:0 0 12px;padding:10px 12px;background:#F8F6FF;border:1px solid #E7DFF7;border-radius:10px;}
+.filter-box.open{display:block;}
+.filter-toggle{width:auto;height:36px;white-space:nowrap;border:1px solid #C4B5FD;background:#fff;color:#6E3B8C;border-radius:8px;padding:7px 10px;font:600 12px inherit;cursor:pointer;}
+.filter-form{display:none;margin-top:0;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:end;}
 .filter-form.open{display:grid;}
 .filter-form label{display:block;font-size:9px;text-transform:uppercase;color:#888;font-weight:700;margin-bottom:4px;}
 .filter-form input,.filter-form select{width:100%;border:1px solid #DDD;border-radius:7px;padding:7px 8px;font:12px inherit;color:var(--ink);background:#fff;min-width:0;}
 @media(max-width:720px){
   .filter-form label{font-size:10px;}
   .filter-form input,.filter-form select{font-size:11px;padding:6px 7px;}
-  .filter-toggle{font-size:11px;padding:6px 9px;}
+  .filter-toggle{height:40px;font-size:11px;padding:6px 9px;}
 }
 .filter-actions{display:flex;gap:6px;}
 .filter-actions button{border:0;border-radius:7px;padding:7px 10px;font:600 12px inherit;cursor:pointer;}
@@ -331,7 +347,16 @@ const {
 function money(n){ return Math.round(Number(n)||0).toLocaleString('ru-RU') + ' ₽'; }
 function fmtDate(iso){ if(!iso) return ''; const p=String(iso).split('-'); return p.length===3?`${p[2]}.${p[1]}.${p[0]}`:String(iso); }
 function monthKey(iso){ return iso?String(iso).slice(0,7):''; }
-function monthTitle(mk){ if(!mk) return ''; const [y,m]=mk.split('-'); return (MONTHS[Number(m)-1]||'')+' '+y; }
+function monthTitle(mk){
+  if(!mk) return '';
+  const [y,m]=mk.split('-');
+  const month=MONTHS[Number(m)-1]||'';
+  return month ? month.charAt(0).toUpperCase()+month.slice(1)+' '+y+' года' : '';
+}
+function monthTitleInText(mk){
+  const title=monthTitle(mk);
+  return title ? title.charAt(0).toLowerCase()+title.slice(1) : '';
+}
 function isComplete(s){ return !!(s&&s.date&&String(s.desc||'').trim()); }
 function isProvided(s,today){ return isComplete(s) && String(s.date).slice(0,10)<=(today||todayISO()); }
 function isPayFull(s){ return !!(s&&(s.pay==='full'||s.pay==='full_prepay')); }
@@ -540,13 +565,18 @@ function contractMeta(ct){
   if(Number(ct.discount)) parts.push('скидка '+Number(ct.discount)+'%');
   return parts.join(' · ');
 }
+function filterToggleTemplate(id){
+  const open = !!FILTER_OPEN[id];
+  const idAttr=esc(String(id));
+  const idArg=esc(JSON.stringify(String(id)));
+  return `<button class="filter-toggle" id="filter-toggle-${idAttr}" type="button" aria-expanded="${open?'true':'false'}" aria-controls="filters-${idAttr}" onclick="toggleFilters(${idArg})">${open?'Скрыть фильтры':'Фильтровать'}</button>`;
+}
 function filtersTemplate(id, f){
   f = f || {};
   const openClass = FILTER_OPEN[id] ? 'open' : '';
   const idAttr=esc(String(id));
   const idArg=esc(JSON.stringify(String(id)));
-  return `<div class="filter-box">
-    <button class="filter-toggle" type="button" onclick="toggleFilters(${idArg})">Фильтровать</button>
+  return `<div class="filter-box ${openClass}">
     <div class="filter-form ${openClass}" id="filters-${idAttr}">
       <div><label for="filter-from-${idAttr}">Дата с</label><input id="filter-from-${idAttr}" type="date" data-filter="from" value="${esc(f.from||'')}" onchange="renderContractById(${idArg})"></div>
       <div><label for="filter-to-${idAttr}">Дата по</label><input id="filter-to-${idAttr}" type="date" data-filter="to" value="${esc(f.to||'')}" onchange="renderContractById(${idArg})"></div>
@@ -575,9 +605,17 @@ function filterServices(list,f){
   });
 }
 function toggleFilters(id){
-  const box=document.getElementById('filters-'+id); if(!box) return;
-  box.classList.toggle('open');
-  FILTER_OPEN[id] = box.classList.contains('open');
+  const form=document.getElementById('filters-'+id); if(!form) return;
+  const open=!form.classList.contains('open');
+  form.classList.toggle('open',open);
+  const box=form.closest('.filter-box');
+  if(box) box.classList.toggle('open',open);
+  const toggle=document.getElementById('filter-toggle-'+id);
+  if(toggle){
+    toggle.textContent=open?'Скрыть фильтры':'Фильтровать';
+    toggle.setAttribute('aria-expanded',open?'true':'false');
+  }
+  FILTER_OPEN[id] = open;
 }
 function resetFilters(id){
   const box=document.getElementById('filters-'+id); if(!box) return;
@@ -641,7 +679,7 @@ function renderContract(c,ct,presetFilters){
       const special=monthIsComplete(k)&&isAbonementSpecialMonth(c, ct, k, today);
       const gs=special ? contractPriceForMonth(ct, k) : g.reduce((a,s)=>a+(Number(s.price)||0),0);
       const gp=monthIsComplete(k)?displayPaidForMonth(ct, k, g, special):g.reduce((total,s)=>total+paidOf(s),0);
-      return `<h3>${esc(monthTitle(k))}</h3>${renderTable(g, special)}<div class="mtot">За ${esc(monthTitle(k))} года: оказано на ${money(gs)}, оплачено ${money(gp)}, к оплате ${money(Math.max(0,gs-gp))}</div>`;
+      return `<h3>${esc(monthTitle(k))}</h3>${renderTable(g, special)}<div class="mtot">За ${esc(monthTitleInText(k))}: оказано на ${money(gs)}, оплачено ${money(gp)}, к оплате ${money(Math.max(0,gs-gp))}</div>`;
     }).join('');
   }else{
     const months=[...new Set(list.map(s=>monthKey(s.date)))];
@@ -653,9 +691,12 @@ function renderContract(c,ct,presetFilters){
     } else body=renderTable(list, false);
   }
   return `<div class="contract-block" id="contract-${esc(id)}">
-    <div class="contract-head"><div><div class="contract-title">${esc(contractLabel(ct))}</div>
-      <div class="contract-meta">${contractMeta(ct)}${basisBlockHtml(ct)}</div>
-    </div></div>
+    <div class="contract-head">
+      <div class="contract-title">${esc(contractLabel(ct))}</div>
+      <div class="contract-meta">${contractMeta(ct)}</div>
+      <div class="contract-basis">${basisBlockHtml(ct)}</div>
+      <div class="contract-filter-control">${filterToggleTemplate(id)}</div>
+    </div>
     ${filtersTemplate(id, f)}
     ${body}
     <div class="totals">${tot('Общая цена услуг',money(filteredTotals.sum))}${tot('Оплачено',money(filteredTotals.paid))}${tot('К оплате',money(filteredTotals.debt))}</div>
@@ -676,6 +717,18 @@ function bindSyncedHScroll(top, bot){
   if(!top || !bot) return;
   const topInner = top.firstElementChild;
   const syncWidth = () => {
+    if(topInner){
+      topInner.style.removeProperty('width');
+      topInner.style.removeProperty('min-width');
+    }
+    const overflow = bot.scrollWidth - bot.clientWidth > 2;
+    top.classList.toggle('has-x-overflow', overflow);
+    bot.classList.toggle('has-x-overflow', overflow);
+    if(!overflow){
+      top.scrollLeft = 0;
+      bot.scrollLeft = 0;
+      return;
+    }
     const w = bot.scrollWidth;
     if(topInner){
       topInner.style.width = w + 'px';
@@ -821,4 +874,3 @@ loadAndRender();
 </script>
 </body>
 </html>
-
