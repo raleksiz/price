@@ -271,10 +271,14 @@ tr.locked td{background:#FAFAFC;}
 .sur-extra{display:grid;grid-template-columns:90px minmax(0,1fr);gap:6px;margin:2px 0 5px 25px;align-items:stretch;}
 .sur-extra input,.sur-extra select,.sur-extra textarea{font-size:12px;padding:7px 8px;border-radius:8px;width:100%;box-sizing:border-box;}
 .sur-extra .sur-comment{grid-column:auto;min-width:0;min-height:34px;resize:none;overflow:hidden;line-height:1.35;}
-.sur-extra:not(:has(.sur-count)):not(:has(.sur-expense-amount)) .sur-comment{grid-column:1 / -1;}
+.sur-extra:not(:has(.sur-count)):not(:has(.sur-expense-amount)):not(.sur-extra-claim-credit):not(.sur-extra-base-contract) .sur-comment{grid-column:1 / -1;}
 .sur-extra .sur-count,
 .sur-extra .sur-expense-amount{width:90px;min-width:90px;max-width:90px;min-height:34px;height:100%;align-self:stretch;}
 .sur-extra .sur-extra-amount{grid-column:1 / -1;}
+.sur-extra.sur-extra-claim-credit .sur-extra-amount,
+.sur-extra.sur-extra-base-contract .sur-base-price{grid-column:auto;width:90px;min-width:90px;max-width:90px;min-height:34px;height:100%;align-self:stretch;}
+.sur-extra.sur-extra-claim-credit .sur-comment,
+.sur-extra.sur-extra-base-contract .sur-comment{grid-column:auto;}
 .cf-row{border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-bottom:9px;background:#fff;}
 .cf-public{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:11.5px;color:#666;text-transform:none;letter-spacing:0;font-weight:500;}
 .cf-public input{width:16px;height:16px;accent-color:var(--violet);}
@@ -288,6 +292,8 @@ tr.locked td{background:#FAFAFC;}
   .sur-extra{grid-template-columns:80px minmax(0,1fr);}
   .sur-extra .sur-count,
   .sur-extra .sur-expense-amount{width:80px;min-width:80px;max-width:80px;}
+  .sur-extra.sur-extra-claim-credit .sur-extra-amount,
+  .sur-extra.sur-extra-base-contract .sur-base-price{width:80px;min-width:80px;max-width:80px;}
   .sur-item.sur-item-claim-credit{grid-template-columns:16px minmax(88px,.8fr) minmax(0,1.2fr);}
   .sur-item.sur-item-claim-credit .amt{grid-column:auto;padding-left:4px;text-align:right;}
 }
@@ -3275,16 +3281,18 @@ function renderSurcharges(){
           <span class="amt">${esc(x.amount)}${needs && Number(m.count)>1 ? ' × '+Number(m.count) : ''}</span>
         </label>
         ${requirementHint}
-        ${showDetails ? `<div class="sur-extra${actualExpenses?' sur-expense-extra':''}">
-          ${actualExpenses ? expenseInputsHtml(i, m) : ''}
-          ${needs?`<input type="number" min="1" step="1" class="sur-count" data-sur-index="${i}" value="${Math.max(1,Number(m.count)||1)}" placeholder="Кол-во" oninput="onSurMetaChange()" onchange="onSurMetaChange()">`: ''}
-          <textarea class="sur-comment autogrow" data-sur-comment="${i}" rows="1" placeholder="${actualExpenses?'Комментарий к расходам':'Комментарий'}" oninput="autoGrowTextarea(this);onSurMetaChange()">${esc(m.comment||'')}</textarea>
-          ${showExtra?`<input type="number" min="0" step="1" class="sur-extra-amount" data-sur-extra="${i}" value="${Number(m.extraAmount)||0}" placeholder="${x.type==='manual'?'Сумма зачёта, ₽':'Факт. расходы, ₽'}" oninput="onSurMetaChange()">`: ''}
+        ${showDetails ? `<div class="sur-extra${actualExpenses?' sur-expense-extra':''}${claimCredit?' sur-extra-claim-credit':''}${needsBase?' sur-extra-base-contract':''}">
           ${needsBase?`<div class="sur-base-contract">
             <div class="muted">Базовый договор — 50% считается от его цены, не от накопленной суммы</div>
             <select class="sur-base-code" data-sur-base-code="${i}" onchange="onSurBaseCodeChange('${i}')">${baseContractOptionsHtml(m.baseCode)}</select>
-            <input type="number" min="0" step="100" class="sur-base-price" data-sur-base="${i}" value="${Number(m.basePrice)||0}" placeholder="Стоимость базового договора, ₽" oninput="onSurMetaChange()">
-          </div>`: ''}
+          </div>
+          <input type="number" min="0" step="100" class="sur-base-price" data-sur-base="${i}" value="${Number(m.basePrice)||0}" placeholder="Стоимость базового договора, ₽" oninput="onSurMetaChange()">
+          <textarea class="sur-comment autogrow" data-sur-comment="${i}" rows="1" placeholder="Комментарий" oninput="autoGrowTextarea(this);onSurMetaChange()">${esc(m.comment||'')}</textarea>`:`
+          ${actualExpenses ? expenseInputsHtml(i, m) : ''}
+          ${needs?`<input type="number" min="1" step="1" class="sur-count" data-sur-index="${i}" value="${Math.max(1,Number(m.count)||1)}" placeholder="Кол-во" oninput="onSurMetaChange()" onchange="onSurMetaChange()">`: ''}
+          ${claimCredit && showExtra?`<input type="number" min="0" step="1" class="sur-extra-amount" data-sur-extra="${i}" value="${Number(m.extraAmount)||0}" placeholder="Сумма зачёта, ₽" oninput="onSurMetaChange()">`: ''}
+          <textarea class="sur-comment autogrow" data-sur-comment="${i}" rows="1" placeholder="${actualExpenses?'Комментарий к расходам':'Комментарий'}" oninput="autoGrowTextarea(this);onSurMetaChange()">${esc(m.comment||'')}</textarea>
+          ${showExtra && !claimCredit?`<input type="number" min="0" step="1" class="sur-extra-amount" data-sur-extra="${i}" value="${Number(m.extraAmount)||0}" placeholder="Факт. расходы, ₽" oninput="onSurMetaChange()">`: ''}`}
         </div>` : ''}
       </div>`;
     }).join('')}</div>`;
