@@ -1255,6 +1255,30 @@ function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toStr
 function tokenGen(){ return [...crypto.getRandomValues(new Uint8Array(12))].map(n=>Number(n).toString(16).padStart(2,'0')).join(''); }
 function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function money(n){ return Math.round(Number(n)||0).toLocaleString('ru-RU') + ' ₽'; }
+function isExecutorDiscountName(name){ return /скидка исполнителя/i.test(String(name||'')); }
+function executorDiscountRub(calc, typed){
+  return Math.max(0, Math.round(Number(calc)||0) - Math.round(Number(typed)||0));
+}
+function stripExecutorApplied(applied){
+  return (applied||[]).filter(a=>a && !isExecutorDiscountName(a.name));
+}
+function executorAppliedItem(discount){
+  const d = Math.round(Number(discount)||0);
+  return {
+    name:'Скидка исполнителя',
+    amount:-d,
+    delta:-d,
+    count:1,
+    comment:'',
+    extraAmount:0,
+    actualExpenses:false
+  };
+}
+function withExecutorApplied(applied, discount){
+  const list = stripExecutorApplied(applied);
+  if(!(discount>0)) return list;
+  return list.concat([executorAppliedItem(discount)]);
+}
 function fmtDate(iso){ if(!iso) return ''; const p = String(iso).split('-'); return p.length===3 ? `${p[2]}.${p[1]}.${p[0]}` : String(iso); }
 function monthKey(iso){ return iso ? String(iso).slice(0,7) : ''; }
 function monthTitle(mk){ if(!mk) return ''; const [y,m] = mk.split('-'); return MONTHS[Number(m)-1] + ' ' + y; }
@@ -3458,6 +3482,10 @@ function recalc(keepPrice){
   const priceEl = document.getElementById('svcPrice');
   if(!window.__ctx.manual && !keepPrice) priceEl.value = r.price;
   if(!window.__ctx.manual && keepPrice && !Number(priceEl.value)) priceEl.value = r.price;
+  if(window.__ctx.manual && (Number(priceEl.value)||0) > r.price) priceEl.value = r.price;
+  const shown = Number(priceEl.value)||0;
+  const exec = window.__ctx.manual ? executorDiscountRub(r.price, shown) : 0;
+  if(window.__ctx) window.__ctx.executorDiscount = exec;
 
   const note = document.getElementById('priceNote');
   if(item && item.formula){
@@ -3476,11 +3504,11 @@ function recalc(keepPrice){
   const cl = document.getElementById('calcLine');
   if(item){
     const parts = [`база ${money(r.base)}`];
-    r.applied.forEach(a=>{
+    withExecutorApplied(r.applied, exec).forEach(a=>{
       const suffix = !a.actualExpenses && a.count > 1 ? ' × ' + Number(a.count) : '';
       parts.push(esc(a.name) + ' (' + money(a.amount) + suffix + ')');
     });
-    cl.innerHTML = parts.join(' → ') + ' = <b>' + money(r.price) + '</b>';
+    cl.innerHTML = parts.join(' → ') + ' = <b>' + money(shown) + '</b>';
     cl.classList.remove('hidden');
   } else if(cl) cl.classList.add('hidden');
   onPayChange(true);
@@ -3662,8 +3690,10 @@ function saveService(clientId, svcId){
   const isLegacyService = !!(!item && existingService && existingService.legacyCatalogCode);
   const discount = ct ? Number(ct.discount)||0 : 0;
   const r = isLegacyService
-    ? {applied: (existingService.applied || []).slice()}
+    ? {applied: (existingService.applied || []).slice(), price: Number(existingService.price)||0}
     : calcPrice(code, window.__ctx.side, window.__ctx.surSel, discount, window.__ctx.surMeta);
+  const exec = isLegacyService ? 0 : executorDiscountRub(r.price, price);
+  const appliedList = withExecutorApplied(r.applied, exec);
   const baseContractCode = String(code) === '4.3' ? (document.getElementById('baseContractSel')?.value || window.__ctx.baseContractCode || '') : '';
   const baseContractPrice = String(code) === '4.3' ? (Number(window.__ctx.baseContractPrice)||0) : 0;
 
@@ -3675,7 +3705,7 @@ function saveService(clientId, svcId){
     surchargeMeta: isLegacyService
       ? JSON.parse(JSON.stringify(existingService.surchargeMeta||{}))
       : JSON.parse(JSON.stringify(window.__ctx.surMeta||{})),
-    applied: r.applied.map(a=>({
+    applied: appliedList.map(a=>({
       name:a.name,
       amount:a.amount,
       delta:a.delta,
@@ -3685,8 +3715,9 @@ function saveService(clientId, svcId){
       actualExpenses:!!a.actualExpenses,
       actualExpenseAmount:a.actualExpenses ? Math.max(0, Number(a.amount)||0) : 0
     })),
+    executorDiscount: exec,
     catKey: item ? item.cat : (isLegacyService ? existingService.catKey || '' : ''), custom,
-    priceManual: isLegacyService || !!window.__ctx.manual,
+    priceManual: isLegacyService || !!window.__ctx.manual || exec>0,
     baseContractCode,
     baseContractPrice
   };
@@ -4122,8 +4153,14 @@ function customFieldUiHtml(fieldDef, rawValue){
   }
   return `<div class="c-cf">${esc(fieldDef.name)}: ${esc(value)}</div>`;
 }
+function appliedForDisplay(s){
+  const stored = Number(s && s.executorDiscount)||0;
+  const has = (s && s.applied||[]).some(a=>a && isExecutorDiscountName(a.name));
+  if(has || !(stored>0)) return (s && s.applied)||[];
+  return withExecutorApplied(s.applied, stored);
+}
 function appliedHtml(s){
-  const applied=(s.applied||[]);
+  const applied=appliedForDisplay(s);
   if(!applied.length) return '';
   return `<details class="applied-details"><summary>Примененные надбавки/скидки</summary><ul style="margin:5px 0 0 18px;padding:0">${applied.map(a=>{
     const comment=String(a.comment||'').trim();
@@ -5024,7 +5061,7 @@ function customFieldHtmlForPdf(s){
   }).join('')}</div>`;
 }
 function appliedPdfHtml(s){
-  const applied=(s.applied||[]).filter(a=>a && String(a.name||'').trim());
+  const applied=appliedForDisplay(s).filter(a=>a && String(a.name||'').trim());
   if(!applied.length) return '';
   return `<div class="pa-appl"><div class="pa-appl-title">Примененные надбавки/скидки:</div><ul>${
     applied.map(a=>{

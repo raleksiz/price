@@ -536,12 +536,18 @@ function tot(l,v){ return `<div class="tot"><div class="l">${l}</div><div class=
 function grandTot(l,v){ return `<div class="grand-tot"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
 
 function appliedItems(s){
-  return Array.isArray(s.applied)?s.applied.filter(a=>a&&a.name):[];
+  const list=Array.isArray(s.applied)?s.applied.filter(a=>a&&a.name):[];
+  const has=list.some(a=>/скидка исполнителя/i.test(String(a.name||'')));
+  const exec=Math.round(Number(s.executorDiscount)||0);
+  if(has || !(exec>0)) return list;
+  return list.concat([{name:'Скидка исполнителя',amount:-exec,count:1}]);
 }
 function formatAppliedLabel(a){
   if(typeof Calculator!=='undefined' && Calculator.formatAppliedLabel) return Calculator.formatAppliedLabel(a);
   const name=String(a.name||'').trim();
   const comment=String(a.comment||'').trim();
+  const amount=Math.round(Number(a.amount)||0);
+  if(/скидка исполнителя/i.test(name) && amount) return name+' ('+amount.toLocaleString('ru-RU')+')';
   return comment ? name+' ('+comment+')' : name;
 }
 function appliedHtml(s,expanded=false){

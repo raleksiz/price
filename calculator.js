@@ -245,7 +245,7 @@
     var name = text(item && item.name).trim();
     if (!name) return '';
     // Для "Скидка по тарифу" тоже показываем целую сумму корректировки.
-    if (/скидка по тарифу/i.test(name)) {
+    if (/скидка по тарифу/i.test(name) || /скидка исполнителя/i.test(name)) {
       var tariffAmount = Math.round(n(item && item.amount));
       return tariffAmount ? name + ' (' + tariffAmount.toLocaleString('ru-RU') + ')' : name;
     }
