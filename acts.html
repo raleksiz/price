@@ -1832,6 +1832,24 @@ function makeServicePriceFn(client, ct){
     };
   };
 }
+function compensationExecutorDiscount(service){
+  if(typeof RaleksizCalculator!=='undefined' && RaleksizCalculator.executorDiscountOf){
+    return RaleksizCalculator.executorDiscountOf(service);
+  }
+  const stored = Math.max(0, Math.round(Number(service && service.executorDiscount)||0));
+  if(stored>0) return stored;
+  const hit = (service && service.applied||[]).find(a=>a && isExecutorDiscountName(a.name));
+  return hit ? Math.max(0, Math.round(Math.abs(Number(hit.amount)||0))) : 0;
+}
+function withCompensationExecutor(raw, service){
+  const exec = compensationExecutorDiscount(service);
+  const price = Math.max(0, Math.round(Number(raw && raw.price)||0) - exec);
+  return Object.assign({}, raw, {
+    price,
+    applied: withExecutorApplied(raw && raw.applied, exec),
+    executorDiscount: exec
+  });
+}
 function makeCompensationPriceFn(){
   return function(service, contractRemainder, extra){
     const ct = extra && extra.contract;
@@ -1842,12 +1860,12 @@ function makeCompensationPriceFn(){
       const r = (typeof RaleksizCalculator!=='undefined' && RaleksizCalculator.calculateService)
         ? RaleksizCalculator.calculateService(service, ct, [], contractRemainder)
         : {price:basePrice, basePrice:basePrice, discountPrice:basePrice, applied:[]};
-      return {
+      return withCompensationExecutor({
         price:Math.round(r.price||0),
         basePrice:Number(r.basePrice)||basePrice,
         discountPrice:Math.round(r.discountPrice||r.price||0),
         applied:r.applied||[]
-      };
+      }, service);
     }
     let baseContractCost = 0;
     if(String(service.code) === '4.3'){
@@ -1872,13 +1890,13 @@ function makeCompensationPriceFn(){
       service.date,
       contractRemainder
     ));
-    return {
+    return withCompensationExecutor({
       price:Math.round(r.final),
       basePrice:Number(r.base)||0,
       discountPrice:Math.round(r.priceWithDiscount),
       applied:r.applied||[],
       baseContractCost
-    };
+    }, service);
   };
 }
 function recalculateContractMonthServices(client, contractId, month, fromDate){

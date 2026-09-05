@@ -671,6 +671,45 @@
     };
   }
 
+  function isExecutorDiscountName(name) {
+    return /скидка исполнителя/i.test(text(name));
+  }
+
+  function executorDiscountOf(service) {
+    var stored = Math.max(0, Math.round(n(service && service.executorDiscount)));
+    if (stored > 0) return stored;
+    var applied = (service && service.applied) || [];
+    for (var i = 0; i < applied.length; i++) {
+      if (isExecutorDiscountName(applied[i] && applied[i].name)) {
+        return Math.max(0, Math.round(Math.abs(n(applied[i].amount))));
+      }
+    }
+    return 0;
+  }
+
+  function applyExecutorDiscountLast(result, discount) {
+    var d = Math.max(0, Math.round(n(discount)));
+    var price = Math.max(0, round(n(result && result.price) - d));
+    var applied = ((result && result.applied) || []).filter(function (item) {
+      return item && !isExecutorDiscountName(item.name);
+    });
+    if (d > 0) {
+      applied = applied.concat([{
+        name: 'Скидка исполнителя',
+        amount: -d,
+        delta: -d,
+        count: 1,
+        comment: ''
+      }]);
+    }
+    var out = {};
+    Object.keys(result || {}).forEach(function (key) { out[key] = result[key]; });
+    out.price = price;
+    out.applied = applied;
+    out.executorDiscount = d;
+    return out;
+  }
+
   function serviceFinalPrice(service, priceGuess) {
     if (priceGuess != null) return round(priceGuess);
     if (service && (service.priceManual || service.locked)) return round(service.price);
@@ -1046,6 +1085,8 @@
           surchargeMeta: service.surchargeMeta,
           baseContractCode: service.baseContractCode,
           baseContractPrice: service.baseContractPrice,
+          applied: service.applied,
+          executorDiscount: executorDiscountOf(service),
           actPrice: n(service.price)
         };
       });
@@ -1061,7 +1102,7 @@
         }
         : function (service, remainder) {
           var calculated = calculateService(service, hypo, params.surchargeDefinitions || [], remainder);
-          return calculated;
+          return applyExecutorDiscountLast(calculated, executorDiscountOf(service));
         };
 
       var history = copies.length ? calculateMonthHistory(copies, hypo, priceFn) : { services: [] };
@@ -1161,6 +1202,7 @@
     listMonthKeys: listMonthKeys,
     inferCompensationRange: inferCompensationRange,
     resolveCompensationTariff: resolveCompensationTariff,
+    executorDiscountOf: executorDiscountOf,
     calculateCompensation: calculateCompensation
   };
 
@@ -1201,6 +1243,7 @@
     listMonthKeys: listMonthKeys,
     inferCompensationRange: inferCompensationRange,
     resolveCompensationTariff: resolveCompensationTariff,
+    executorDiscountOf: executorDiscountOf,
     calculateCompensation: calculateCompensation
   };
   if (typeof module !== 'undefined' && module.exports) {
