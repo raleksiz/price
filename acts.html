@@ -1047,7 +1047,7 @@ details[open] summary::before{content:"▾ ";}
               <label for="fFrom">Дата с</label>
               <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр" aria-hidden="true" tabindex="-1">×</button>
             </div>
-            <input type="text" id="fFrom" class="xl-filter-input" data-filter="fFrom" placeholder="Дата или фрагмент" autocomplete="off">
+            <input type="text" id="fFrom" class="xl-filter-input xl-date-input" data-filter="fFrom" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" maxlength="10" autocomplete="off">
             <div class="xl-filter-drop hidden"></div>
           </div>
           <div class="xl-filter">
@@ -1055,7 +1055,7 @@ details[open] summary::before{content:"▾ ";}
               <label for="fTo">Дата по</label>
               <button type="button" class="xl-filter-clear" aria-label="Сбросить фильтр" aria-hidden="true" tabindex="-1">×</button>
             </div>
-            <input type="text" id="fTo" class="xl-filter-input" data-filter="fTo" placeholder="Дата или фрагмент" autocomplete="off">
+            <input type="text" id="fTo" class="xl-filter-input xl-date-input" data-filter="fTo" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" maxlength="10" autocomplete="off">
             <div class="xl-filter-drop hidden"></div>
           </div>
           <div class="xl-filter">
@@ -3660,6 +3660,16 @@ function uniqSorted(values){
   seen.sort((a,b)=>a.localeCompare(b,'ru',{sensitivity:'base'}));
   return seen;
 }
+function uniqDatesSorted(values){
+  return uniqSorted(values).sort((a,b)=>{
+    const aIso = filterDateISO(a);
+    const bIso = filterDateISO(b);
+    if(aIso && bIso) return aIso.localeCompare(bIso);
+    if(aIso) return -1;
+    if(bIso) return 1;
+    return a.localeCompare(b,'ru',{sensitivity:'base'});
+  });
+}
 const PAY_FILTER_OPTIONS = ['Не оплачено','Оплачено','Оплачено частично','С зачётом предоплаты'];
 function payLabelsForService(s){
   return PAY_FILTER_OPTIONS.filter(label => matchPayFilter(s, label));
@@ -3704,6 +3714,7 @@ function filterOptionsFor(key){
     }
   });
   if(key==='fPay') return PAY_FILTER_OPTIONS.filter(label => values.indexOf(label)>=0);
+  if(key==='fFrom' || key==='fTo') return uniqDatesSorted(values);
   return uniqSorted(values);
 }
 function closeXlDrops(except){
@@ -3770,9 +3781,15 @@ function openXlDrop(input, opts){
   const filtered = q ? list.filter(o => o.toLowerCase().indexOf(q) >= 0) : list;
   const shown = filtered.slice(0, 50);
   const rows = [];
+  const isDateFilter = key==='fFrom' || key==='fTo';
+  const typedDate = isDateFilter && typing ? filterDateISO(input.value) : '';
+  const typedDateLabel = typedDate ? fmtDate(typedDate) : '';
+  if(typedDateLabel && !list.some(o=>filterDateISO(o)===typedDate)){
+    rows.push(`<button type="button" data-val="${esc(typedDateLabel)}">Использовать: ${esc(typedDateLabel)}</button>`);
+  }
   if(!q) rows.push('<button type="button" data-val="">(Все)</button>');
   shown.forEach(o => rows.push(`<button type="button" data-val="${esc(o)}">${esc(o)}</button>`));
-  box.innerHTML = rows.join('') || '<div class="xl-empty">Нет совпадений</div>';
+  box.innerHTML = rows.join('') || `<div class="xl-empty">${isDateFilter?'Введите дату в формате ДД.ММ.ГГГГ':'Нет совпадений'}</div>`;
   const current = input.value.trim();
   const btns = xlDropButtons(box);
   const match = current ? btns.find(b => b.dataset.val === current) : null;
