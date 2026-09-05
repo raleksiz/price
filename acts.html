@@ -52,8 +52,41 @@ textarea.autogrow{resize:none;overflow:hidden;}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 @media (max-width:720px){.grid2,.grid3{grid-template-columns:1fr;}}
 .grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
-.payment-block{margin-bottom:14px;}
+.pay-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 36px;
+  gap:6px;
+  align-items:end;
+  margin-bottom:10px;
+}
+.pay-row .field{margin-bottom:0;min-width:0;}
+.pay-row label{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  margin-bottom:4px;
+  letter-spacing:0;
+}
+.pay-row input,.pay-row select{
+  min-width:0;
+  width:100%;
+  padding:10px 8px;
+}
+.pay-prepay-btn{
+  width:36px;height:42px;padding:0;flex-shrink:0;align-self:end;
+  border:1.5px solid var(--line);border-radius:10px;background:#fff;
+  color:var(--ink);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.pay-prepay-btn.active{border-color:var(--ink);background:var(--soft);color:var(--violet);}
+.pay-prepay-btn:disabled{opacity:.4;cursor:not-allowed;}
 .payment-hint{margin-top:6px;}
+@media (max-width:720px){
+  .pay-row{gap:4px;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 32px;}
+  .pay-row label{font-size:10px;}
+  .pay-row input,.pay-row select{padding:9px 5px;font-size:14px;}
+  .pay-prepay-btn{width:32px;height:40px;}
+}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:stretch;margin-bottom:16px;}
 .tab{padding:9px 14px;border-radius:10px;background:#fff;border:1.5px solid var(--line);cursor:pointer;font-size:13px;font-weight:700;color:#6b6b7b;}
 .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
@@ -2990,26 +3023,30 @@ function openServiceForm(clientId, contractId, svcId){
     <div class="field"><label>Расшифровка услуги</label><textarea class="autogrow" id="svcDesc" placeholder="Заполнится автоматически по коду, текст можно менять" oninput="autoGrowTextarea(this)">${esc(cur.desc||'')}</textarea></div>
     <div id="baseContractFields" class="hidden"></div>
     <div id="surBox"></div>
-    <div class="field"><label>Стоимость, ₽</label><input type="number" id="svcPrice" step="1" value="${Number(cur.price)||0}" oninput="onManualPrice()">
-      <div class="muted" id="priceNote"></div>
-    </div>
-    <div id="calcLine" class="calc-line hidden"></div>
-    <div class="field payment-block">
-      <div class="grid-auto payment-grid">
-        <div class="field" style="margin-bottom:0"><label>Оплата</label>
-          <select id="svcPay" onchange="onPayChange()">
-            ${Object.keys(PAY_LABELS).map(k=>`<option value="${k}" ${cur.pay===k?'selected':''}>${PAY_LABELS[k]}</option>`).join('')}
-          </select>
-        </div>
-        <div class="field" id="payAmtField" style="margin-bottom:0"><label id="payAmtLabel">Сумма оплаты, ₽</label>
-          <input type="number" id="svcPayAmt" step="1" min="0" value="${Number(cur.payAmount)||0}" oninput="onPayChange(true)">
-        </div>
-        <div class="field" id="actualPrepayField" style="margin-bottom:0;display:none"><label>Фактически внесено, ₽</label>
-          <input type="number" id="svcActualPrepay" step="1" min="0" value="${Number(cur.actualPrepay)||0}" oninput="onActualPrepayInput()">
-        </div>
+    <div class="pay-row" id="payRow">
+      <div class="field">
+        <label for="svcPrice">Цена</label>
+        <input type="number" id="svcPrice" step="1" value="${Number(cur.price)||0}" oninput="onManualPrice()">
       </div>
-      <div class="muted payment-hint" id="paymentHint"></div>
+      <div class="field">
+        <label for="svcPayStatus">Статус</label>
+        <select id="svcPayStatus" onchange="onPayChange()">
+          <option value="none" ${(!cur.pay || cur.pay==='none')?'selected':''}>Не оплачено</option>
+          <option value="paid" ${(cur.pay && cur.pay!=='none')?'selected':''}>Оплачено</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="svcPayAmt">Сумма</label>
+        <input type="number" id="svcPayAmt" step="1" min="0" ${(!cur.pay || cur.pay==='none')?'disabled placeholder="—"':''} value="${(cur.pay && cur.pay!=='none')?(Number(cur.payAmount)||0):''}" oninput="onPayChange(true)">
+      </div>
+      <button type="button" class="pay-prepay-btn${(cur.pay==='full_prepay'||cur.pay==='part_prepay')?' active':''}" id="svcPrepayBtn" onclick="togglePrepayBtn()" title="Аванс" aria-label="Аванс" aria-pressed="${(cur.pay==='full_prepay'||cur.pay==='part_prepay')?'true':'false'}" ${(!cur.pay || cur.pay==='none')?'disabled':''}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 12h4v2h-4a1 1 0 0 1 0-2z"/><path d="M2 10h20"/></svg>
+      </button>
     </div>
+    <div class="muted" id="priceNote"></div>
+    <div id="calcLine" class="calc-line hidden"></div>
+    <input type="hidden" id="svcActualPrepay" value="${Number(cur.actualPrepay)||0}">
+    <div class="muted payment-hint" id="paymentHint"></div>
     ${cf}
     <div class="row" style="margin-top:8px">
       <button type="button" class="btn ghost" onclick="closeModal()">Отмена</button>
@@ -3457,30 +3494,71 @@ function onSvcDateChange(){
   renderBaseContractFieldsIfNeeded();
   recalc();
 }
+function formPayFromUi(){
+  const statusEl = document.getElementById('svcPayStatus');
+  const status = statusEl ? statusEl.value : 'none';
+  const btn = document.getElementById('svcPrepayBtn');
+  const fromPrepay = !!(btn && !btn.disabled && btn.classList.contains('active'));
+  const price = Number(document.getElementById('svcPrice')?.value)||0;
+  const amtRaw = document.getElementById('svcPayAmt')?.value;
+  const amount = amtRaw==='' || amtRaw==null ? 0 : Number(amtRaw);
+  if(status!=='paid') return { pay:'none', payAmt:0, fromPrepay:false };
+  if(!(amount>0)) return { pay:'full', payAmt:0, fromPrepay:false };
+  if(fromPrepay){
+    if(amount>=price) return { pay:'full_prepay', payAmt:price, fromPrepay:true };
+    return { pay:'part_prepay', payAmt:amount, fromPrepay:true };
+  }
+  if(amount>=price) return { pay:'full', payAmt:price, fromPrepay:false };
+  return { pay:'part', payAmt:amount, fromPrepay:false };
+}
+function togglePrepayBtn(){
+  const btn = document.getElementById('svcPrepayBtn');
+  if(!btn || btn.disabled) return;
+  btn.classList.toggle('active');
+  btn.setAttribute('aria-pressed', btn.classList.contains('active') ? 'true' : 'false');
+  onPayChange();
+}
 function onPayChange(silent){
-  const pay = document.getElementById('svcPay').value;
-  const payAmtField = document.getElementById('payAmtField');
-  const payAmtLabel = document.getElementById('payAmtLabel');
+  const statusEl = document.getElementById('svcPayStatus');
+  const amt = document.getElementById('svcPayAmt');
+  const btn = document.getElementById('svcPrepayBtn');
   const c = ctxClient();
   const ct = ctxContract();
-  const date = document.getElementById('svcDate').value;
-  const price = Number(document.getElementById('svcPrice').value)||0;
+  const date = document.getElementById('svcDate')?.value;
+  const price = Number(document.getElementById('svcPrice')?.value)||0;
   const hint = document.getElementById('paymentHint');
-  const actualBox = document.getElementById('actualPrepayField');
   const actualInp = document.getElementById('svcActualPrepay');
-  const fromPrepay = pay==='full_prepay' || pay==='part_prepay';
+  const unpaid = !statusEl || statusEl.value!=='paid';
 
-  const showPayAmt = pay==='part' || pay==='part_prepay';
-  if(payAmtField) payAmtField.style.display = showPayAmt ? '' : 'none';
-  if(payAmtLabel) payAmtLabel.textContent = pay==='part_prepay' ? 'Зачтено из предоплаты, ₽' : 'Сумма оплаты, ₽';
-  if(actualBox) actualBox.style.display = fromPrepay ? '' : 'none';
+  if(amt){
+    amt.disabled = unpaid;
+    if(unpaid){
+      amt.value = '';
+      amt.placeholder = '—';
+    } else {
+      amt.placeholder = '';
+      if(!silent && amt.value==='') amt.value = String(price);
+    }
+  }
+  if(btn){
+    btn.disabled = unpaid;
+    if(unpaid){
+      btn.classList.remove('active');
+      btn.setAttribute('aria-pressed','false');
+    }
+  }
+
+  const mapped = formPayFromUi();
+  const fromPrepay = mapped.fromPrepay;
 
   if(fromPrepay && actualInp){
     if(!silent && !window.__ctx.actualPrepayManual){
-      const def = defaultActualPrepayForForm(c, window.__ctx.contractId, date, price, window.__ctx.svcId);
+      const def = defaultActualPrepayForForm(c, window.__ctx.contractId, date, price, window.__ctx.svcId)
+        || Number(ct && ct.prepay)||0;
       actualInp.value = def > 0 ? def : '';
     } else if(!silent && !(Number(actualInp.value)>0)){
-      const def = defaultActualPrepayForForm(c, window.__ctx.contractId, date, price, window.__ctx.svcId);
+      const def = defaultActualPrepayForForm(c, window.__ctx.contractId, date, price, window.__ctx.svcId)
+        || Number(ct && ct.prepay)||0;
       if(def>0) actualInp.value = def;
     }
   } else if(window.__ctx){
@@ -3492,13 +3570,13 @@ function onPayChange(silent){
 
   const formActual = Number(actualInp && actualInp.value)||0;
   const avail = prepayAvailable(c, window.__ctx.contractId, date, window.__ctx.svcId, formActual);
-  const need = pay==='full_prepay' ? price : (Number(document.getElementById('svcPayAmt').value)||0);
+  const need = mapped.pay==='full_prepay' ? price : mapped.payAmt;
   const planned = Number(ct && ct.prepay)||0;
 
   let availTxt = 'Доступно из предоплаты' + (ct && ct.status==='Абонемент' ? ' за ' + monthTitle(monthKey(date)) : '') + ': ' + money(avail);
   let availColor = '#888';
   if(!(formActual>0)){
-    availTxt = 'Сначала укажите фактически внесённую предоплату';
+    availTxt = 'Нет суммы фактической предоплаты за месяц — аванс сохранится, если она уже есть в договоре';
     availColor = '#E65100';
   } else if(need > avail){
     availTxt += ' — ' + money(need-avail) + ' будет учтено как обычная оплата';
@@ -3547,10 +3625,10 @@ function saveService(clientId, svcId){
     alert('Для «Смешанный предмет договора» выберите базовый договор — 50% считается от него, а не от накопленной цены');
     return;
   }
-  const pay  = document.getElementById('svcPay').value;
-  let payAmt = Number(document.getElementById('svcPayAmt').value)||0;
+  const mapped = formPayFromUi();
+  const pay = mapped.pay;
+  let payAmt = mapped.payAmt;
   if(payAmt<0){ alert('Сумма оплаты не может быть отрицательной'); return; }
-  if(pay==='full' || pay==='full_prepay') payAmt = price;
   if((pay==='part'||pay==='part_prepay') && payAmt > price){
     alert('Сумма оплаты не может превышать стоимость услуги'); return;
   }
@@ -3558,7 +3636,13 @@ function saveService(clientId, svcId){
   if(pay==='full_prepay' || pay==='part_prepay'){
     actualPrepay = Number(document.getElementById('svcActualPrepay')?.value)||0;
     if(!(actualPrepay>0)){
-      alert('Укажите фактически внесённую предоплату'); return;
+      actualPrepay = defaultActualPrepayForForm(c, contractId, date, price, svcId) || Number(ct && ct.prepay)||0;
+      const hid = document.getElementById('svcActualPrepay');
+      if(hid && actualPrepay>0) hid.value = actualPrepay;
+    }
+    if(!(actualPrepay>0)){
+      alert('Нет суммы фактической предоплаты за месяц. Выключите аванс или сначала внесите предоплату в договоре.');
+      return;
     }
   }
   const custom = {};
