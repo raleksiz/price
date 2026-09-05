@@ -1470,7 +1470,8 @@
         "amount": "+10 000 ₽",
         "type": "fix",
         "value": 10000,
-        "extra": false
+        "extra": false,
+        "countable": false
       },
       {
         "name": "Нерабочие дни и после 19:00 по Мск",
@@ -1481,11 +1482,11 @@
         "nameHtml": "Нерабочие дни и <span class=\"hl\">после 19:00</span> по Мск"
       },
       {
-        "name": "Каждый выезд за пределы Мск и МО",
+        "name": "Выезд за пределы Мск и МО",
         "amount": "+10 000 ₽",
         "type": "fix",
         "value": 10000,
-        "countable": true
+        "countable": false
       },
       {
         "name": "Фактические расходы при выезде за пределы Мск и МО",
@@ -1494,7 +1495,7 @@
         "value": 0,
         "actualExpenses": true,
         "countable": true,
-        "requiresSurcharge": "Каждый выезд за пределы Мск и МО"
+        "requiresSurcharge": "Выезд за пределы Мск и МО"
       }
     ],
     "litigation_single": [
