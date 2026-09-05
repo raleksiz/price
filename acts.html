@@ -266,6 +266,8 @@ tr.locked td{background:#FAFAFC;}
 .sur-item span{min-width:0;}
 .sur-item span:not(.amt){overflow-wrap:break-word;}
 .sur-item .amt{margin-left:0;font-weight:700;white-space:nowrap;text-align:right;padding-left:8px;}
+.sur-item.sur-item-claim-credit{grid-template-columns:16px minmax(140px,.8fr) minmax(0,1.4fr);}
+.sur-item.sur-item-claim-credit .amt{white-space:normal;overflow-wrap:break-word;line-height:1.35;}
 .sur-extra{display:grid;grid-template-columns:90px minmax(0,1fr);gap:6px;margin:2px 0 5px 25px;align-items:stretch;}
 .sur-extra input,.sur-extra select,.sur-extra textarea{font-size:12px;padding:7px 8px;border-radius:8px;width:100%;box-sizing:border-box;}
 .sur-extra .sur-comment{grid-column:auto;min-width:0;min-height:34px;resize:none;overflow:hidden;line-height:1.35;}
@@ -286,6 +288,8 @@ tr.locked td{background:#FAFAFC;}
   .sur-extra{grid-template-columns:80px minmax(0,1fr);}
   .sur-extra .sur-count,
   .sur-extra .sur-expense-amount{width:80px;min-width:80px;max-width:80px;}
+  .sur-item.sur-item-claim-credit{grid-template-columns:16px minmax(0,1fr);}
+  .sur-item.sur-item-claim-credit .amt{grid-column:2;padding-left:0;text-align:left;}
 }
 .contract-date-row,
 .contract-params-row,
@@ -3264,7 +3268,7 @@ function renderSurcharges(){
         ? `<div class="muted" style="margin:-1px 0 5px 25px">Сначала отметь «${esc(x.requiresSurcharge)}».</div>`
         : '';
       return `<div>
-        <label class="sur-item">
+        <label class="sur-item${/зач[её]т при заказе претензии/i.test(String(x.name||''))?' sur-item-claim-credit':''}">
           <input type="checkbox" class="sur-cb" value="${i}" ${checked?'checked':''} ${requiredMissing?'disabled':''} onchange="onSurChange()">
           <span>${esc(x.name)}${x.type==='manual'?' <span class="muted">(вручную)</span>':''}</span>
           <span class="amt">${esc(x.amount)}${needs && Number(m.count)>1 ? ' × '+Number(m.count) : ''}</span>
@@ -5079,4 +5083,3 @@ function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
 </script>
 </body>
 </html>
-
