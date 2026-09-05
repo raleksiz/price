@@ -288,8 +288,8 @@ tr.locked td{background:#FAFAFC;}
   .sur-extra{grid-template-columns:80px minmax(0,1fr);}
   .sur-extra .sur-count,
   .sur-extra .sur-expense-amount{width:80px;min-width:80px;max-width:80px;}
-  .sur-item.sur-item-claim-credit{grid-template-columns:16px minmax(0,1fr);}
-  .sur-item.sur-item-claim-credit .amt{grid-column:2;padding-left:0;text-align:left;}
+  .sur-item.sur-item-claim-credit{grid-template-columns:16px minmax(88px,.8fr) minmax(0,1.2fr);}
+  .sur-item.sur-item-claim-credit .amt{grid-column:auto;padding-left:4px;text-align:right;}
 }
 .contract-date-row,
 .contract-params-row,
@@ -3267,10 +3267,11 @@ function renderSurcharges(){
       const requirementHint = requiredMissing
         ? `<div class="muted" style="margin:-1px 0 5px 25px">Сначала отметь «${esc(x.requiresSurcharge)}».</div>`
         : '';
+      const claimCredit = /зач[её]т при заказе претензии/i.test(String(x.name||''));
       return `<div>
-        <label class="sur-item${/зач[её]т при заказе претензии/i.test(String(x.name||''))?' sur-item-claim-credit':''}">
+        <label class="sur-item${claimCredit?' sur-item-claim-credit':''}">
           <input type="checkbox" class="sur-cb" value="${i}" ${checked?'checked':''} ${requiredMissing?'disabled':''} onchange="onSurChange()">
-          <span>${esc(x.name)}${x.type==='manual'?' <span class="muted">(вручную)</span>':''}</span>
+          <span>${esc(x.name)}${x.type==='manual'&&!claimCredit?' <span class="muted">(вручную)</span>':''}</span>
           <span class="amt">${esc(x.amount)}${needs && Number(m.count)>1 ? ' × '+Number(m.count) : ''}</span>
         </label>
         ${requirementHint}
