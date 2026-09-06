@@ -201,9 +201,17 @@ tr.locked td{background:#FAFAFC;}
 .clients-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:14px;min-width:0;}
 .clients-page-title{margin:0;font-size:15px;font-weight:700;flex-shrink:0;line-height:1.2;}
 .clients-toolbar #globalTotals{display:flex;align-items:center;min-width:0;}
-.icon-btn-toggle{background:#fff;border:1.5px solid var(--line);border-radius:8px;width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;color:#666;flex-shrink:0;}
+.icon-btn-toggle{position:relative;background:#fff;border:1.5px solid var(--line);border-radius:8px;width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;color:#666;flex-shrink:0;}
 .icon-btn-toggle:hover{border-color:var(--violet);color:var(--violet);}
 .icon-btn-toggle.active{border-color:var(--violet);background:var(--soft);color:var(--violet);}
+.hidden-count-badge{
+  position:absolute;top:-6px;right:-6px;z-index:1;
+  min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:2px solid #fff;border-radius:999px;background:#dc2626;color:#fff;
+  font-size:9px;font-weight:800;line-height:1;font-family:inherit;
+  font-variant-numeric:tabular-nums;
+}
 .clients-add-btn{margin-left:auto;flex-shrink:0;}
 @media (min-width:721px){.clients-add-btn{display:none;}}
 @media (max-width:720px){
@@ -703,7 +711,34 @@ details[open] summary::before{content:"▾ ";}
 @media(max-width:720px){.contract-toolbar-actions{margin-left:0;width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.contract-toolbar-actions .btn{width:100%;min-width:0;height:34px;padding:5px 3px;font-size:11px;line-height:1;white-space:nowrap}}
 .invoice-result-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;gap:8px;margin-top:14px;align-items:stretch}.invoice-result-actions .invoice-action{width:100%;min-width:0;justify-content:center}.invoice-action svg{display:none}.invoice-action-label{display:inline;white-space:nowrap;font-size:12px}@media(max-width:720px){.invoice-result-actions{gap:7px}.invoice-action{height:38px;min-width:0!important;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;border-radius:9px!important}.invoice-action-label{display:none}.invoice-action svg{display:block;width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.invoice-action.pdf svg{width:22px;height:22px}.invoice-action.pdf svg text{fill:currentColor;stroke:none;font-size:7px;font-family:Arial,sans-serif;font-weight:800;letter-spacing:-.4px}}
 .invoice-create-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.invoice-payer-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(105px,.6fr);gap:10px;align-items:start}.invoice-payer-row .field{min-width:0}.invoice-payer-row .field>label{min-height:16px;white-space:nowrap}@media(max-width:720px){.invoice-create-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.invoice-payer-row{grid-template-columns:minmax(0,1fr) minmax(105px,.6fr)}}
-.invoice-issued-list{margin:10px 0 0;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:var(--soft)}.invoice-issued-list summary{color:var(--violet)}.invoice-issued-list ul{margin:0 0 10px 18px;padding:0}.invoice-issued-row{margin:5px 0}.invoice-issued-line{display:flex;align-items:center;gap:7px;min-width:0}.invoice-issued-line>a{min-width:0;color:var(--violet);font-weight:700;text-decoration:none;overflow-wrap:anywhere}.invoice-issued-line>a:hover{text-decoration:underline}.invoice-issued-state{flex:0 0 auto;padding:2px 5px;border-radius:999px;background:#f1eeee;color:#8b5353;font-size:10px;font-weight:700;line-height:1.2;text-transform:uppercase}.invoice-issued-row.is-annulled .invoice-issued-line>a{color:#856d7b;text-decoration:line-through}.invoice-manage{display:inline-flex;flex:0 0 28px;width:28px;height:28px;align-items:center;justify-content:center;padding:0;border:1px solid #cfc4de;border-radius:7px;background:#fff;color:#6e3b8c;cursor:pointer}.invoice-manage:hover,.invoice-manage[aria-expanded="true"]{border-color:var(--violet);background:#f8f4ff}.invoice-manage svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.invoice-manage-menu{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:5px 0 8px;padding:7px 8px;border:1px solid #d9cdea;border-radius:8px;background:#fff}.invoice-manage-menu .btn{flex:0 0 auto;min-width:0}.invoice-manage-error{flex-basis:100%;color:var(--bad);font-size:11px;line-height:1.35}.invoice-year-group{border-top:1px solid #ddd1ec}.invoice-year-group:first-child{border-top:0}.invoice-year-group summary{padding:8px 0;color:#6e3b8c}.invoice-year-group ul{margin-bottom:9px}
+.invoice-issued-list{margin:10px 0 0;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:var(--soft);}
+.invoice-issued-list summary{color:var(--violet);}
+.invoice-issued-list ul{margin:0 0 10px 18px;padding:0;}
+.invoice-issued-row{margin:0;font-size:13px;font-weight:700;line-height:1.4;}
+.invoice-issued-row + .invoice-issued-row{margin-top:14px;}
+.invoice-issued-line{display:flex;align-items:center;gap:7px;min-width:0;}
+.invoice-issued-line>a{min-width:0;color:var(--violet);font-size:13px;font-weight:700;text-decoration:none;overflow-wrap:anywhere;}
+.invoice-issued-line>a:hover{text-decoration:underline;}
+.invoice-issued-state{flex:0 0 auto;padding:2px 5px;border-radius:999px;background:#f1eeee;color:#8b5353;font-size:10px;font-weight:700;line-height:1.2;text-transform:uppercase;}
+.invoice-issued-row.is-annulled .invoice-issued-line>a{color:#856d7b;text-decoration:line-through;}
+.invoice-manage{display:inline-flex;flex:0 0 28px;width:28px;height:28px;align-items:center;justify-content:center;padding:0;border:1px solid #cfc4de;border-radius:7px;background:#fff;color:#6e3b8c;cursor:pointer;}
+.invoice-manage:hover,.invoice-manage[aria-expanded="true"]{border-color:var(--violet);background:#f8f4ff;}
+.invoice-manage svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.invoice-manage-menu{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 34px;align-items:stretch;gap:6px;margin:5px 0 8px;padding:7px 8px;border:1px solid #d9cdea;border-radius:8px;background:#fff;}
+.invoice-manage-menu .btn{width:100%;min-width:0;height:34px;padding:6px 5px;font-size:11.5px;line-height:1;white-space:nowrap;}
+.invoice-delete-wide{grid-column:1 / 3;}
+.invoice-menu-close{width:34px;height:34px;padding:0;border:1.5px solid #c4b5fd;border-radius:8px;background:var(--soft);color:#6e3b8c;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
+.invoice-menu-close:hover{border-color:var(--violet);color:var(--violet);}
+.invoice-menu-close svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;}
+.invoice-manage-error{grid-column:1 / -1;color:var(--bad);font-size:11px;line-height:1.35;}
+.invoice-manage-error:empty{display:none;}
+.invoice-year-group{border-top:1px solid #ddd1ec;}
+.invoice-year-group:first-child{border-top:0;}
+.invoice-year-group summary{padding:8px 0;color:#6e3b8c;}
+.invoice-year-group ul{margin-bottom:9px;}
+@media(max-width:720px){
+  .invoice-manage{flex-basis:32px;width:32px;height:32px;}
+}
 .contract-preamble{font-size:12.5px;}
 .sent-flag-compact{margin-bottom:10px;}
 .sent-flag-label{text-transform:none;font-size:13px;margin:0;font-weight:700;}
@@ -886,6 +921,7 @@ details[open] summary::before{content:"▾ ";}
 .all-head{
   display:grid;
   grid-template-columns:28px 120px 100px 90px 52px minmax(280px,1fr) 86px 86px 132px 36px;
+  align-items:end;
   gap:8px;padding:0 8px 6px;
   font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);
   border-bottom:1.5px solid var(--line);
@@ -1045,7 +1081,7 @@ details[open] summary::before{content:"▾ ";}
       <div class="clients-toolbar">
         <h2 class="clients-page-title">Заказчики</h2>
         <div id="globalTotals"></div>
-        <button type="button" class="icon-btn-toggle" id="showHiddenBtn" onclick="toggleShowHiddenClients()" title="Показывать скрытых" aria-pressed="false">👁</button>
+        <button type="button" class="icon-btn-toggle" id="showHiddenBtn" onclick="toggleShowHiddenClients()" title="Показывать скрытых" aria-label="Показывать скрытых" aria-pressed="false"><span aria-hidden="true">👁</span></button>
         <button type="button" class="btn sm clients-add-btn" onclick="openClientForm(null)">+ Заказчик</button>
       </div>
       <div class="clients" id="clientsList"></div>
@@ -1112,7 +1148,7 @@ details[open] summary::before{content:"▾ ";}
       <div class="totals" id="allTotals"></div>
       <div id="allTableTopScroll" class="svc-head-scroll is-sticky">
         <div class="all-table-inner">
-          <div class="all-head"><div>№</div><div>Заказчик</div><div>Основание</div><div>Дата оказания услуги</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div><div class="c-edit-col"></div></div>
+          <div class="all-head"><div>№</div><div>Заказчик</div><div>Основание</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div><div class="c-edit-col"></div></div>
         </div>
       </div>
       <div id="allTableScroll" class="all-table-scroll">
@@ -1152,7 +1188,7 @@ details[open] summary::before{content:"▾ ";}
           <span id="cDebtChip" class="client-debt-chip"></span>
           <a id="cLink" class="icon-btn-toggle client-link-ico" target="_blank" rel="noopener" title="Ссылка для заказчика">🔗</a>
           <span class="client-list-actions">
-            <button type="button" class="icon-btn-toggle" id="showHiddenContractsBtn" onclick="toggleShowHiddenContracts()" title="Показывать скрытые" aria-pressed="false">👁</button>
+            <button type="button" class="icon-btn-toggle" id="showHiddenContractsBtn" onclick="toggleShowHiddenContracts()" title="Показывать скрытые" aria-label="Показывать скрытые" aria-pressed="false"><span aria-hidden="true">👁</span></button>
             <button type="button" class="btn sm" onclick="openContractForm(currentClientId,null)">+ Договор</button>
           </span>
           <div class="head-contract-actions">
@@ -2361,6 +2397,16 @@ function setView(v, id, keepContract){
 }
 
 /* ====================== ЗАКАЗЧИКИ (СПИСОК) ====================== */
+function updateHiddenToggleButton(button, showHidden, count, showLabel, hideLabel, countLabel){
+  if(!button) return;
+  const actionLabel=showHidden ? hideLabel : showLabel;
+  const safeCount=Math.max(0, Number(count)||0);
+  button.classList.toggle('active', showHidden);
+  button.setAttribute('aria-pressed', showHidden ? 'true' : 'false');
+  button.title=safeCount ? actionLabel+' · '+countLabel+': '+safeCount : actionLabel;
+  button.setAttribute('aria-label', button.title);
+  button.innerHTML=`<span aria-hidden="true">${showHidden?'🙈':'👁'}</span>${safeCount?`<span class="hidden-count-badge" aria-hidden="true">${safeCount>99?'99+':safeCount}</span>`:''}`;
+}
 function sortedClients(){
   return DB.clients.slice().sort((a,b)=>{
     if(!!b.pinned !== !!a.pinned) return b.pinned?1:-1;
@@ -2370,12 +2416,8 @@ function sortedClients(){
 function renderClients(){
   const showHidden = showHiddenClients;
   const showHiddenBtn = document.getElementById('showHiddenBtn');
-  if(showHiddenBtn){
-    showHiddenBtn.classList.toggle('active', showHidden);
-    showHiddenBtn.setAttribute('aria-pressed', showHidden ? 'true' : 'false');
-    showHiddenBtn.title = showHidden ? 'Скрыть скрытых' : 'Показывать скрытых';
-    showHiddenBtn.textContent = showHidden ? '🙈' : '👁';
-  }
+  const hiddenCount=DB.clients.filter(c=>c.hidden).length;
+  updateHiddenToggleButton(showHiddenBtn, showHidden, hiddenCount, 'Показывать скрытых', 'Скрыть скрытых', 'скрытых заказчиков');
   const list = sortedClients().filter(c=>showHidden || !c.hidden);
   const box = document.getElementById('clientsList');
   if(!list.length){
@@ -4289,10 +4331,9 @@ function syncHiddenContractsBtn(){
   const btn = document.getElementById('showHiddenContractsBtn');
   if(!box || !btn) return;
   const showHidden = !!box.dataset.showHidden;
-  btn.classList.toggle('active', showHidden);
-  btn.setAttribute('aria-pressed', showHidden ? 'true' : 'false');
-  btn.title = showHidden ? 'Скрыть скрытые' : 'Показывать скрытые';
-  btn.textContent = showHidden ? '🙈' : '👁';
+  const c=getClient(currentClientId);
+  const hiddenCount=c && Array.isArray(c.contracts) ? c.contracts.filter(ct=>ct.hidden).length : 0;
+  updateHiddenToggleButton(btn, showHidden, hiddenCount, 'Показывать скрытые', 'Скрыть скрытые', 'скрытых договоров');
 }
 function renderContractsList(c){
   const box = document.getElementById('cContractsList');
@@ -4871,7 +4912,8 @@ function issuedInvoiceItemHtml(invoice){
   const annulled=invoice.status==='annulled';
   const label=invoiceLabel(invoice);
   const annulButton=annulled ? '' : `<button type="button" class="btn ghost sm" onclick="manageInvoice('${id}','annul')">Аннулировать</button>`;
-  return `<li class="invoice-issued-row${annulled?' is-annulled':''}"><div class="invoice-issued-line"><a href="${esc(invoiceUrl(invoice))}" target="_blank" rel="noopener">${esc(label)}</a>${annulled?'<span class="invoice-issued-state">аннулирован</span>':''}<button type="button" class="invoice-manage" data-invoice-id="${id}" title="Удалить или аннулировать" aria-label="Удалить или аннулировать" aria-expanded="false" onclick="toggleInvoiceManageMenu('${id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button></div><div class="invoice-manage-menu hidden" id="invoiceManage-${id}">${annulButton}<button type="button" class="btn danger sm" onclick="manageInvoice('${id}','delete')">Удалить навсегда</button><button type="button" class="btn ghost sm" onclick="hideInvoiceManageMenu('${id}')">Отмена</button><span class="invoice-manage-error" id="invoiceManageError-${id}"></span></div></li>`;
+  const deleteClass=annulled ? ' invoice-delete-wide' : '';
+  return `<li class="invoice-issued-row${annulled?' is-annulled':''}"><div class="invoice-issued-line"><a href="${esc(invoiceUrl(invoice))}" target="_blank" rel="noopener">${esc(label)}</a>${annulled?'<span class="invoice-issued-state">аннулирован</span>':''}<button type="button" class="invoice-manage" data-invoice-id="${id}" title="Удалить или аннулировать" aria-label="Удалить или аннулировать" aria-expanded="false" onclick="toggleInvoiceManageMenu('${id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button></div><div class="invoice-manage-menu hidden" id="invoiceManage-${id}">${annulButton}<button type="button" class="btn danger sm${deleteClass}" onclick="manageInvoice('${id}','delete')">Удалить</button><button type="button" class="invoice-menu-close" onclick="hideInvoiceManageMenu('${id}')" title="Закрыть" aria-label="Закрыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button><span class="invoice-manage-error" id="invoiceManageError-${id}"></span></div></li>`;
 }
 function issuedInvoicesListHtml(invoices){
   return `<ul>${invoices.map(issuedInvoiceItemHtml).join('')}</ul>`;
@@ -4981,11 +5023,19 @@ function nextInvoiceNumber(){
   const n=Number(DB.invoiceLastNumber);
   return Number.isSafeInteger(n) && n>=0 ? String(n+1) : '1';
 }
+function defaultInvoiceAmount(c,ct){
+  if(ct && ct.status==='Абонемент'){
+    const prepay=Math.max(0,Number(ct.prepay)||0);
+    return prepay>0 ? prepay : Math.max(0,Number(ct.contractPrice)||0);
+  }
+  return ct ? Math.max(0,Number(contractTotals(c,ct.id).debt)||0) : 0;
+}
 function openInvoiceDialog(){
   const c=getClient(currentClientId), ct=getContract(c,currentContractId);
   if(!c || !ct) return;
   if(typeof RaleksizInvoice==='undefined'){ alert('Модуль счёта не загрузился. Обнови страницу.'); return; }
   const purposeBasis=invoiceBasis(ct,true);
+  const amount=defaultInvoiceAmount(c,ct);
   openModal(`<h1>Счёт на оплату · ${esc(c.name)}</h1>
     <div class="invoice-create-row">
       <div class="field"><label>Дата счёта</label><input id="invDate" type="date" value="${todayISO()}"></div>
@@ -4993,7 +5043,7 @@ function openInvoiceDialog(){
     </div>
     <div class="invoice-payer-row"><div class="field"><label>Плательщик</label><input id="invPayer" value="${esc(c.name)}"></div>
       <div class="field"><label>ИНН</label><input id="invPayerInn" inputmode="numeric" value="${esc(rememberedPayerInn(c))}"></div></div>
-    <div class="field"><label>Сумма, ₽</label><input id="invAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="Введите сумму"></div>
+    <div class="field"><label>Сумма, ₽</label><input id="invAmount" type="number" min="0" step="0.01" inputmode="decimal" value="${amount}"></div>
     <div class="field"><label>Назначение платежа</label><textarea id="invPurpose" class="autogrow">Оплата юридических услуг по ${esc(purposeBasis)}</textarea></div>
     <div id="issuedInvoicesContainer">${issuedInvoicesHtml(ct)}</div>
     <div class="err" id="invErr"></div><div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button><button type="button" class="btn" onclick="saveInvoice()">Создать счёт</button></div>`);
@@ -5026,7 +5076,7 @@ async function saveInvoice(){
   if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.touchSection(DB,'invoiceLastNumber');
   ct.invoices=Array.isArray(ct.invoices)?ct.invoices:[]; ct.invoices.push(invoice); c.invoicePayerInn=payerInn; c.inn=payerInn; touchContract(ct); touchClient(c);
   save({immediate:true});
-  const url=invoiceUrl(invoice), subject='Счёт на оплату № '+number+' от '+fmtDate(date), body='Направляю счёт на оплату.\n\nСсылка на счёт: '+url;
+  const url=invoiceUrl(invoice), subject=invoiceLabel(invoice)+'. '+purpose, body='Направляю счёт на оплату.\n\nСсылка на счёт: '+url;
   closeModal();
   openModal(`<h1>Счёт создан</h1><div class="link-box"><a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></div>
     <div class="invoice-result-actions"><button type="button" class="btn invoice-action pdf" title="Открыть и скачать PDF" aria-label="Открыть и скачать PDF" onclick="window.open('${esc(url)}','_blank')"><span class="invoice-action-label">Открыть PDF</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h10l4 4v16H5z"/><path d="M15 2v5h5"/><text x="6" y="17">PDF</text></svg></button><button type="button" class="btn ghost invoice-action" title="Копировать ссылку" aria-label="Копировать ссылку" onclick="copyLink('${esc(url)}')"><span class="invoice-action-label">Копировать ссылку</span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg></button><a class="btn ghost invoice-action" title="Написать письмо" aria-label="Написать письмо" href="mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}"><span class="invoice-action-label">Написать письмо</span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg></a><button type="button" class="btn ghost invoice-action" title="Закрыть" aria-label="Закрыть" onclick="closeModal()"><span class="invoice-action-label">Закрыть</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>`);
