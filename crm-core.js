@@ -604,6 +604,138 @@
     return migrateDB(out);
   }
 
+  function sameValue(a, b) {
+    if (a === b) return true;
+    if (a === undefined || b === undefined) return false;
+    try { return JSON.stringify(a) === JSON.stringify(b); }
+    catch (e) { return false; }
+  }
+
+  function isPlainObject(value) {
+    return !!value && typeof value === 'object' && !Array.isArray(value);
+  }
+
+  function arrayEntityKey(list) {
+    if (!Array.isArray(list) || !list.length) return '';
+    var objects = list.filter(function (item) { return isPlainObject(item); });
+    if (objects.length !== list.length) return '';
+    if (objects.every(function (item) { return text(item.id); })) return 'id';
+    if (objects.every(function (item) { return text(item.code); })) return 'code';
+    return '';
+  }
+
+  function mergeThreeWayArray(base, local, remote) {
+    var keyName = arrayEntityKey(base) || arrayEntityKey(local) || arrayEntityKey(remote);
+    if (!keyName) {
+      var allPrimitive = (base || []).concat(local || [], remote || []).every(function (item) {
+        return item === null || (typeof item !== 'object' && typeof item !== 'function');
+      });
+      if (!allPrimitive) return clone(local);
+      var result = clone(remote);
+      var baseCount = {};
+      var localCount = {};
+      var localValue = {};
+      (base || []).forEach(function (item) {
+        var key = JSON.stringify(item);
+        baseCount[key] = (baseCount[key] || 0) + 1;
+      });
+      (local || []).forEach(function (item) {
+        var key = JSON.stringify(item);
+        localCount[key] = (localCount[key] || 0) + 1;
+        localValue[key] = item;
+      });
+      new Set(Object.keys(baseCount).concat(Object.keys(localCount))).forEach(function (key) {
+        var delta = (localCount[key] || 0) - (baseCount[key] || 0);
+        while (delta < 0) {
+          var index = result.findIndex(function (item) { return JSON.stringify(item) === key; });
+          if (index !== -1) result.splice(index, 1);
+          delta++;
+        }
+        while (delta > 0) {
+          result.push(clone(localValue[key]));
+          delta--;
+        }
+      });
+      return result;
+    }
+    var baseMap = new Map();
+    var localMap = new Map();
+    var remoteMap = new Map();
+    (base || []).forEach(function (item) { baseMap.set(text(item[keyName]), item); });
+    (local || []).forEach(function (item) { localMap.set(text(item[keyName]), item); });
+    (remote || []).forEach(function (item) { remoteMap.set(text(item[keyName]), item); });
+    var orderedKeys = [];
+    (remote || []).concat(local || []).forEach(function (item) {
+      var key = text(item && item[keyName]);
+      if (key && orderedKeys.indexOf(key) === -1) orderedKeys.push(key);
+    });
+    return orderedKeys.reduce(function (out, key) {
+      var hasBase = baseMap.has(key);
+      var hasLocal = localMap.has(key);
+      var hasRemote = remoteMap.has(key);
+      if (!hasLocal) {
+        if (!hasBase && hasRemote) out.push(clone(remoteMap.get(key)));
+        return out;
+      }
+      if (!hasRemote) {
+        if (!hasBase || !sameValue(localMap.get(key), baseMap.get(key))) {
+          out.push(clone(localMap.get(key)));
+        }
+        return out;
+      }
+      out.push(mergeThreeWayValue(
+        hasBase ? baseMap.get(key) : undefined,
+        localMap.get(key),
+        remoteMap.get(key)
+      ));
+      return out;
+    }, []);
+  }
+
+  function mergeThreeWayValue(base, local, remote) {
+    if (sameValue(local, base)) return clone(remote);
+    if (sameValue(remote, base)) return clone(local);
+    if (local === undefined) return undefined;
+    if (remote === undefined) return clone(local);
+    if (Array.isArray(local) && Array.isArray(remote)) {
+      return mergeThreeWayArray(Array.isArray(base) ? base : [], local, remote);
+    }
+    if (isPlainObject(local) && isPlainObject(remote)) {
+      var baseObject = isPlainObject(base) ? base : {};
+      var out = {};
+      var keys = new Set(Object.keys(baseObject).concat(Object.keys(local), Object.keys(remote)));
+      keys.forEach(function (key) {
+        var hasBase = Object.prototype.hasOwnProperty.call(baseObject, key);
+        var hasLocal = Object.prototype.hasOwnProperty.call(local, key);
+        var hasRemote = Object.prototype.hasOwnProperty.call(remote, key);
+        if (!hasLocal) {
+          if (!hasBase && hasRemote) out[key] = clone(remote[key]);
+          return;
+        }
+        if (!hasRemote) {
+          if (!hasBase || !sameValue(local[key], baseObject[key])) out[key] = clone(local[key]);
+          return;
+        }
+        var merged = mergeThreeWayValue(hasBase ? baseObject[key] : undefined, local[key], remote[key]);
+        if (merged !== undefined) out[key] = merged;
+      });
+      return out;
+    }
+    // Оба источника изменили одно и то же простое поле: сохраняем действие текущей вкладки.
+    return clone(local);
+  }
+
+  // Накладывает только изменения текущей вкладки (base -> local) на свежую облачную базу.
+  // Это не даёт устаревшей вкладке вернуть старые значения в соседних полях и записях.
+  function mergeDBThreeWay(baseInput, localInput, remoteInput) {
+    var base = migrateDB(clone(baseInput || {}));
+    var local = migrateDB(clone(localInput || {}));
+    var remote = migrateDB(clone(remoteInput || {}));
+    var out = mergeThreeWayValue(base, local, remote);
+    out.updated = local.updated || isoNow();
+    return migrateDB(out);
+  }
+
   function touchSection(db, section, when) {
     ensureSyncMeta(db).sections[section] = when || isoNow();
   }
@@ -965,6 +1097,7 @@
     markDeleted: markDeleted,
     migrateDB: migrateDB,
     mergeDB: mergeDB,
+    mergeDBThreeWay: mergeDBThreeWay,
     touchSection: touchSection,
     ensureCatalogMeta: ensureCatalogMeta,
     serviceCodeGroups: serviceCodeGroups,

@@ -1263,6 +1263,11 @@ const TOKEN_KEY  = 'raleksiz_gh_token';
 const DB_KEY     = 'raleksiz_acts_db';
 const SHA_KEY    = 'raleksiz_acts_sha';
 const PENDING_KEY= 'raleksiz_acts_pending_sync';
+const DRAFT_KEY  = 'raleksiz_acts_tab_draft';
+const DRAFT_BASE_KEY = 'raleksiz_acts_tab_draft_base';
+const TAB_ID_KEY = 'raleksiz_acts_tab_id';
+const TAB_EVENT_KEY = 'raleksiz_acts_cloud_updated';
+const WRITE_LOCK_KEY = 'raleksiz_acts_github_write';
 const GH_REPO        = 'raleksiz/Price-private'; // acts.json + offers.json (private)
 const GH_PUBLIC_REPO = 'raleksiz/price';         // price-catalog.json (public)
 const GH_FILE        = 'acts.json';
@@ -1280,6 +1285,11 @@ const PAY_LABELS = {
 const MONTHS = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
 
 let DB = null;
+let DB_BASE = null;
+let REMOTE_SHA = '';
+let LOCAL_DIRTY = false;
+let TAB_CHANNEL = null;
+let QUEUED_REMOTE = null;
 let OFFERS = [];
 let currentView = 'clients';
 let currentClientId = null;
@@ -1485,48 +1495,178 @@ function normalizeDB(db){
   if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.migrateDB(db);
   return db;
 }
+function cloneActsDB(db){
+  if(typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.clone) return RaleksizCRMCore.clone(db);
+  return JSON.parse(JSON.stringify(db));
+}
+function mergeActsDBThreeWay(base, local, remote){
+  if(base && typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.mergeDBThreeWay){
+    return normalizeDB(RaleksizCRMCore.mergeDBThreeWay(base, local, remote));
+  }
+  return mergeActsDB(local, remote);
+}
+function tabId(){
+  let id = '';
+  try{
+    id = sessionStorage.getItem(TAB_ID_KEY) || '';
+    if(!id){ id = uid(); sessionStorage.setItem(TAB_ID_KEY, id); }
+  }catch(e){ id = uid(); }
+  return id;
+}
+async function fetchRemoteDB(){
+  const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}?ref=main`, {
+    headers:ghHeaders(), cache:'no-store'
+  });
+  if(!res.ok) throw new Error('READ_'+res.status);
+  const data = await res.json();
+  return {db:normalizeDB(JSON.parse(b64dec(data.content))), sha:data.sha||''};
+}
+function saveCanonicalCache(db, sha){
+  try{
+    localStorage.setItem(DB_KEY, JSON.stringify(db));
+    if(sha) localStorage.setItem(SHA_KEY, sha); // Только кэш; при записи SHA всегда читается заново.
+  }catch(e){}
+}
+function saveTabDraft(){
+  try{
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(DB));
+    sessionStorage.setItem(DRAFT_BASE_KEY, JSON.stringify(DB_BASE || {}));
+    sessionStorage.setItem(PENDING_KEY, '1');
+  }catch(e){}
+}
+function clearTabDraft(){
+  try{
+    sessionStorage.removeItem(DRAFT_KEY);
+    sessionStorage.removeItem(DRAFT_BASE_KEY);
+    sessionStorage.removeItem(PENDING_KEY);
+    localStorage.removeItem(PENDING_KEY); // Убираем флаг старой версии после успешного объединения.
+  }catch(e){}
+}
+function modalIsOpen(){ return !!document.querySelector('#modalRoot .modal'); }
+function notifyOtherTabs(db, sha){
+  const message = {source:tabId(), sha:sha||'', db:cloneActsDB(db)};
+  try{ if(TAB_CHANNEL) TAB_CHANNEL.postMessage(message); }catch(e){}
+  try{ localStorage.setItem(TAB_EVENT_KEY, JSON.stringify({source:message.source, at:Date.now()})); }catch(e){}
+}
+async function acceptRemoteUpdate(message){
+  try{
+    let incoming = message && message.db ? {db:normalizeDB(message.db), sha:message.sha||''} : null;
+    if(!incoming){
+      if(!localStorage.getItem(TOKEN_KEY)) return;
+      incoming = await fetchRemoteDB();
+    }
+    if(incoming.sha && incoming.sha===REMOTE_SHA) return;
+    if(modalIsOpen()){
+      QUEUED_REMOTE = incoming;
+      setSync('Есть изменения в другой вкладке — они будут объединены при сохранении');
+      return;
+    }
+    if(!DB){ QUEUED_REMOTE = incoming; return; }
+    if(LOCAL_DIRTY){
+      DB = mergeActsDBThreeWay(DB_BASE, DB, incoming.db);
+      DB_BASE = cloneActsDB(incoming.db);
+      REMOTE_SHA = incoming.sha || REMOTE_SHA;
+      saveTabDraft();
+      setSync('Изменения вкладок объединены — сохраняю…');
+      pushDB();
+    }else{
+      DB = cloneActsDB(incoming.db);
+      DB_BASE = cloneActsDB(incoming.db);
+      REMOTE_SHA = incoming.sha || REMOTE_SHA;
+      saveCanonicalCache(DB, REMOTE_SHA);
+      renderAllViews();
+      setView(currentView, currentClientId, true);
+      setSync('Обновлено из другой вкладки');
+    }
+  }catch(e){ console.warn('Не удалось получить обновление другой вкладки', e); }
+}
+function initTabSync(){
+  if(window.__actsTabSyncBound) return;
+  window.__actsTabSyncBound = true;
+  tabId();
+  if(typeof BroadcastChannel!=='undefined'){
+    TAB_CHANNEL = new BroadcastChannel('raleksiz_acts_sync_v2');
+    TAB_CHANNEL.addEventListener('message', e=>{
+      if(e.data && e.data.source!==tabId()) acceptRemoteUpdate(e.data);
+    });
+  }
+  window.addEventListener('storage', e=>{
+    if(e.key!==TAB_EVENT_KEY || !e.newValue) return;
+    try{
+      const event = JSON.parse(e.newValue);
+      if(event.source!==tabId()) acceptRemoteUpdate(null);
+    }catch(err){}
+  });
+}
 async function loadDB(){
   const token = localStorage.getItem(TOKEN_KEY);
   let remote = null;
-  let remoteSha = '';
   if(token){
-    try{
-      const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}?ref=main`, {headers:ghHeaders(), cache:'no-store'});
-      if(res.ok){
-        const data = await res.json();
-        remote = normalizeDB(JSON.parse(b64dec(data.content)));
-        remoteSha = data.sha || '';
-      } else setSync('Ошибка чтения acts.json', true);
-    }catch(e){ setSync('Нет связи с GitHub', true); }
+    try{ remote = await fetchRemoteDB(); }
+    catch(e){
+      setSync(String(e && e.message||'').startsWith('READ_') ? 'Ошибка чтения acts.json' : 'Нет связи с GitHub', true);
+    }
   } else setSync('Токен не задан', true);
 
-  let local = null;
+  let cached = null;
+  let draft = null;
+  let draftBase = null;
+  let tabPending = false;
+  let legacyPending = false;
   try{
-    const raw = localStorage.getItem(DB_KEY);
-    if(raw) local = normalizeDB(JSON.parse(raw));
+    tabPending = sessionStorage.getItem(PENDING_KEY)==='1';
+    legacyPending = localStorage.getItem(PENDING_KEY)==='1';
+    const cachedRaw = localStorage.getItem(DB_KEY);
+    const draftRaw = sessionStorage.getItem(DRAFT_KEY);
+    const baseRaw = sessionStorage.getItem(DRAFT_BASE_KEY);
+    if(cachedRaw) cached = normalizeDB(JSON.parse(cachedRaw));
+    if(tabPending && draftRaw) draft = normalizeDB(JSON.parse(draftRaw));
+    if(tabPending && baseRaw) draftBase = normalizeDB(JSON.parse(baseRaw));
   }catch(e){}
 
-  if(remote && local){
-    const merged = mergeActsDB(local, remote);
-    if(remoteSha) localStorage.setItem(SHA_KEY, remoteSha);
-    try{ localStorage.setItem(DB_KEY, JSON.stringify(merged)); }catch(e){}
-    window.__needsCloudPush = JSON.stringify(merged) !== JSON.stringify(remote) ||
-      localStorage.getItem(PENDING_KEY) === '1';
-    if(window.__needsCloudPush) setSync('Объединены несинхронизированные изменения — отправляю в облако…', true);
-    return merged;
-  }
   if(remote){
-    if(remoteSha) localStorage.setItem(SHA_KEY, remoteSha);
-    try{ localStorage.setItem(DB_KEY, JSON.stringify(remote)); }catch(e){}
+    REMOTE_SHA = remote.sha;
+    DB_BASE = cloneActsDB(remote.db);
+    saveCanonicalCache(remote.db, remote.sha);
+    if(draft){
+      const merged = draftBase
+        ? mergeActsDBThreeWay(draftBase, draft, remote.db)
+        : mergeActsDB(draft, remote.db);
+      LOCAL_DIRTY = JSON.stringify(merged)!==JSON.stringify(remote.db);
+      if(LOCAL_DIRTY){
+        DB = merged;
+        saveTabDraft();
+        window.__needsCloudPush = true;
+        setSync('Восстановлены несинхронизированные изменения — сохраняю…', true);
+        return DB;
+      }
+    }else if(legacyPending && cached){
+      const merged = mergeActsDB(cached, remote.db);
+      LOCAL_DIRTY = JSON.stringify(merged)!==JSON.stringify(remote.db);
+      if(LOCAL_DIRTY){
+        DB = merged;
+        saveTabDraft();
+        window.__needsCloudPush = true;
+        setSync('Восстановлены изменения старой версии — сохраняю…', true);
+        return DB;
+      }
+    }
+    LOCAL_DIRTY = false;
+    clearTabDraft();
     setSync('');
-    return remote;
+    return remote.db;
   }
+
+  const local = draft || cached;
   if(local){
-    if(localStorage.getItem(PENDING_KEY)==='1') window.__needsCloudPush = true;
+    LOCAL_DIRTY = !!draft || legacyPending;
+    DB_BASE = cloneActsDB(draftBase || local);
+    if(LOCAL_DIRTY) window.__needsCloudPush = true;
     return local;
   }
   // Публичный raw acts.json больше не используем — база только в private
-  return normalizeDB({});
+  DB_BASE = normalizeDB({});
+  return cloneActsDB(DB_BASE);
 }
 async function loadPublicCatalog(){
   const urls = ['price-catalog.json', 'https://raleksiz.github.io/price/price-catalog.json'];
@@ -1553,8 +1693,9 @@ function save(opts){
   opts = opts || {};
   DB.updated = new Date().toISOString();
   if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.migrateDB(DB);
-  try{ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }catch(e){}
-  try{ localStorage.setItem(PENDING_KEY, '1'); }catch(e){}
+  LOCAL_DIRTY = true;
+  saveTabDraft();
+  setSync('Сохраняется…');
   clearTimeout(saveTimer);
   if(opts.immediate){
     saveTimer = null;
@@ -1571,64 +1712,87 @@ function flushPendingSave(){
 }
 window.addEventListener('pagehide', flushPendingSave);
 window.addEventListener('beforeunload', e=>{
-  if(localStorage.getItem(PENDING_KEY)==='1' && localStorage.getItem(TOKEN_KEY)){
+  if(LOCAL_DIRTY && localStorage.getItem(TOKEN_KEY)){
     e.preventDefault();
     e.returnValue = '';
   }
 });
+function withWriteLock(task){
+  if(navigator.locks && typeof navigator.locks.request==='function'){
+    return navigator.locks.request(WRITE_LOCK_KEY, {mode:'exclusive'}, task);
+  }
+  return task();
+}
 function pushDB(){
   if(pushInFlight){
     pushAgain = true;
     return pushInFlight;
   }
-  pushInFlight = pushDBOnce(false).finally(()=>{
+  pushInFlight = withWriteLock(pushDBOnce).finally(()=>{
     pushInFlight = null;
     if(pushAgain){
       pushAgain = false;
-      pushDB();
+      if(LOCAL_DIRTY) pushDB();
     }
   });
   return pushInFlight;
 }
-async function pushDBOnce(retry){
+async function pushDBOnce(){
   const token = localStorage.getItem(TOKEN_KEY);
-  if(!token){ setSync('Токен не задан — сохранено локально', true); return; }
-  setSync('Сохраняю…');
-  const revision = DB.updated;
+  if(!token){ setSync('Сохранено только на устройстве — синхронизация не выполнена', true); return; }
+  setSync('Сохраняется…');
+  const localSnapshot = cloneActsDB(DB);
+  const baseSnapshot = DB_BASE ? cloneActsDB(DB_BASE) : null;
   try{
-    const body = { message:'Update acts.json', content: b64enc(JSON.stringify(DB, null, 2)) };
-    const sha = localStorage.getItem(SHA_KEY);
-    if(sha) body.sha = sha;
-    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, {
-      method:'PUT',
-      headers:{...ghHeaders(),'Content-Type':'application/json'},
-      body: JSON.stringify(body)
-    });
-    if(res.ok){
-      const data = await res.json();
-      localStorage.setItem(SHA_KEY, data.content.sha);
-      if(DB.updated===revision){
-        localStorage.removeItem(PENDING_KEY);
-        setSync('');
-      }else{
-        pushAgain = true;
+    for(let attempt=0; attempt<3; attempt++){
+      // SHA берётся вместе со свежей базой непосредственно перед каждой записью.
+      const latest = await fetchRemoteDB();
+      const payload = baseSnapshot
+        ? mergeActsDBThreeWay(baseSnapshot, localSnapshot, latest.db)
+        : mergeActsDB(localSnapshot, latest.db);
+      payload.updated = new Date().toISOString();
+      if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.migrateDB(payload);
+      const body = {
+        message:'Update acts.json',
+        content:b64enc(JSON.stringify(payload, null, 2)),
+        sha:latest.sha
+      };
+      const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, {
+        method:'PUT',
+        headers:{...ghHeaders(),'Content-Type':'application/json'},
+        body:JSON.stringify(body)
+      });
+      if(res.ok){
+        const data = await res.json();
+        REMOTE_SHA = data.content.sha;
+        const unchangedWhileSaving = JSON.stringify(DB)===JSON.stringify(localSnapshot);
+        DB_BASE = cloneActsDB(payload);
+        saveCanonicalCache(payload, REMOTE_SHA);
+        QUEUED_REMOTE = null;
+        if(unchangedWhileSaving){
+          DB = cloneActsDB(payload);
+          LOCAL_DIRTY = false;
+          clearTabDraft();
+          setSync('Сохранено в GitHub');
+        }else{
+          DB = mergeActsDBThreeWay(localSnapshot, DB, payload);
+          LOCAL_DIRTY = true;
+          saveTabDraft();
+          pushAgain = true;
+        }
+        notifyOtherTabs(payload, REMOTE_SHA);
+        if(!modalIsOpen()) renderAllViews();
+        return;
       }
-      return;
-    }
-    if((res.status===409 || res.status===422) && !retry){
-      const g = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}?ref=main`, {headers:ghHeaders(), cache:'no-store'});
-      if(g.ok){
-        const d = await g.json();
-        localStorage.setItem(SHA_KEY, d.sha);
-        try{
-          DB = mergeActsDB(DB, normalizeDB(JSON.parse(b64dec(d.content))));
-          localStorage.setItem(DB_KEY, JSON.stringify(DB));
-        }catch(e){}
-        return pushDBOnce(true);
+      if(res.status!==409 && res.status!==422){
+        setSync('Сохранено только на устройстве — синхронизация не выполнена ('+res.status+')', true);
+        return;
       }
     }
-    setSync('Ошибка сохранения ('+res.status+')', true);
-  }catch(e){ setSync('Нет связи с GitHub — сохранено локально', true); }
+    setSync('Сохранено только на устройстве — синхронизация не выполнена: база менялась одновременно', true);
+  }catch(e){
+    setSync('Сохранено только на устройстве — синхронизация не выполнена', true);
+  }
 }
 async function loadOffers(){
   const localKey = 'raleksiz_sent_offers';
@@ -2213,7 +2377,13 @@ async function init(){
   try{
     setCrmBrandLogo();
     checkCrmHeaderWrap();
+    initTabSync();
     DB = await loadDB();
+    if(QUEUED_REMOTE){
+      const queued = QUEUED_REMOTE;
+      QUEUED_REMOTE = null;
+      await acceptRemoteUpdate(queued);
+    }
     const catalog = await loadPublicCatalog();
     if(catalog && typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.mergeCatalogIntoDB){
       const before = new Set((DB.priceList||[]).map(item => String(item && item.code||'')));
@@ -5294,7 +5464,14 @@ function openModal(html, wide, cardClass){
     `<div class="modal" onclick="if(event.target===this)closeModal()"><div class="card ${wide?'wide':''} ${cardClass||''}">${html}</div></div>`;
   bindCompScrollPairs(document.getElementById('modalRoot'));
 }
-function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
+function closeModal(){
+  document.getElementById('modalRoot').innerHTML='';
+  if(QUEUED_REMOTE && !LOCAL_DIRTY && !pushInFlight){
+    const queued = QUEUED_REMOTE;
+    QUEUED_REMOTE = null;
+    acceptRemoteUpdate(queued);
+  }
+}
 </script>
 </body>
 </html>
