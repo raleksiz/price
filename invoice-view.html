@@ -6,7 +6,7 @@
   <title>Счёт на оплату</title>
   <link rel="icon" type="image/png" sizes="32x32" href="acts_offer-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="acts_offer-180.png">
-  <script src="invoice.js?v=invoice-pdf-20260907a"></script>
+  <script src="invoice.js?v=invoice-pdf-20260907b"></script>
   <style>
     :root{--ink:#2B1A6B;--soft:#F3ECFA;--line:#CDB9E8}
     *{box-sizing:border-box}
@@ -16,7 +16,7 @@
     .actions button{border:1px solid var(--line);border-radius:9px;padding:9px 13px;background:#fff;color:var(--ink);font-weight:700;cursor:pointer;box-shadow:0 2px 10px #2b1a6b24}
     .invoice-sheet{background:#fff;padding:34px 38px;box-shadow:0 2px 16px #2b1a6b20}
     .invoice-head{display:flex;gap:18px;align-items:center;padding-bottom:18px;border-bottom:2px solid var(--line)}
-    .invoice-logo{width:180px;height:54px;flex:0 0 180px;object-fit:contain;object-position:left center;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .invoice-logo{height:57px;width:auto;max-width:240px;flex:0 0 auto;object-fit:contain;object-position:left center;display:block;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .invoice-issuer{margin-left:auto;text-align:right;font-size:12px}
     .invoice-issuer a{color:inherit;text-decoration:underline;text-underline-offset:2px}
     .invoice-title{margin:25px 0 18px}
@@ -51,7 +51,7 @@
     .invoice-sign{display:none}
     .invoice-annulled{margin-top:18px;border:1px solid #f0b7b7;border-radius:10px;padding:18px;background:#fff5f5;color:#8f1d1d}.invoice-annulled h2{margin:0 0 5px;font-size:20px}.invoice-annulled p{margin:0;font-weight:700}
     @media(max-width:620px){
-      .page{margin:0}.actions{right:12px;bottom:12px}.invoice-sheet{padding:20px 14px;box-shadow:none}.invoice-head{align-items:flex-start}.invoice-logo{width:112px;height:34px;flex-basis:112px;max-height:34px}.invoice-issuer{font-size:10px}.invoice-title h1{font-size:20px}
+      .page{margin:0}.actions{right:12px;bottom:12px}.invoice-sheet{padding:20px 14px;box-shadow:none}.invoice-head{align-items:flex-start}.invoice-logo{height:46px;max-width:180px}.invoice-issuer{font-size:10px}.invoice-title h1{font-size:20px}
       .invoice-payment{display:block}.invoice-payment .invoice-qr-desktop{display:none}
       .invoice-bank-grid{grid-template-columns:56% 44%;font-size:10px}.invoice-bank-grid>div{padding:6px;min-height:50px}.invoice-bank-grid b{font-size:10px;overflow-wrap:anywhere}
       .invoice-party-qr-area{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:stretch;margin:18px 0}
@@ -67,8 +67,8 @@
       .page{max-width:none;margin:0}
       .actions{display:none}
       .invoice-sheet{box-shadow:none;padding:0}
-      .invoice-head{padding-bottom:12px}
-      .invoice-logo{width:48mm!important;height:14mm!important;max-width:48mm!important;max-height:14mm!important;flex-basis:48mm!important;object-fit:contain!important;object-position:left center!important}
+      .invoice-head{padding-bottom:12px;align-items:center}
+      .invoice-logo{height:15mm!important;width:auto!important;max-width:65mm!important;max-height:15mm!important;flex:0 0 auto!important}
       .invoice-title{margin-top:16px}
       .invoice-sign{display:block;margin-top:52px;width:calc((100% - 44px)/2);min-height:92px;font-size:11px;break-inside:avoid;page-break-inside:avoid}
       .invoice-sign-line{border-bottom:1px solid #111;height:42px;margin-bottom:4px;position:relative}
@@ -84,6 +84,12 @@
   </main>
   <script>
     const id=RaleksizInvoice.readToken(),root=document.getElementById('root');
+    function invoiceFileTitle(d,annulled){
+      const n=String((d&&d.number)||'');
+      const dt=RaleksizInvoice.date(d&&d.date);
+      const head=annulled?'Аннулированный счёт № ':'Счёт № ';
+      return head+n+(dt?' от '+dt:'')+'.pdf';
+    }
     (async()=>{
       if(!/^[A-Za-z0-9]{10,15}$/.test(id)){root.innerHTML='<p>Ссылка на счёт недействительна.</p>';return}
       let d;
@@ -96,7 +102,7 @@
       if(d.status==='annulled'){
         root.innerHTML=RaleksizInvoice.annulledHtml(d);
         document.getElementById('downloadPdf').hidden=true;
-        document.title='Аннулированный счёт № '+d.number+(d.date?' от '+RaleksizInvoice.date(d.date):'');
+        document.title=invoiceFileTitle(d,true);
         return;
       }
       try{
@@ -106,7 +112,11 @@
         root.replaceChildren(...draft.childNodes);
         RaleksizInvoice.fitAmounts(root);
         window.addEventListener('resize',()=>RaleksizInvoice.fitAmounts(root),{passive:true});
-        document.title='Счёт № '+d.number+(d.date?' от '+RaleksizInvoice.date(d.date):'')
+        document.title=invoiceFileTitle(d,false);
+        document.getElementById('downloadPdf').onclick=function(){
+          document.title=invoiceFileTitle(d,false);
+          window.print();
+        };
       }catch(e){root.innerHTML='<p>Не удалось сформировать обязательный QR-код. Счёт не показан.</p>'}
     })();
   </script>

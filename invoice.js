@@ -38,7 +38,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
   function annulledHtml(d) {
     return `<article class="invoice-sheet invoice-annulled-sheet">
       <header class="invoice-head">
-        <img class="invoice-logo" src="${API}/logo.png?v=logo-20260907a" alt="RALEKSIZ HOUSE" width="180" height="54">
+        <img class="invoice-logo" src="brand-logo.png" alt="RALEKSIZ HOUSE">
         <div class="invoice-issuer"><b>${RECIPIENT.name}</b><br>ОГРНИП ${RECIPIENT.ogrnip}<br><a href="mailto:${esc(RECIPIENT.email)}">${RECIPIENT.email}</a> · <a href="${esc(RECIPIENT.telegram)}" target="_blank" rel="noopener">${RECIPIENT.telegram}</a></div>
       </header>
       <section class="invoice-title"><div><h1>СЧЁТ НА ОПЛАТУ № ${esc(d.number)}</h1><p>от ${date(d.date)}</p></div></section>
@@ -50,7 +50,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     const payerInn = d.payerInn ? esc(d.payerInn) : '—';
     return `<article class="invoice-sheet">
       <header class="invoice-head">
-        <img class="invoice-logo" src="${API}/logo.png?v=logo-20260907a" alt="RALEKSIZ HOUSE" width="180" height="54">
+        <img class="invoice-logo" src="brand-logo.png" alt="RALEKSIZ HOUSE">
         <div class="invoice-issuer"><b>${RECIPIENT.name}</b><br>ОГРНИП ${RECIPIENT.ogrnip}<br><a href="mailto:${esc(RECIPIENT.email)}">${RECIPIENT.email}</a> · <a href="${esc(RECIPIENT.telegram)}" target="_blank" rel="noopener">${RECIPIENT.telegram}</a></div>
       </header>
       <section class="invoice-title"><div><h1>СЧЁТ НА ОПЛАТУ № ${esc(d.number)}</h1><p>от ${date(d.date)}</p></div></section>
