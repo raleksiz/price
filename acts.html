@@ -1331,7 +1331,34 @@ function monthTitle(mk){ if(!mk) return ''; const [y,m] = mk.split('-'); return 
 async function sha256(str){ const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
 function b64enc(s){ return btoa(unescape(encodeURIComponent(s))); }
 function b64dec(s){ return decodeURIComponent(escape(atob(String(s).replace(/\n/g,'')))); }
-function setSync(t, warn){ const el = document.getElementById('syncState'); if(el){ el.textContent = t; el.style.color = warn ? '#dc2626' : '#888'; } }
+function setSync(t, warn, onClick){
+  const el = document.getElementById('syncState');
+  if(!el) return;
+  el.textContent = t;
+  el.style.color = warn ? '#dc2626' : '#888';
+  el.style.cursor = typeof onClick==='function' ? 'pointer' : '';
+  el.style.textDecoration = typeof onClick==='function' ? 'underline' : '';
+  el.onclick = typeof onClick==='function' ? onClick : null;
+  el.onkeydown = typeof onClick==='function' ? e=>{
+    if(e.key==='Enter' || e.key===' '){ e.preventDefault(); onClick(); }
+  } : null;
+  el.tabIndex = typeof onClick==='function' ? 0 : -1;
+  el.setAttribute('role', typeof onClick==='function' ? 'button' : 'status');
+  if(!t) el.removeAttribute('title');
+}
+function showSaveFailure(reason){
+  const tokenMissing = !localStorage.getItem(TOKEN_KEY);
+  const message = tokenMissing
+    ? 'Сохранено только на устройстве — нажмите, чтобы указать токен GitHub'
+    : 'Сохранено только на устройстве — нажмите, чтобы повторить синхронизацию';
+  setSync(message, true, ()=>{
+    if(tokenMissing){ openTokenPrompt(); return; }
+    setSync('');
+    pushDB();
+  });
+  const el = document.getElementById('syncState');
+  if(el && reason) el.title = 'Причина: '+reason;
+}
 
 /* ====================== АВТОРИЗАЦИЯ ====================== */
 function checkSession(){
@@ -1363,7 +1390,11 @@ function openTokenPrompt(){
   const v = prompt('GitHub token (Contents: Read and write для Price-private и price):', cur||'');
   if(v===null) return;
   if(v.trim()){ localStorage.setItem(TOKEN_KEY, v.trim()); init(); }
-  else { localStorage.removeItem(TOKEN_KEY); setSync('Токен не задан', true); }
+  else {
+    localStorage.removeItem(TOKEN_KEY);
+    if(LOCAL_DIRTY) showSaveFailure('токен GitHub не задан');
+    else setSync('');
+  }
 }
 async function showMain(){
   document.documentElement.classList.add('session-ok');
@@ -1558,7 +1589,7 @@ async function acceptRemoteUpdate(message){
     if(incoming.sha && incoming.sha===REMOTE_SHA) return;
     if(modalIsOpen()){
       QUEUED_REMOTE = incoming;
-      setSync('Есть изменения в другой вкладке — они будут объединены при сохранении');
+      setSync('');
       return;
     }
     if(!DB){ QUEUED_REMOTE = incoming; return; }
@@ -1567,7 +1598,7 @@ async function acceptRemoteUpdate(message){
       DB_BASE = cloneActsDB(incoming.db);
       REMOTE_SHA = incoming.sha || REMOTE_SHA;
       saveTabDraft();
-      setSync('Изменения вкладок объединены — сохраняю…');
+      setSync('');
       pushDB();
     }else{
       DB = cloneActsDB(incoming.db);
@@ -1576,7 +1607,7 @@ async function acceptRemoteUpdate(message){
       saveCanonicalCache(DB, REMOTE_SHA);
       renderAllViews();
       setView(currentView, currentClientId, true);
-      setSync('Обновлено из другой вкладки');
+      setSync('');
     }
   }catch(e){ console.warn('Не удалось получить обновление другой вкладки', e); }
 }
@@ -1604,9 +1635,9 @@ async function loadDB(){
   if(token){
     try{ remote = await fetchRemoteDB(); }
     catch(e){
-      setSync(String(e && e.message||'').startsWith('READ_') ? 'Ошибка чтения acts.json' : 'Нет связи с GitHub', true);
+      setSync('');
     }
-  } else setSync('Токен не задан', true);
+  } else setSync('');
 
   let cached = null;
   let draft = null;
@@ -1637,7 +1668,7 @@ async function loadDB(){
         DB = merged;
         saveTabDraft();
         window.__needsCloudPush = true;
-        setSync('Восстановлены несинхронизированные изменения — сохраняю…', true);
+        setSync('');
         return DB;
       }
     }else if(legacyPending && cached){
@@ -1647,7 +1678,7 @@ async function loadDB(){
         DB = merged;
         saveTabDraft();
         window.__needsCloudPush = true;
-        setSync('Восстановлены изменения старой версии — сохраняю…', true);
+        setSync('');
         return DB;
       }
     }
@@ -1695,7 +1726,7 @@ function save(opts){
   if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.migrateDB(DB);
   LOCAL_DIRTY = true;
   saveTabDraft();
-  setSync('Сохраняется…');
+  setSync('');
   clearTimeout(saveTimer);
   if(opts.immediate){
     saveTimer = null;
@@ -1739,8 +1770,8 @@ function pushDB(){
 }
 async function pushDBOnce(){
   const token = localStorage.getItem(TOKEN_KEY);
-  if(!token){ setSync('Сохранено только на устройстве — синхронизация не выполнена', true); return; }
-  setSync('Сохраняется…');
+  if(!token){ showSaveFailure('токен GitHub не задан'); return; }
+  setSync('');
   const localSnapshot = cloneActsDB(DB);
   const baseSnapshot = DB_BASE ? cloneActsDB(DB_BASE) : null;
   try{
@@ -1773,7 +1804,7 @@ async function pushDBOnce(){
           DB = cloneActsDB(payload);
           LOCAL_DIRTY = false;
           clearTabDraft();
-          setSync('Сохранено в GitHub');
+          setSync('');
         }else{
           DB = mergeActsDBThreeWay(localSnapshot, DB, payload);
           LOCAL_DIRTY = true;
@@ -1785,13 +1816,13 @@ async function pushDBOnce(){
         return;
       }
       if(res.status!==409 && res.status!==422){
-        setSync('Сохранено только на устройстве — синхронизация не выполнена ('+res.status+')', true);
+        showSaveFailure('GitHub вернул код '+res.status);
         return;
       }
     }
-    setSync('Сохранено только на устройстве — синхронизация не выполнена: база менялась одновременно', true);
+    showSaveFailure('база менялась одновременно');
   }catch(e){
-    setSync('Сохранено только на устройстве — синхронизация не выполнена', true);
+    showSaveFailure('нет связи с GitHub');
   }
 }
 async function loadOffers(){
