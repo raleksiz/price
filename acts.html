@@ -4412,7 +4412,8 @@ function customFieldUiHtml(fieldDef, rawValue){
     if(!items.length) return `<div class="c-cf">${esc(fieldDef.name)}: —</div>`;
     return `<div class="c-cf"><b>${esc(fieldDef.name)}:</b><ul style="margin:4px 0 0 16px;padding:0;list-style:disc;">${items.map(v=>`<li>${esc(v)}</li>`).join('')}</ul></div>`;
   }
-  return `<div class="c-cf">${esc(fieldDef.name)}: ${esc(value)}</div>`;
+  const shown = (fieldDef && fieldDef.type==='longtext') ? esc(value).replace(/\r?\n/g,'<br>') : esc(value);
+  return `<div class="c-cf">${esc(fieldDef.name)}: ${shown}</div>`;
 }
 function appliedForDisplay(s){
   const stored = Number(s && s.executorDiscount)||0;
@@ -4692,18 +4693,110 @@ function toggleSent(){
 }
 
 /* ====================== ДОПОЛНИТЕЛЬНЫЕ ГРАФЫ ====================== */
+const CUSTOM_FIELD_TYPES = {text:'текст',longtext:'длинный текст',number:'число',date:'дата',bulleted:'маркированный список'};
+function fieldTypeOptions(selected){
+  return Object.keys(CUSTOM_FIELD_TYPES).map(k=>`<option value="${k}" ${k===selected?'selected':''}>${CUSTOM_FIELD_TYPES[k]}</option>`).join('');
+}
+function customFieldRawValue(raw){
+  if(raw && typeof raw==='object' && !Array.isArray(raw)) return String(raw.value??'');
+  return String(raw??'');
+}
+function setCustomFieldStoredValue(s, fieldId, value){
+  s.custom = s.custom || {};
+  const raw = s.custom[fieldId];
+  if(raw && typeof raw==='object' && !Array.isArray(raw)) raw.value = value;
+  else s.custom[fieldId] = {value, public:false};
+}
+function convertCustomFieldValue(value, fromType, toType){
+  const raw = String(value??'');
+  if(fromType===toType) return raw;
+  if(toType==='bulleted'){
+    return raw.split(/\r?\n/).map(line=>line.replace(/^[\s\u2022•·●○▪▫–—\-*]+/, '').trim()).filter(Boolean).join('\n');
+  }
+  if(fromType==='bulleted' && (toType==='longtext' || toType==='text')){
+    const items = raw.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    return toType==='text' ? items.join(' ') : items.join('\n');
+  }
+  if(toType==='text') return raw.replace(/\r?\n+/g,' ').replace(/\s+/g,' ').trim();
+  if(toType==='longtext') return raw;
+  if(toType==='number'){
+    const compact = raw.replace(/\s/g,'').replace(',', '.');
+    if(compact!=='' && isFinite(Number(compact))) return String(Number(compact));
+    return raw.trim();
+  }
+  if(toType==='date'){
+    const t = raw.trim();
+    const m = t.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if(m) return m[3]+'-'+m[2]+'-'+m[1];
+    return t;
+  }
+  return raw;
+}
+function applyCustomFieldTypeChange(fieldId, fromType, toType){
+  if(fromType===toType) return;
+  const now = new Date().toISOString();
+  (DB.clients||[]).forEach(c=>{
+    let changed=false;
+    (c.services||[]).forEach(s=>{
+      if(!s.custom || s.custom[fieldId]==null) return;
+      const old = customFieldRawValue(s.custom[fieldId]);
+      if(!old.trim()) return;
+      const next = convertCustomFieldValue(old, fromType, toType);
+      if(next===old) return;
+      setCustomFieldStoredValue(s, fieldId, next);
+      s.updatedAt = now;
+      changed = true;
+    });
+    if(changed) touchClient(c);
+  });
+}
+function customFieldIsUsed(fieldId){
+  return (DB.clients||[]).some(c=>(c.services||[]).some(s=>String(customFieldRawValue(s.custom && s.custom[fieldId])).trim()));
+}
 function renderFields(){
   const box = document.getElementById('fieldsList');
   if(!DB.customFields.length){ box.innerHTML = '<div class="muted">Дополнительных граф нет.</div>'; return; }
   box.innerHTML = `<div class="tbl-scroll"><table><thead><tr><th>Название</th><th>Тип</th><th></th></tr></thead><tbody>
-    ${DB.customFields.map(f=>`<tr><td>${esc(f.name)}</td><td>${({text:'текст',longtext:'длинный текст',number:'число',date:'дата',bulleted:'маркированный список'})[f.type]||f.type}</td>
-    <td><button type="button" class="icon-btn" onclick="delField('${f.id}')">Удалить</button></td></tr>`).join('')}
+    ${DB.customFields.map(f=>`<tr><td>${esc(f.name)}</td><td>${esc(CUSTOM_FIELD_TYPES[f.type]||f.type)}</td>
+    <td><button type="button" class="icon-btn" onclick="openFieldForm('${f.id}')">Изменить</button> <button type="button" class="icon-btn" onclick="delField('${f.id}')">Удалить</button></td></tr>`).join('')}
     </tbody></table></div>`;
+}
+function openFieldForm(id){
+  const f = DB.customFields.find(x=>x.id===id);
+  if(!f) return;
+  openModal(`<h1>Графа</h1>
+    <div class="field"><label>Название</label><input type="text" id="editFieldName" value="${esc(f.name)}"></div>
+    <div class="field"><label>Тип</label><select id="editFieldType">${fieldTypeOptions(f.type)}</select></div>
+    <p class="muted">Смена типа сразу меняет формат во всех услугах, где графа уже заполнена. Абзацы длинного текста (перенос строки) станут пунктами маркированного списка; один абзац — одним пунктом.</p>
+    <div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button>
+    <button type="button" class="btn" onclick="saveField('${id}')">Сохранить</button></div>`);
+}
+function saveField(id){
+  const f = DB.customFields.find(x=>x.id===id);
+  if(!f) return;
+  const name = document.getElementById('editFieldName').value.trim();
+  const type = document.getElementById('editFieldType').value;
+  if(!name){ alert('Укажи название графы'); return; }
+  if(!CUSTOM_FIELD_TYPES[type]){ alert('Неизвестный тип графы'); return; }
+  const fromType = f.type;
+  if(type!==fromType && customFieldIsUsed(id) && !confirm('Тип графы «'+f.name+'» изменится во всех услугах, где она уже заполнена. Продолжить?')) return;
+  applyCustomFieldTypeChange(id, fromType, type);
+  f.name = name;
+  f.type = type;
+  f.updatedAt = new Date().toISOString();
+  if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.touchSection(DB, 'customFields');
+  save();
+  closeModal();
+  renderFields();
+  renderAll();
+  if(currentClientId) renderClientCard();
 }
 function addCustomField(){
   const name = document.getElementById('newFieldName').value.trim();
   if(!name){ alert('Укажи название графы'); return; }
-  DB.customFields.push({id: uid(), name, type: document.getElementById('newFieldType').value, updatedAt:new Date().toISOString()});
+  const type = document.getElementById('newFieldType').value;
+  if(!CUSTOM_FIELD_TYPES[type]){ alert('Неизвестный тип графы'); return; }
+  DB.customFields.push({id: uid(), name, type, updatedAt:new Date().toISOString()});
   if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.touchSection(DB, 'customFields');
   document.getElementById('newFieldName').value = '';
   save(); renderFields(); renderAll();
