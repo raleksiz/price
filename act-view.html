@@ -304,7 +304,7 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .applied-list{margin:5px 0 0 18px;padding:0;}.applied-list li{margin:2px 0;overflow-wrap:anywhere;}
 .cf-public-list{margin-top:7px;padding-top:7px;border-top:1px solid #F0F0F3;font-size:11.5px;line-height:1.55;}
 .cf-public-item{margin:4px 0;overflow-wrap:anywhere;}.cf-public-item b{color:var(--ink);}
-.cf-public-item a{color:var(--violet);text-decoration:none;font-size:inherit;font-weight:inherit;}.cf-public-item a:hover{text-decoration:underline;}
+.cf-public-item a,.kad-case-link{color:var(--violet);text-decoration:none;font-size:inherit;font-weight:inherit;}.cf-public-item a:hover,.kad-case-link:hover{text-decoration:underline;}
 .cf-public-item ul{margin:4px 0 4px 18px;padding:0;list-style:disc;}.cf-public-item li{margin:2px 0;}
 .svc-desc-text{display:inline;}
 .act-field-changed{
@@ -437,12 +437,18 @@ const BASE_URL = 'https://raleksiz.github.io/price/';
 const MONTHS = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
 const {
   escapeHtml: esc,
+  linkifyKadCases,
   safeHttpUrl,
   paidOf,
   prepayOf,
   cashPaidOf,
   paidForAbonementMonth
 } = RaleksizCRMCore;
+
+function descHtml(s){
+  const t = esc(s);
+  return typeof linkifyKadCases==='function' ? linkifyKadCases(t) : t;
+}
 
 function money(n){ return Math.round(Number(n)||0).toLocaleString('ru-RU') + ' ₽'; }
 function fmtDate(iso){ if(!iso) return ''; const p=String(iso).split('-'); return p.length===3?`${p[2]}.${p[1]}.${p[0]}`:String(iso); }
@@ -1004,10 +1010,10 @@ function renderServiceRow(s,num,special){
   const codeLabel = String(s.code||'').trim() || '—';
   return `<div class="svc-row${special?' abon-special':''}" data-service-id="${esc(s.id)}" data-contract-id="${esc(s.contractId)}">
     <div class="c-num">${num}</div><div class="c-date" data-field-key="date">${fmtDate(s.date)}</div><div class="c-code" data-field-key="code">${esc(codeLabel)}</div>
-    <div class="c-desc"><span class="svc-desc-text" data-field-key="desc">${esc(s.desc)}</span>${extra}</div>
+    <div class="c-desc"><span class="svc-desc-text" data-field-key="desc">${descHtml(s.desc)}</span>${extra}</div>
     ${special?'':`<div class="c-price" data-field-key="price">${money(Number(s.price)||0)}</div><div class="c-paid" data-field-key="paid">${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</div>`}
     <div class="c-status" data-field-key="status">${payPill(s)}</div>
-    <div class="c-codedesc"><span class="pill no" data-field-key="code">${esc(codeLabel)}</span> <span class="svc-desc-text" data-field-key="desc">${esc(s.desc)}</span>${extra}</div>
+    <div class="c-codedesc"><span class="pill no" data-field-key="code">${esc(codeLabel)}</span> <span class="svc-desc-text" data-field-key="desc">${descHtml(s.desc)}</span>${extra}</div>
     <div class="c-priceinfo">${special?'':`<span class="price-main" data-field-key="price">${money(Number(s.price)||0)}</span><span class="paid-amt" data-field-key="paid">Оплачено: ${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</span>`}<span data-field-key="status">${payPill(s)}</span></div>
   </div>`;
 }
@@ -1053,7 +1059,7 @@ function renderDeletedServiceRow(service){
   const codeLabel=String(fields.code||'').trim()||'—';
   const extra=(special?'':snapshotAppliedHtml(service))+snapshotCustomFieldsHtml(service);
   const paidShown=Number(presentation.paid)>0||presentation.paymentStatus==='Оплачено';
-  const desc=`<span class="deleted-label">УДАЛЕНО</span><span class="svc-desc-text">${esc(fields.desc||'')}</span>`;
+  const desc=`<span class="deleted-label">УДАЛЕНО</span><span class="svc-desc-text">${descHtml(fields.desc||'')}</span>`;
   return `<div class="svc-row act-service-deleted${special?' abon-special':''}" data-deleted-service-id="${esc(service.id)}" data-contract-id="${esc(service.contractId)}">
     <div class="c-num">—</div><div class="c-date">${esc(fields.date||'')}</div><div class="c-code">${esc(codeLabel)}</div>
     <div class="c-desc">${desc}${extra}</div>
@@ -1248,7 +1254,7 @@ function compensationActHtml(ct){
     const rows=(month.services||[]).map(s=>`<tr>
       <td class="comp-svc-date">${fmtDate(s.date)}</td>
       <td class="comp-svc-code">${esc(s.code||'—')}</td>
-      <td class="comp-svc-desc">${esc(s.desc||'')}</td>
+      <td class="comp-svc-desc">${descHtml(s.desc||'')}</td>
       <td class="num" data-label="В акте">${money(s.actPrice)}</td>
       <td class="num" data-label="При факт. параметрах">${money(s.newPrice)}</td>
       <td class="num ${compensationDeltaClass(s.delta)}" data-label="Разница">${compensationDeltaText(s.delta)}</td>

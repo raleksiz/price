@@ -968,8 +968,8 @@ tr.fields-drag-over td{background:var(--soft);}
   margin:4px 0 0 16px;padding:0;list-style:disc;
 }
 .svc-row .c-cf li{margin:2px 0;}
-.svc-row .c-cf a{color:var(--violet);text-decoration:none;font-size:inherit;font-weight:inherit;}
-.svc-row .c-cf a:hover{text-decoration:underline;}
+.svc-row .c-cf a,.kad-case-link{color:var(--violet);text-decoration:none;font-size:inherit;font-weight:inherit;}
+.svc-row .c-cf a:hover,.kad-case-link:hover{text-decoration:underline;}
 .svc-row .c-codedesc,.svc-row .c-priceinfo{display:none;}
 @media (max-width:720px){
   .svc-head{display:grid;}
@@ -1384,6 +1384,10 @@ let showHiddenClients = false;
 function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 function tokenGen(){ return [...crypto.getRandomValues(new Uint8Array(12))].map(n=>Number(n).toString(16).padStart(2,'0')).join(''); }
 function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function descHtml(s){
+  const t = esc(s);
+  return (typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.linkifyKadCases) ? RaleksizCRMCore.linkifyKadCases(t) : t;
+}
 function money(n){ return Math.round(Number(n)||0).toLocaleString('ru-RU') + ' ₽'; }
 function isExecutorDiscountName(name){ return /скидка исполнителя/i.test(String(name||'')); }
 function executorDiscountRub(calc, typed){
@@ -4420,12 +4424,12 @@ function renderAll(){
       <div class="c-basis">${basisLabel ? contractLinkHtml(ct) : '<span class="pill no">нет</span>'}</div>
       <div class="c-date">${fmtDate(s.date)||'<span class="pill no">нет</span>'}</div>
       <div class="c-code">${fmtSvcCode(s)}</div>
-      <div class="c-desc">${esc(s.desc)||'<span class="pill no">нет</span>'}${appliedHtml(s)}${serviceCustomFieldsHtml(s)}</div>
+      <div class="c-desc">${descHtml(s.desc)||'<span class="pill no">нет</span>'}${appliedHtml(s)}${serviceCustomFieldsHtml(s)}</div>
       <div class="c-price">${fmtSvcPrice(s)}</div>
       <div class="c-paid">${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</div>
       <div class="c-status">${payPill(s)}${s.locked?' <span class="pill lock">отправлено</span>':''}</div>
       <div class="c-codedesc">
-        <span class="pill no">${fmtSvcCode(s)}</span> <span class="brk">${esc(s.desc)||'нет'}</span>
+        <span class="pill no">${fmtSvcCode(s)}</span> <span class="brk">${descHtml(s.desc)||'нет'}</span>
         ${appliedHtml(s)}
       </div>
       <div class="c-priceinfo">
@@ -4722,12 +4726,12 @@ function renderContractDetail(c, ct){
       <div class="c-num">${list.length-i}</div>
       <div class="c-date">${fmtDate(s.date)||'<span class="pill no">нет</span>'}</div>
       <div class="c-code">${fmtSvcCode(s)}</div>
-      <div class="c-desc">${esc(s.desc)||'<span class="pill no">нет</span>'}${appliedHtml(s)}${serviceCustomFieldsHtml(s, usedCF)}</div>
+      <div class="c-desc">${descHtml(s.desc)||'<span class="pill no">нет</span>'}${appliedHtml(s)}${serviceCustomFieldsHtml(s, usedCF)}</div>
       <div class="c-price">${fmtSvcPrice(s)}</div>
       <div class="c-paid">${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</div>
       <div class="c-status">${payPill(s)}${s.locked?' <span class="pill lock">отправлено</span>':''}</div>
       <div class="c-codedesc">
-        <span class="pill no">${fmtSvcCode(s)}</span> <span class="brk">${esc(s.desc)||'нет'}</span>
+        <span class="pill no">${fmtSvcCode(s)}</span> <span class="brk">${descHtml(s.desc)||'нет'}</span>
         ${appliedHtml(s)}
       </div>
       <div class="c-priceinfo">
@@ -5173,7 +5177,7 @@ function clientViewHtml(c, ct){
     <div class="tbl-scroll"><table>
       <thead><tr><th>№</th><th>Дата</th><th>Код</th><th>Услуга</th><th class="num">Стоимость</th><th>Оплата</th></tr></thead>
       <tbody>${g.map((s,i)=>`<tr><td>${g.length-i}</td><td>${fmtDate(s.date)}</td><td>${String(s.code||'').trim()||'—'}</td>
-        <td>${esc(s.desc)}${appliedHtml(s)}</td><td class="num">${money(s.price)}</td>
+        <td>${descHtml(s.desc)}${appliedHtml(s)}</td><td class="num">${money(s.price)}</td>
         <td>${clientPayPill(s)}</td></tr>`).join('')}</tbody></table></div>
     <div class="muted" style="margin-top:6px">За месяц: ${money(gs)} · оплачено ${money(gp)} · остаток ${money(Math.max(0,gs-gp))}</div>`;
   }).join('')}
@@ -5222,7 +5226,7 @@ function compensationResultHtml(result){
     const rows = (month.services||[]).map(s=>`<tr>
       <td class="comp-svc-date">${fmtDate(s.date)}</td>
       <td class="comp-svc-code">${esc(s.code||'—')}</td>
-      <td class="comp-svc-desc">${esc(s.desc||'')}</td>
+      <td class="comp-svc-desc">${descHtml(s.desc||'')}</td>
       <td class="num" data-label="В акте">${money(s.actPrice)}</td>
       <td class="num" data-label="При факт. параметрах">${money(s.newPrice)}</td>
       <td class="num ${compensationDeltaClass(s.delta)}" data-label="Разница">${compensationDeltaText(s.delta)}</td>

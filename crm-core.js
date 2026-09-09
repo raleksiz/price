@@ -119,6 +119,18 @@
     });
   }
 
+  // Display-only links to kad.arbitr.ru; tail after the year stays in the clickable text, not in the URL.
+  function linkifyKadCases(escapedText) {
+    return text(escapedText).replace(
+      /(^|[^А-Яа-яA-Za-z0-9])([АA]\d{2}-\d{1,8}\/(?:\d{4}|\d{2}))((?:-(?!\d+\.)\d+)*)/g,
+      function (_, prefix, core, tail) {
+        var urlNum = core.replace(/^А/, 'A');
+        var href = 'https://kad.arbitr.ru/Card?number=' + encodeURIComponent(urlNum);
+        return prefix + '<a class="kad-case-link" href="' + href + '" target="_blank" rel="noopener">' + core + tail + '</a>';
+      }
+    );
+  }
+
   function safeHttpUrl(value) {
     var raw = text(value).trim();
     if (!/^https?:\/\//i.test(raw)) return '';
@@ -1073,6 +1085,7 @@
     OFFER_CATEGORIES: OFFER_CATEGORIES.slice(),
     clone: clone,
     escapeHtml: escapeHtml,
+    linkifyKadCases: linkifyKadCases,
     safeHttpUrl: safeHttpUrl,
     parseDateParts: parseDateParts,
     offerPayload: offerPayload,
