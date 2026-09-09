@@ -119,7 +119,7 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
   display:grid;
   grid-template-columns:28px 90px 55px minmax(215px,1fr) 90px 90px 150px;
   grid-template-areas:"num date code desc price paid status";
-  align-items:center;gap:8px;padding:9px 6px;border-bottom:1px solid #F0F0F3;font-size:13px;
+  align-items:start;gap:8px;padding:9px 6px;border-bottom:1px solid #F0F0F3;font-size:13px;
   min-width:0;
 }
 .svc-row .c-num{grid-area:num;color:#888;font-variant-numeric:tabular-nums;}
@@ -304,7 +304,10 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .applied-list{margin:5px 0 0 18px;padding:0;}.applied-list li{margin:2px 0;overflow-wrap:anywhere;}
 .cf-public-list{margin-top:7px;padding-top:7px;border-top:1px solid #F0F0F3;font-size:11.5px;line-height:1.55;}
 .cf-public-item{margin:4px 0;overflow-wrap:anywhere;}.cf-public-item b{color:var(--ink);}
-.cf-public-item ul{margin:4px 0 4px 18px;padding:0;}.cf-public-item li{margin:2px 0;}
+.cf-public-item a{color:var(--violet);text-decoration:none;font-size:inherit;font-weight:inherit;}.cf-public-item a:hover{text-decoration:underline;}
+.cf-public-item ul{margin:4px 0 4px 18px;padding:0;list-style:disc;}.cf-public-item li{margin:2px 0;}
+.cf-public-item:has(.cf-link-list),
+.cf-public-item .cf-link-list{font-size:13px;font-weight:400;line-height:1.35;}
 .svc-desc-text{display:inline;}
 .act-field-changed{
   background:#F3EEFF;
@@ -643,14 +646,46 @@ function customFieldValue(raw){
   if(raw&&typeof raw==='object'&&!Array.isArray(raw)) return {value:String(raw.value??''),public:!!raw.public};
   return {value:String(raw??''),public:false};
 }
+function parseCustomLinks(raw){
+  if(raw==null || raw==='') return [];
+  let list=[];
+  if(Array.isArray(raw)) list=raw;
+  else {
+    const t=String(raw).trim();
+    if(!t) return [];
+    try{ list=JSON.parse(t); }catch(e){ return []; }
+  }
+  if(!Array.isArray(list)) return [];
+  return list.map(item=>{
+    if(!item||typeof item!=='object') return null;
+    return {name:String(item.name||'').slice(0,20), url:String(item.url||'')};
+  }).filter(x=>x && (String(x.name).trim() || String(x.url).trim()));
+}
+function customLinksDisplayHtml(rawValue){
+  const items=parseCustomLinks(rawValue).map(item=>{
+    const title=String(item.name||'').trim() || 'Ссылка';
+    const href=safeHttpUrl(item.url);
+    const label=href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(title)}</a>` : esc(title);
+    return `<li>${label}</li>`;
+  });
+  if(!items.length) return '';
+  return `<ul class="cf-link-list">${items.join('')}</ul>`;
+}
 function renderCustomFields(s,db){
   const fields=Array.isArray(db.customFields)?db.customFields:[];
   const out=[];
   fields.forEach(f=>{
     const raw=(s.custom||{})[f.id];
     const x=customFieldValue(raw);
-    if(!x.public||!x.value.trim()) return;
+    if(!x.public) return;
     const fieldKey=esc('custom:'+f.id);
+    if(f.type==='link'){
+      const shown=customLinksDisplayHtml(x.value);
+      if(!shown) return;
+      out.push(`<div class="cf-public-item" data-field-key="${fieldKey}"><b>${esc(f.name)}:</b>${shown}</div>`);
+      return;
+    }
+    if(!x.value.trim()) return;
     if(f.type==='bulleted'){
       const items=x.value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
       out.push(`<div class="cf-public-item" data-field-key="${fieldKey}"><b>${esc(f.name)}:</b><ul>${items.map(v=>`<li>${esc(v)}</li>`).join('')}</ul></div>`);
@@ -986,15 +1021,22 @@ function snapshotAppliedHtml(service){
 }
 function snapshotCustomFieldsHtml(service){
   const values=service&&service.publicCustomValues||{};
-  const items=Object.keys(values).sort().map(id=>values[id]).filter(Boolean).map(value=>{
+  const order=(CURRENT_DB && CURRENT_DB.customFields) || [];
+  const ids=order.map(f=>f.id).filter(id=>values[id]);
+  Object.keys(values).forEach(id=>{ if(ids.indexOf(id)<0) ids.push(id); });
+  const items=ids.map(id=>values[id]).filter(Boolean).map(value=>{
     const name=esc(value.name||'Дополнительное поле');
     const raw=String(value.value||'');
+    if(value.type==='link'){
+      const shown=customLinksDisplayHtml(raw);
+      return shown?`<div class="cf-public-item"><b>${name}:</b>${shown}</div>`:'';
+    }
     if(value.type==='bulleted'){
       const lines=raw.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
       return `<div class="cf-public-item"><b>${name}:</b><ul>${lines.map(line=>`<li>${esc(line)}</li>`).join('')}</ul></div>`;
     }
     return `<div class="cf-public-item"><b>${name}:</b> ${esc(raw).replace(/\r\n?|\n/g,'<br>')}</div>`;
-  });
+  }).filter(Boolean);
   return items.length?`<div class="cf-public-list">${items.join('')}</div>`:'';
 }
 function snapshotPayPill(service){

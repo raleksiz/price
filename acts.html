@@ -10,6 +10,13 @@
     var ts = localStorage.getItem('raleksiz_acts_session');
     if(ts && (Date.now() - Number(ts) < 7*24*60*60*1000)) document.documentElement.classList.add('session-ok');
   }catch(e){}
+  try{
+    var h = (location.hash || '').replace(/^#/, '');
+    var html = document.documentElement;
+    if(h.indexOf('client/')===0) html.classList.add('boot-route-client');
+    else if(h==='all') html.classList.add('boot-route-all');
+    else if(h==='fields') html.classList.add('boot-route-fields');
+  }catch(e){}
 })();
 </script>
 <style>html.session-ok #pwdScreen{display:none!important}html.session-ok #mainScreen{display:block!important}</style>
@@ -183,6 +190,12 @@ textarea.autogrow{resize:none;overflow:hidden;}
 .muted{color:var(--muted);font-size:12px;line-height:1.55;}
 .err{color:var(--bad);font-size:13px;min-height:18px;margin-bottom:10px;}
 .hidden{display:none !important;}
+html.boot-route-client #view-clients,
+html.boot-route-all #view-clients,
+html.boot-route-fields #view-clients{display:none!important}
+html.boot-route-client #view-client,
+html.boot-route-all #view-all,
+html.boot-route-fields #view-fields{display:block!important}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);padding:8px 8px;border-bottom:1.5px solid var(--line);white-space:nowrap;}
 td{padding:9px 8px;border-bottom:1px solid #F0F0F3;vertical-align:top;}
@@ -323,6 +336,26 @@ tr.locked td{background:#FAFAFC;}
 .cf-row{border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-bottom:9px;background:#fff;}
 .cf-public{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:11.5px;color:#666;text-transform:none;letter-spacing:0;font-weight:500;}
 .cf-public input{width:16px;height:16px;accent-color:var(--violet);}
+.cf-picker{border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-bottom:9px;background:#fff;}
+.cf-picker-title{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;}
+.cf-picker-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 10px;}
+.cf-pick{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;align-items:center;min-width:0;height:22px;margin:0;font-size:12.5px;font-weight:400;color:var(--ink);text-transform:none;letter-spacing:0;cursor:pointer;}
+.cf-pick input{width:16px;height:16px;margin:0;accent-color:var(--violet);}
+.cf-pick span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cf-link-rows{margin:0;padding:0 0 0 1.2em;list-style:disc;}
+.cf-link-row{display:list-item;margin:0 0 8px;}
+.cf-link-row:last-child{margin-bottom:0;}
+.cf-link-row-inner{display:grid;grid-template-columns:20ch minmax(0,1fr) 16px;gap:8px;align-items:end;min-width:0;}
+.cf-link-row .field{margin-bottom:0;min-width:0;}
+.cf-link-name,.cf-link-url{width:100%;font-size:13px;padding:8px 10px;line-height:1.35;}
+.cf-link-name{max-width:20ch;}
+.cf-link-url{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cf-link-slot{width:16px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cf-link-action{width:16px;height:16px;padding:0;border:0;background:transparent;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.cf-link-action svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+@media (max-width:720px){
+  .cf-picker-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
 .offer-cats{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px;}
 .offer-cats summary{font-size:12px;padding:2px 0;}
 .offer-cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
@@ -698,6 +731,12 @@ details[open] summary::before{content:"▾ ";}
 .token-hint{margin-top:4px;}
 .fields-description{margin-bottom:14px;}
 .fields-add-row{margin-bottom:14px;}
+.fields-handle{cursor:grab;color:#999;padding:0 4px;user-select:none;letter-spacing:-1px;font-size:14px;line-height:1;}
+.fields-handle:active{cursor:grabbing;}
+.fields-order{white-space:nowrap;width:1%;}
+.fields-move{padding:2px 6px;line-height:1;}
+.fields-move:disabled{opacity:.35;cursor:default;}
+tr.fields-drag-over td{background:var(--soft);}
 .fields-name-column{flex:2;}
 .fields-add-action{flex:0 0 auto;display:flex;align-items:flex-end;}
 .client-title{margin:0 0 0 6px;}
@@ -760,6 +799,9 @@ details[open] summary::before{content:"▾ ";}
 #printArea .pa-appl li{margin:1px 0;}
 #printArea .pa-custom{font-size:10px;color:#444;margin-top:5px;padding-top:3px;border-top:1px solid #EEE;}
 #printArea .pa-custom-name{font-weight:700;color:#222;}
+#printArea .pa-custom ul{margin:3px 0 0 16px;padding:0;list-style:disc;}
+#printArea .pa-custom li{margin:1px 0;}
+#printArea .pa-custom a{color:var(--violet);text-decoration:none;font-size:inherit;font-weight:inherit;}
 #printArea .pa-total{margin-top:14px;font-size:12px;line-height:1.9;}
 #printArea .pa-sign{margin-top:52px;display:grid;grid-template-columns:1fr 1fr;gap:44px;font-size:11px;}
 #printArea .pa-sign-col{position:relative;min-height:92px;}
@@ -874,6 +916,9 @@ details[open] summary::before{content:"▾ ";}
   align-items:center;gap:8px;padding:9px 8px;border-bottom:1px solid #F0F0F3;font-size:13px;
   min-width:0;
 }
+@media (min-width:721px){
+  .svc-row{align-items:start;}
+}
 .svc-row.locked{background:#FAFAFC;}
 .svc-row .c-num{grid-area:num;color:#888;font-variant-numeric:tabular-nums;}
 .svc-row .c-date{grid-area:date;white-space:nowrap;}
@@ -896,6 +941,14 @@ details[open] summary::before{content:"▾ ";}
   overflow-wrap:anywhere;
   word-break:break-word;
 }
+.svc-row .c-cf ul{
+  margin:4px 0 0 16px;padding:0;list-style:disc;
+}
+.svc-row .c-cf li{margin:2px 0;}
+.svc-row .c-cf:has(.cf-link-list){font-size:13px;}
+.svc-row .c-cf .cf-link-list{font-size:13px;font-weight:400;line-height:1.35;}
+.svc-row .c-cf a{color:var(--violet);text-decoration:none;font-size:inherit;font-weight:inherit;}
+.svc-row .c-cf a:hover{text-decoration:underline;}
 .svc-row .c-codedesc,.svc-row .c-priceinfo{display:none;}
 @media (max-width:720px){
   .svc-head{display:grid;}
@@ -1170,6 +1223,7 @@ details[open] summary::before{content:"▾ ";}
           <select id="newFieldType">
             <option value="text">Текст</option><option value="longtext">Длинный текст</option>
             <option value="number">Число</option><option value="date">Дата</option><option value="bulleted">Маркированный список</option>
+            <option value="link">Ссылка</option>
           </select></div>
         <div class="fields-add-action"><button type="button" class="btn sm" onclick="addCustomField()">Добавить</button></div>
       </div>
@@ -1179,6 +1233,15 @@ details[open] summary::before{content:"▾ ";}
 
   <!-- ВИД: КАРТОЧКА ЗАКАЗЧИКА -->
   <div id="view-client" class="hidden">
+  <script>
+  (function(){
+    try{
+      var h=(location.hash||'').replace(/^#/,'');
+      if(h.indexOf('client/')===0 && h.indexOf('/contract/')===-1)
+        document.getElementById('view-client').classList.add('list-narrow');
+    }catch(e){}
+  })();
+  </script>
     <div class="card">
       <div class="toolbar client-head">
         <button type="button" class="icon-btn" onclick="currentContractId ? openContract(null) : setView('clients')"> ← </button>
@@ -2594,6 +2657,7 @@ function setView(v, id, keepContract){
   if(v==='all') renderAll();
   if(v==='client') renderClientCard();
   persistNav();
+  document.documentElement.classList.remove('boot-route-client','boot-route-all','boot-route-fields');
   window.scrollTo(0,0);
 }
 
@@ -3287,14 +3351,14 @@ function openServiceForm(clientId, contractId, svcId){
     })
   ).join('');
 
-  const cf = DB.customFields.map(f=>{
-    const raw = (cur.custom||{})[f.id];
-    const v = raw && typeof raw==='object' ? (raw.value??'') : (raw??'');
-    const pub = !!(raw && typeof raw==='object' && raw.public);
-    if(f.type==='longtext' || f.type==='bulleted') return `<div class="cf-row"><label>${esc(f.name)}</label><textarea class="autogrow" data-cf="${f.id}" data-cf-type="${f.type}" oninput="autoGrowTextarea(this)">${esc(v)}</textarea><label class="cf-public"><input type="checkbox" data-cf-public="${f.id}" ${pub?'checked':''}> Показывать заказчику в акте и PDF</label></div>`;
-    const t = f.type==='number' ? 'number' : (f.type==='date' ? 'date' : 'text');
-    return `<div class="cf-row"><label>${esc(f.name)}</label><input type="${t}" data-cf="${f.id}" value="${esc(v)}"><label class="cf-public"><input type="checkbox" data-cf-public="${f.id}" ${pub?'checked':''}> Показывать заказчику в акте и PDF</label></div>`;
-  }).join('');
+  const picker = (DB.customFields||[]).length ? `<div class="cf-picker"><div class="cf-picker-title">Дополнительные поля</div><div class="cf-picker-grid">${
+    DB.customFields.map(f=>{
+      const raw = (cur.custom||{})[f.id];
+      const v = raw && typeof raw==='object' ? (raw.value??'') : (raw??'');
+      const on = customFieldHasValue(f.type, v);
+      return `<label class="cf-pick"><input type="checkbox" data-cf-pick="${f.id}" ${on?'checked':''} onchange="onCfPickChange(this)"><span title="${esc(f.name)}">${esc(f.name)}</span></label>`;
+    }).join('')
+  }</div></div><div id="cfEditors"></div>` : '';
 
   openModal(`
     <h1>${s?'Услуга':'Новая услуга'} · ${esc(c.name)}</h1>
@@ -3332,7 +3396,7 @@ function openServiceForm(clientId, contractId, svcId){
     <div id="calcLine" class="calc-line hidden"></div>
     <input type="hidden" id="svcActualPrepay" value="${Number(cur.actualPrepay)||0}">
     <div class="muted payment-hint" id="paymentHint"></div>
-    ${cf}
+    ${picker}
     <div class="row" style="margin-top:8px">
       <button type="button" class="btn ghost" onclick="closeModal()">Отмена</button>
       ${s?`<button type="button" class="btn danger" onclick="deleteService('${clientId}','${svcId}')">Удалить</button>`:''}
@@ -3359,6 +3423,12 @@ function openServiceForm(clientId, contractId, svcId){
   renderBaseContractFieldsIfNeeded();
   recalc(true);
   onPayChange();
+  (DB.customFields||[]).forEach(f=>{
+    const raw = (cur.custom||{})[f.id];
+    const v = raw && typeof raw==='object' ? (raw.value??'') : (raw??'');
+    const pub = !!(raw && typeof raw==='object' && raw.public);
+    if(customFieldHasValue(f.type, v)) renderCfEditor(f, v, pub);
+  });
   document.querySelectorAll('#modalRoot textarea.autogrow').forEach(autoGrowTextarea);
 }
 function autoGrowTextarea(el){
@@ -3934,12 +4004,7 @@ function saveService(clientId, svcId){
       return;
     }
   }
-  const custom = {};
-  document.querySelectorAll('[data-cf]').forEach(el=>{
-    const id=el.dataset.cf;
-    const pubEl=document.querySelector(`[data-cf-public="${id}"]`);
-    custom[id] = {value:el.value, public:!!(pubEl&&pubEl.checked)};
-  });
+  const custom = collectServiceCustom();
 
   if(pay==='full_prepay' || pay==='part_prepay'){
     const need = pay==='full_prepay' ? price : payAmt;
@@ -4397,7 +4462,11 @@ function bindCompScrollPairs(root){
 function serviceCustomFieldsHtml(s, fields){
   const list = fields || (DB && DB.customFields) || [];
   return list
-    .filter(f=>String(((s.custom||{})[f.id] && typeof (s.custom||{})[f.id]==='object' ? (s.custom||{})[f.id].value : (s.custom||{})[f.id])||'').trim())
+    .filter(f=>{
+      const raw = (s.custom||{})[f.id];
+      const v = raw && typeof raw==='object' && !Array.isArray(raw) ? raw.value : raw;
+      return customFieldHasValue(f.type, v);
+    })
     .map(f=>{
       const v = ((s.custom||{})[f.id] && typeof (s.custom||{})[f.id]==='object')
         ? (s.custom||{})[f.id].value
@@ -4406,6 +4475,11 @@ function serviceCustomFieldsHtml(s, fields){
     }).join('');
 }
 function customFieldUiHtml(fieldDef, rawValue){
+  if(fieldDef && fieldDef.type==='link'){
+    const shown = customLinksDisplayHtml(rawValue);
+    if(!shown) return `<div class="c-cf">${esc(fieldDef.name)}: —</div>`;
+    return `<div class="c-cf"><b>${esc(fieldDef.name)}:</b>${shown}</div>`;
+  }
   const value = rawValue == null ? '' : String(rawValue);
   if(fieldDef && fieldDef.type==='bulleted'){
     const items = value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
@@ -4706,9 +4780,49 @@ function toggleSent(){
 }
 
 /* ====================== ДОПОЛНИТЕЛЬНЫЕ ГРАФЫ ====================== */
-const CUSTOM_FIELD_TYPES = {text:'текст',longtext:'длинный текст',number:'число',date:'дата',bulleted:'маркированный список'};
+const CUSTOM_FIELD_TYPES = {text:'текст',longtext:'длинный текст',number:'число',date:'дата',bulleted:'маркированный список',link:'ссылка'};
 function fieldTypeOptions(selected){
   return Object.keys(CUSTOM_FIELD_TYPES).map(k=>`<option value="${k}" ${k===selected?'selected':''}>${CUSTOM_FIELD_TYPES[k]}</option>`).join('');
+}
+function parseCustomLinks(raw){
+  if(raw==null || raw==='') return [];
+  let list = [];
+  if(Array.isArray(raw)) list = raw;
+  else {
+    const t = String(raw).trim();
+    if(!t) return [];
+    try{ list = JSON.parse(t); }catch(e){ return []; }
+  }
+  if(!Array.isArray(list)) return [];
+  return list.map(item=>{
+    if(!item || typeof item!=='object') return null;
+    return {name:String(item.name||'').slice(0,20), url:String(item.url||'')};
+  }).filter(x=>x && (String(x.name).trim() || String(x.url).trim()));
+}
+function serializeCustomLinks(list){
+  return JSON.stringify((list||[]).map(x=>({
+    name:String(x.name||'').trim().slice(0,20),
+    url:String(x.url||'').trim()
+  })).filter(x=>x.name || x.url));
+}
+function customFieldHasValue(type, raw){
+  if(type==='link') return parseCustomLinks(raw).length>0;
+  return String(raw??'').trim()!=='';
+}
+function safeCustomLinkHref(url){
+  if(typeof RaleksizCRMCore!=='undefined' && RaleksizCRMCore.safeHttpUrl) return RaleksizCRMCore.safeHttpUrl(url);
+  const t = String(url||'').trim();
+  return /^https?:\/\//i.test(t) ? t : '';
+}
+function customLinksDisplayHtml(rawValue){
+  const items = parseCustomLinks(rawValue).map(item=>{
+    const title = String(item.name||'').trim() || 'Ссылка';
+    const href = safeCustomLinkHref(item.url);
+    const label = href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(title)}</a>` : esc(title);
+    return `<li>${label}</li>`;
+  });
+  if(!items.length) return '';
+  return `<ul class="cf-link-list">${items.join('')}</ul>`;
 }
 function customFieldRawValue(raw){
   if(raw && typeof raw==='object' && !Array.isArray(raw)) return String(raw.value??'');
@@ -4721,8 +4835,28 @@ function setCustomFieldStoredValue(s, fieldId, value){
   else s.custom[fieldId] = {value, public:false};
 }
 function convertCustomFieldValue(value, fromType, toType){
+  if(fromType===toType) return String(value??'');
+  if(fromType==='link'){
+    const lines = parseCustomLinks(value).map(item=>{
+      const name = String(item.name||'').trim();
+      const url = String(item.url||'').trim();
+      return name && url ? name+' '+url : (name || url);
+    }).filter(Boolean);
+    if(toType==='text') return lines.join(' · ');
+    if(toType==='longtext' || toType==='bulleted') return lines.join('\n');
+    return convertCustomFieldValue(lines.join(' '), 'text', toType);
+  }
+  if(toType==='link'){
+    const lines = (fromType==='bulleted' || fromType==='longtext')
+      ? String(value??'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean)
+      : (String(value??'').trim() ? [String(value).trim()] : []);
+    return serializeCustomLinks(lines.map(line=>{
+      const href = safeCustomLinkHref(line);
+      if(href) return {name:'Ссылка', url:href};
+      return {name:line.slice(0,20), url:''};
+    }));
+  }
   const raw = String(value??'');
-  if(fromType===toType) return raw;
   if(toType==='bulleted'){
     return raw.split(/\r?\n/).map(line=>line.replace(/^[\s\u2022•·●○▪▫–—\-*]+/, '').trim()).filter(Boolean).join('\n');
   }
@@ -4753,7 +4887,7 @@ function applyCustomFieldTypeChange(fieldId, fromType, toType){
     (c.services||[]).forEach(s=>{
       if(!s.custom || s.custom[fieldId]==null) return;
       const old = customFieldRawValue(s.custom[fieldId]);
-      if(!old.trim()) return;
+      if(!customFieldHasValue(fromType, old)) return;
       const next = convertCustomFieldValue(old, fromType, toType);
       if(next===old) return;
       setCustomFieldStoredValue(s, fieldId, next);
@@ -4764,13 +4898,181 @@ function applyCustomFieldTypeChange(fieldId, fromType, toType){
   });
 }
 function customFieldIsUsed(fieldId){
-  return (DB.clients||[]).some(c=>(c.services||[]).some(s=>String(customFieldRawValue(s.custom && s.custom[fieldId])).trim()));
+  const f = (DB.customFields||[]).find(x=>x.id===fieldId);
+  return (DB.clients||[]).some(c=>(c.services||[]).some(s=>customFieldHasValue(f && f.type, customFieldRawValue(s.custom && s.custom[fieldId]))));
+}
+function cfLinkActionHtml(add){
+  if(add) return `<button type="button" class="cf-link-action" onclick="addCfLinkRow(this)" title="Добавить ссылку" aria-label="Добавить ссылку"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>`;
+  return `<button type="button" class="cf-link-action" onclick="removeCfLinkRow(this)" title="Удалить ссылку" aria-label="Удалить ссылку"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>`;
+}
+function cfLinkRowHtml(item, isLast){
+  return `<li class="cf-link-row">
+    <div class="cf-link-row-inner">
+    <div class="field"><label>Имя</label><input class="cf-link-name" maxlength="20" value="${esc((item && item.name) || '')}"></div>
+    <div class="field"><label>Адрес</label><input class="cf-link-url" value="${esc((item && item.url) || '')}" placeholder="https://"></div>
+    <div class="cf-link-slot">${cfLinkActionHtml(!!isLast)}</div>
+    </div>
+  </li>`;
+}
+function refreshCfLinkRowButtons(wrap){
+  if(!wrap) return;
+  const rows = [...wrap.querySelectorAll('.cf-link-row')];
+  rows.forEach((row,i)=>{
+    const slot = row.querySelector('.cf-link-slot');
+    if(slot) slot.innerHTML = cfLinkActionHtml(i===rows.length-1);
+  });
+}
+function addCfLinkRow(btn){
+  const wrap = btn && btn.closest('[data-cf-links]');
+  if(!wrap) return;
+  wrap.insertAdjacentHTML('beforeend', cfLinkRowHtml({name:'',url:''}, true));
+  refreshCfLinkRowButtons(wrap);
+}
+function removeCfLinkRow(btn){
+  const wrap = btn && btn.closest('[data-cf-links]');
+  const row = btn && btn.closest('.cf-link-row');
+  if(row) row.remove();
+  if(wrap && !wrap.querySelector('.cf-link-row')) wrap.insertAdjacentHTML('beforeend', cfLinkRowHtml({name:'',url:''}, true));
+  refreshCfLinkRowButtons(wrap);
+}
+function collectCfLinkRows(id){
+  const wrap = document.querySelector(`[data-cf-links="${id}"]`);
+  if(!wrap) return [];
+  return [...wrap.querySelectorAll('.cf-link-row')].map(row=>({
+    name:(row.querySelector('.cf-link-name')||{}).value||'',
+    url:(row.querySelector('.cf-link-url')||{}).value||''
+  })).filter(x=>String(x.name).trim() || String(x.url).trim());
+}
+function cfEditorHtml(f, raw, pub){
+  const pubBox = `<label class="cf-public"><input type="checkbox" data-cf-public="${f.id}" ${pub?'checked':''}> Показывать заказчику в акте и PDF</label>`;
+  if(f.type==='link'){
+    const links = parseCustomLinks(raw);
+    const rows = links.length ? links : [{name:'',url:''}];
+    return `<div class="cf-row" data-cf-editor="${f.id}"><label>${esc(f.name)}</label><ul class="cf-link-rows" data-cf-links="${f.id}">${rows.map((item,i)=>cfLinkRowHtml(item, i===rows.length-1)).join('')}</ul>${pubBox}</div>`;
+  }
+  const val = String(raw??'');
+  if(f.type==='longtext' || f.type==='bulleted')
+    return `<div class="cf-row" data-cf-editor="${f.id}"><label>${esc(f.name)}</label><textarea class="autogrow" data-cf="${f.id}" data-cf-type="${f.type}" oninput="autoGrowTextarea(this)">${esc(val)}</textarea>${pubBox}</div>`;
+  const t = f.type==='number' ? 'number' : (f.type==='date' ? 'date' : 'text');
+  return `<div class="cf-row" data-cf-editor="${f.id}"><label>${esc(f.name)}</label><input type="${t}" data-cf="${f.id}" value="${esc(val)}">${pubBox}</div>`;
+}
+function renderCfEditor(f, raw, pub){
+  const box = document.getElementById('cfEditors');
+  if(!box || box.querySelector(`[data-cf-editor="${f.id}"]`)) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = cfEditorHtml(f, raw, pub);
+  const node = tmp.firstElementChild;
+  if(!node) return;
+  const fields = DB.customFields||[];
+  const idx = fields.findIndex(x=>x.id===f.id);
+  let inserted = false;
+  for(let i=idx+1;i<fields.length;i++){
+    const next = box.querySelector(`[data-cf-editor="${fields[i].id}"]`);
+    if(next){ box.insertBefore(node, next); inserted = true; break; }
+  }
+  if(!inserted) box.appendChild(node);
+}
+function cfEditorFilled(id){
+  const f = (DB.customFields||[]).find(x=>x.id===id);
+  if(!f) return false;
+  if(f.type==='link') return collectCfLinkRows(id).length>0;
+  const el = document.querySelector(`[data-cf="${id}"]`);
+  return !!(el && String(el.value||'').trim());
+}
+function onCfPickChange(cb){
+  const id = cb.getAttribute('data-cf-pick');
+  const f = (DB.customFields||[]).find(x=>x.id===id);
+  if(!f) return;
+  if(cb.checked){
+    renderCfEditor(f, '', false);
+    const ta = document.querySelector(`[data-cf-editor="${id}"] textarea.autogrow`);
+    if(ta) autoGrowTextarea(ta);
+    return;
+  }
+  if(cfEditorFilled(id) && !confirm('Убрать поле «'+f.name+'»? Введённый текст пропадёт.')){
+    cb.checked = true;
+    return;
+  }
+  const wrap = document.querySelector(`[data-cf-editor="${id}"]`);
+  if(wrap) wrap.remove();
+}
+function collectServiceCustom(){
+  const custom = {};
+  document.querySelectorAll('[data-cf-pick]:checked').forEach(cb=>{
+    const id = cb.getAttribute('data-cf-pick');
+    const f = (DB.customFields||[]).find(x=>x.id===id);
+    if(!f) return;
+    const pubEl = document.querySelector(`[data-cf-public="${id}"]`);
+    const pub = !!(pubEl && pubEl.checked);
+    let value = '';
+    if(f.type==='link'){
+      value = serializeCustomLinks(collectCfLinkRows(id));
+      if(value==='[]') return;
+    } else {
+      const el = document.querySelector(`[data-cf="${id}"]`);
+      if(!el) return;
+      value = el.value;
+      if(!String(value).trim()) return;
+    }
+    custom[id] = {value, public:pub};
+  });
+  return custom;
+}
+function persistCustomFieldOrder(){
+  if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.touchSection(DB,'customFields');
+  save();
+  renderFields();
+  renderAll();
+  if(currentClientId) renderClientCard();
+}
+function moveCustomField(id, dir){
+  const list = DB.customFields||[];
+  const i = list.findIndex(f=>f.id===id);
+  const j = i + dir;
+  if(i<0 || j<0 || j>=list.length) return;
+  const [item] = list.splice(i,1);
+  list.splice(j,0,item);
+  persistCustomFieldOrder();
+}
+function reorderCustomFieldTo(fromId, toId){
+  if(!fromId || fromId===toId) return;
+  const list = DB.customFields||[];
+  const from = list.findIndex(f=>f.id===fromId);
+  const to = list.findIndex(f=>f.id===toId);
+  if(from<0 || to<0) return;
+  const [item] = list.splice(from,1);
+  list.splice(to,0,item);
+  persistCustomFieldOrder();
+}
+function onFieldDragStart(ev, id){
+  ev.dataTransfer.setData('text/plain', id);
+  ev.dataTransfer.effectAllowed = 'move';
+}
+function onFieldDragOver(ev){
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect = 'move';
+  const tr = ev.currentTarget;
+  document.querySelectorAll('#fieldsList tr.fields-drag-over').forEach(r=>{ if(r!==tr) r.classList.remove('fields-drag-over'); });
+  tr.classList.add('fields-drag-over');
+}
+function onFieldDrop(ev, id){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('fields-drag-over');
+  reorderCustomFieldTo(ev.dataTransfer.getData('text/plain'), id);
+}
+function onFieldDragEnd(){
+  document.querySelectorAll('#fieldsList tr.fields-drag-over').forEach(r=>r.classList.remove('fields-drag-over'));
 }
 function renderFields(){
   const box = document.getElementById('fieldsList');
   if(!DB.customFields.length){ box.innerHTML = '<div class="muted">Дополнительных граф нет.</div>'; return; }
-  box.innerHTML = `<div class="tbl-scroll"><table><thead><tr><th>Название</th><th>Тип</th><th></th></tr></thead><tbody>
-    ${DB.customFields.map(f=>`<tr><td>${esc(f.name)}</td><td>${esc(CUSTOM_FIELD_TYPES[f.type]||f.type)}</td>
+  const last = DB.customFields.length-1;
+  box.innerHTML = `<div class="tbl-scroll"><table><thead><tr><th></th><th>Название</th><th>Тип</th><th></th></tr></thead><tbody>
+    ${DB.customFields.map((f,i)=>`<tr data-field-id="${f.id}" ondragover="onFieldDragOver(event)" ondrop="onFieldDrop(event,'${f.id}')" ondragend="onFieldDragEnd()">
+    <td class="fields-order"><span class="fields-handle" draggable="true" ondragstart="onFieldDragStart(event,'${f.id}')" title="Перетащить">⋮⋮</span>
+    <button type="button" class="icon-btn fields-move" onclick="moveCustomField('${f.id}',-1)" ${i===0?'disabled':''} title="Выше">↑</button>
+    <button type="button" class="icon-btn fields-move" onclick="moveCustomField('${f.id}',1)" ${i===last?'disabled':''} title="Ниже">↓</button></td>
+    <td>${esc(f.name)}</td><td>${esc(CUSTOM_FIELD_TYPES[f.type]||f.type)}</td>
     <td><button type="button" class="icon-btn" onclick="openFieldForm('${f.id}')">Изменить</button> <button type="button" class="icon-btn" onclick="delField('${f.id}')">Удалить</button></td></tr>`).join('')}
     </tbody></table></div>`;
 }
@@ -5422,17 +5724,19 @@ function customIsPublic(s, fid){
 }
 function customFieldHtmlForPdf(s){
   const fields = (DB.customFields||[]).filter(f=>{
-    const v=String(getCustomValue(s,f.id)||'').trim();
-    return v && customIsPublic(s,f.id);
+    if(f.type==='link') return false;
+    const v=getCustomValue(s,f.id);
+    return customFieldHasValue(f.type, v) && customIsPublic(s,f.id);
   });
   if(!fields.length) return '';
   return `<div class="pa-custom">${fields.map(f=>{
-    const value=String(getCustomValue(s,f.id)||'').trim();
+    const value=getCustomValue(s,f.id);
+    const text=String(value||'').trim();
     if(f.type==='bulleted'){
-      const items=value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+      const items=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
       return `<div><span class="pa-custom-name">${esc(f.name)}:</span><ul style="margin:3px 0 0 16px;padding:0">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
     }
-    return `<div><span class="pa-custom-name">${esc(f.name)}:</span> ${esc(value).replace(/\r?\n/g,'<br>')}</div>`;
+    return `<div><span class="pa-custom-name">${esc(f.name)}:</span> ${esc(text).replace(/\r?\n/g,'<br>')}</div>`;
   }).join('')}</div>`;
 }
 function appliedPdfHtml(s){
