@@ -4458,6 +4458,15 @@ function openContract(contractId){
   persistNav();
   renderClientCard();
 }
+function openClientActInTestMode(event,linkEl){
+  if(!linkEl) return false;
+  if(event&&event.type==='auxclick'&&event.button!==1) return true;
+  if(event) event.preventDefault();
+  const testUrl=new URL(linkEl.href);
+  testUrl.searchParams.set('test','1');
+  window.open(testUrl.toString(),'_blank','noopener');
+  return false;
+}
 function renderClientCard(){
   const c = getClient(currentClientId);
   if(!c){ setView('clients'); return; }
@@ -4465,7 +4474,11 @@ function renderClientCard(){
 
   const link = BASE_URL + 'act-view.html?c=' + c.token;
   const linkEl = document.getElementById('cLink');
-  if(linkEl) linkEl.href = link;
+  if(linkEl){
+    linkEl.href = link;
+    linkEl.onclick = event=>openClientActInTestMode(event,linkEl);
+    linkEl.onauxclick = event=>openClientActInTestMode(event,linkEl);
+  }
 
   const t = currentContractId ? contractTotals(c, currentContractId) : clientAllTotals(c);
   const chip = document.getElementById('cDebtChip');

@@ -305,6 +305,88 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .cf-public-list{margin-top:7px;padding-top:7px;border-top:1px solid #F0F0F3;font-size:11.5px;line-height:1.55;}
 .cf-public-item{margin:4px 0;overflow-wrap:anywhere;}.cf-public-item b{color:var(--ink);}
 .cf-public-item ul{margin:4px 0 4px 18px;padding:0;}.cf-public-item li{margin:2px 0;}
+.svc-desc-text{display:inline;}
+.act-field-changed{
+  background:#F3EEFF;
+  border-radius:6px;
+  box-shadow:0 0 0 2px rgba(124,58,237,.28);
+  -webkit-box-decoration-break:clone;
+  box-decoration-break:clone;
+}
+.svc-row.act-service-new{
+  background:#F7F2FF;
+  box-shadow:inset 3px 0 0 rgba(124,58,237,.58);
+}
+.svc-row.act-service-deleted{
+  background:#FFF7F7;
+  color:#6B5960;
+  box-shadow:inset 3px 0 0 rgba(185,28,28,.50);
+}
+.svc-row.act-service-deleted .c-num{color:#9A7B83;}
+.svc-row.act-service-deleted .pill{filter:saturate(.68);opacity:.82;}
+.deleted-label{
+  display:inline-block;
+  margin:0 7px 3px 0;
+  padding:2px 7px;
+  border-radius:999px;
+  background:#FEE2E2;
+  color:#991B1B;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.35px;
+  vertical-align:1px;
+}
+.act-change-banner{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:1000;
+  width:min(360px,calc(100vw - 36px));
+  padding:13px 52px 13px 15px;
+  border:1px solid #D8CCF3;
+  border-radius:12px;
+  background:#FFFFFF;
+  color:var(--ink);
+  box-shadow:0 12px 34px rgba(43,26,107,.18);
+  font-size:12.5px;
+  line-height:1.45;
+  cursor:grab;
+  user-select:none;
+  touch-action:none;
+}
+.act-change-banner.dragging{cursor:grabbing;}
+.act-change-banner-close{
+  position:absolute;
+  top:50%;right:5px;
+  width:42px;height:42px;
+  transform:translateY(-50%);
+  display:flex;align-items:center;justify-content:center;
+  border:0;border-radius:9px;
+  background:transparent;color:#6B6478;
+  font:400 24px/1 Arial,sans-serif;
+  cursor:pointer;
+}
+.act-change-banner-close:hover{background:#F5F1FC;color:var(--ink);}
+@media(max-width:720px){
+  body.act-change-banner-open{padding-bottom:calc(60px + var(--act-change-banner-height,0px));}
+  .act-change-banner{
+    left:0;right:0;bottom:0;
+    width:auto;
+    padding:12px 54px calc(12px + env(safe-area-inset-bottom)) 14px;
+    border-width:1px 0 0;
+    border-radius:12px 12px 0 0;
+    font-size:12px;
+    cursor:default;
+    user-select:text;
+    touch-action:auto;
+  }
+  .act-change-banner-close{top:22px;right:5px;transform:none;}
+}
+@media print{
+  .act-change-banner{display:none !important;}
+  .act-field-changed,.svc-row.act-service-new{background:transparent !important;box-shadow:none !important;}
+  .svc-row.act-service-deleted{display:none !important;}
+}
 @media (min-width:721px){
   .svc-row .c-desc,
   .cf-public-list,
@@ -347,6 +429,7 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 
 <script src="crm-core.js"></script>
 <script src="calculator.js"></script>
+<script src="act-changes.js?v=20260909-1"></script>
 <script>
 const ACT_API  = 'https://act.raleksiz-law.workers.dev/';
 const BASE_URL = 'https://raleksiz.github.io/price/';
@@ -554,7 +637,7 @@ function appliedHtml(s,expanded=false){
   const arr=appliedItems(s);
   if(!arr.length) return '';
   const items=arr.map(a=>`<li>${esc(formatAppliedLabel(a))}</li>`).join('');
-  return `<details class="applied-box" ${expanded?'open':''}><summary>Применённые надбавки/скидки</summary><ul class="applied-list">${items}</ul></details>`;
+  return `<details class="applied-box" data-field-key="applied" ${expanded?'open':''}><summary>Применённые надбавки/скидки</summary><ul class="applied-list">${items}</ul></details>`;
 }
 function customFieldValue(raw){
   if(raw&&typeof raw==='object'&&!Array.isArray(raw)) return {value:String(raw.value??''),public:!!raw.public};
@@ -567,15 +650,54 @@ function renderCustomFields(s,db){
     const raw=(s.custom||{})[f.id];
     const x=customFieldValue(raw);
     if(!x.public||!x.value.trim()) return;
+    const fieldKey=esc('custom:'+f.id);
     if(f.type==='bulleted'){
       const items=x.value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
-      out.push(`<div class="cf-public-item"><b>${esc(f.name)}:</b><ul>${items.map(v=>`<li>${esc(v)}</li>`).join('')}</ul></div>`);
+      out.push(`<div class="cf-public-item" data-field-key="${fieldKey}"><b>${esc(f.name)}:</b><ul>${items.map(v=>`<li>${esc(v)}</li>`).join('')}</ul></div>`);
     }else{
       const value=esc(x.value).replace(/\r\n?|\n/g,'<br>');
-      out.push(`<div class="cf-public-item"><b>${esc(f.name)}:</b> ${value}</div>`);
+      out.push(`<div class="cf-public-item" data-field-key="${fieldKey}"><b>${esc(f.name)}:</b> ${value}</div>`);
     }
   });
   return out.length?`<div class="cf-public-list">${out.join('')}</div>`:'';
+}
+function buildCurrentActSnapshot(c,db){
+  const engine=window.RaleksizActChanges;
+  if(!engine||typeof engine.buildSnapshot!=='function') return null;
+  try{
+    const today=todayISO();
+    return engine.buildSnapshot({
+      client:c,
+      customFields:Array.isArray(db.customFields)?db.customFields:[],
+      today,
+      capturedAt:new Date().toISOString(),
+      isProvided,
+      contractPresentation:ct=>({
+        label:contractLabel(ct),
+        basis:contractBasisLabel(ct)
+      }),
+      servicePresentation:(s,ct)=>{
+        const special=!!(ct&&ct.status==='Абонемент'&&isAbonementSpecialMonth(c,ct,monthKey(s.date),today));
+        const code=String(s.code||'').trim()||'—';
+        return {
+          date:fmtDate(s.date),
+          code,
+          desc:s.desc,
+          priceVisible:!special,
+          price:Number(s.price)||0,
+          paidVisible:!special,
+          paid:paidOf(s),
+          paymentStatus:clientPayLabel(s),
+          prepay:prepayOf(s)>0,
+          appliedVisible:!special,
+          applied:special?[]:appliedItems(s).map(formatAppliedLabel)
+        };
+      }
+    });
+  }catch(error){
+    console.error('Не удалось сформировать снимок изменений акта',error);
+    return null;
+  }
 }
 function offerLink(ct){
   return offerLinkHtml(ct);
@@ -790,7 +912,9 @@ function resetFilters(id){
   renderContractById(id);
 }
 let FILTER_OPEN = {};
-let CURRENT_CLIENT=null, CURRENT_DB=null;
+let CURRENT_CLIENT=null, CURRENT_DB=null, CURRENT_ACT_SNAPSHOT=null;
+let CURRENT_ACT_VIEW_STATE=null, CURRENT_ACT_CHANGE_DIFF=null;
+let CURRENT_ACT_MODE='client';
 function renderContractById(id,opts){
   if(!CURRENT_CLIENT||!CURRENT_DB) return;
   const ct=getContract(CURRENT_CLIENT,id);
@@ -801,6 +925,7 @@ function renderContractById(id,opts){
   const box = document.getElementById('filters-'+id);
   if(box && open) box.classList.add('open');
   bindActScrollPairs(document.getElementById('contract-'+id));
+  applyActChangeHighlights(document.getElementById('contract-'+id));
   if(opts&&opts.focusFilter){
     requestAnimationFrame(()=>{
       const form=document.getElementById('filters-'+id);
@@ -813,17 +938,109 @@ function renderContractById(id,opts){
     });
   }
 }
+function actChangeDiff(){
+  return CURRENT_ACT_CHANGE_DIFF&&CURRENT_ACT_CHANGE_DIFF.compatible!==false
+    ? CURRENT_ACT_CHANGE_DIFF:null;
+}
+function deletedServicesForContract(contractId,filters){
+  const diff=actChangeDiff();
+  const deleted=diff&&Array.isArray(diff.deletedServices)?diff.deletedServices:[];
+  return deleted.filter(service=>String(service.contractId||'')===String(contractId||''))
+    .filter(service=>matchDeletedServiceFilter(service,filters||{}));
+}
+function matchDeletedServiceFilter(service,f){
+  const from=filterDateISO(f.from),to=filterDateISO(f.to);
+  const date=String(service&&service.sort&&service.sort.date||'').slice(0,10);
+  const code=String(f.code||'').trim().toLowerCase();
+  if(from&&(!date||date<from)) return false;
+  if(to&&(!date||date>to)) return false;
+  if(code&&!String(service&&service.fields&&service.fields.code||'').toLowerCase().includes(code)) return false;
+  const q=String(f.pay||'').trim().toLowerCase();
+  if(!q||q==='любой'||q==='все') return true;
+  const presentation=service&&service.presentation||{};
+  const status=String(presentation.paymentStatus||'').toLowerCase();
+  const prepay=!!presentation.prepay;
+  if(q==='prepay'||q.includes('предоплат')) return prepay;
+  if(q==='partial'||q.includes('частич')) return status.includes('частич');
+  if(q==='none'||q==='неоплачено'||q.includes('не оплач')) return status.includes('не оплач');
+  if(q==='paid'||q==='оплачено'||q==='оплачено полностью') return status==='оплачено';
+  return status.includes(q)||(prepay&&'с предоплатой'.includes(q));
+}
 function renderServiceRow(s,num,special){
   const extra = special ? renderCustomFields(s,CURRENT_DB) : (appliedHtml(s)+renderCustomFields(s,CURRENT_DB));
   const codeLabel = String(s.code||'').trim() || '—';
-  return `<div class="svc-row${special?' abon-special':''}">
-    <div class="c-num">${num}</div><div class="c-date">${fmtDate(s.date)}</div><div class="c-code">${esc(codeLabel)}</div>
-    <div class="c-desc">${esc(s.desc)}${extra}</div>
-    ${special?'':`<div class="c-price">${money(Number(s.price)||0)}</div><div class="c-paid">${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</div>`}
-    <div class="c-status">${payPill(s)}</div>
-    <div class="c-codedesc"><span class="pill no">${esc(codeLabel)}</span> ${esc(s.desc)}${extra}</div>
-    <div class="c-priceinfo">${special?'':`<span class="price-main">${money(Number(s.price)||0)}</span><span class="paid-amt">Оплачено: ${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</span>`}${payPill(s)}</div>
+  return `<div class="svc-row${special?' abon-special':''}" data-service-id="${esc(s.id)}" data-contract-id="${esc(s.contractId)}">
+    <div class="c-num">${num}</div><div class="c-date" data-field-key="date">${fmtDate(s.date)}</div><div class="c-code" data-field-key="code">${esc(codeLabel)}</div>
+    <div class="c-desc"><span class="svc-desc-text" data-field-key="desc">${esc(s.desc)}</span>${extra}</div>
+    ${special?'':`<div class="c-price" data-field-key="price">${money(Number(s.price)||0)}</div><div class="c-paid" data-field-key="paid">${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</div>`}
+    <div class="c-status" data-field-key="status">${payPill(s)}</div>
+    <div class="c-codedesc"><span class="pill no" data-field-key="code">${esc(codeLabel)}</span> <span class="svc-desc-text" data-field-key="desc">${esc(s.desc)}</span>${extra}</div>
+    <div class="c-priceinfo">${special?'':`<span class="price-main" data-field-key="price">${money(Number(s.price)||0)}</span><span class="paid-amt" data-field-key="paid">Оплачено: ${(isPayFull(s)||paidOf(s))?money(paidOf(s)):'—'}</span>`}<span data-field-key="status">${payPill(s)}</span></div>
   </div>`;
+}
+function snapshotAppliedHtml(service){
+  const presentation=service&&service.presentation||{};
+  const items=Array.isArray(presentation.applied)?presentation.applied.filter(Boolean):[];
+  if(!items.length||presentation.appliedVisible===false) return '';
+  return `<details class="applied-box"><summary>Применённые надбавки/скидки</summary><ul class="applied-list">${items.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details>`;
+}
+function snapshotCustomFieldsHtml(service){
+  const values=service&&service.publicCustomValues||{};
+  const items=Object.keys(values).sort().map(id=>values[id]).filter(Boolean).map(value=>{
+    const name=esc(value.name||'Дополнительное поле');
+    const raw=String(value.value||'');
+    if(value.type==='bulleted'){
+      const lines=raw.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+      return `<div class="cf-public-item"><b>${name}:</b><ul>${lines.map(line=>`<li>${esc(line)}</li>`).join('')}</ul></div>`;
+    }
+    return `<div class="cf-public-item"><b>${name}:</b> ${esc(raw).replace(/\r\n?|\n/g,'<br>')}</div>`;
+  });
+  return items.length?`<div class="cf-public-list">${items.join('')}</div>`:'';
+}
+function snapshotPayPill(service){
+  const presentation=service&&service.presentation||{};
+  const status=String(presentation.paymentStatus||'Не оплачено');
+  let cls='no';
+  if(status==='Оплачено') cls='ok';
+  else if(status.includes('частич')) cls='part';
+  const label=cls==='part'?'Оплачено <span class="part-rest">частично</span>':esc(status);
+  return `<span class="pay-stack"><span class="pill ${cls}">${label}</span>${presentation.prepay?'<span class="pill pre">Предоплата</span>':''}</span>`;
+}
+function renderDeletedServiceRow(service){
+  const fields=service&&service.fields||{};
+  const presentation=service&&service.presentation||{};
+  const special=presentation.priceVisible===false&&presentation.paidVisible===false;
+  const codeLabel=String(fields.code||'').trim()||'—';
+  const extra=(special?'':snapshotAppliedHtml(service))+snapshotCustomFieldsHtml(service);
+  const paidShown=Number(presentation.paid)>0||presentation.paymentStatus==='Оплачено';
+  const desc=`<span class="deleted-label">УДАЛЕНО</span><span class="svc-desc-text">${esc(fields.desc||'')}</span>`;
+  return `<div class="svc-row act-service-deleted${special?' abon-special':''}" data-deleted-service-id="${esc(service.id)}" data-contract-id="${esc(service.contractId)}">
+    <div class="c-num">—</div><div class="c-date">${esc(fields.date||'')}</div><div class="c-code">${esc(codeLabel)}</div>
+    <div class="c-desc">${desc}${extra}</div>
+    ${special?'':`<div class="c-price">${money(presentation.price)}</div><div class="c-paid">${paidShown?money(presentation.paid):'—'}</div>`}
+    <div class="c-status">${snapshotPayPill(service)}</div>
+    <div class="c-codedesc"><span class="pill no">${esc(codeLabel)}</span> ${desc}${extra}</div>
+    <div class="c-priceinfo">${special?'':`<span class="price-main">${money(presentation.price)}</span><span class="paid-amt">Оплачено: ${paidShown?money(presentation.paid):'—'}</span>`}${snapshotPayPill(service)}</div>
+  </div>`;
+}
+function snapshotSortValue(service,key){
+  return String(service&&service.sort&&service.sort[key]||'');
+}
+function renderServiceRows(list,deleted,specialResolver){
+  const current=sortServices(list||[]);
+  const numbers=new Map(current.map((service,index)=>[String(service.id),current.length-index]));
+  const combined=current.map(service=>({kind:'current',service,date:String(service.date||''),createdAt:String(service.createdAt||'')}))
+    .concat((deleted||[]).map(service=>({kind:'deleted',service,date:snapshotSortValue(service,'date'),createdAt:snapshotSortValue(service,'createdAt')})));
+  combined.sort((a,b)=>{
+    const date=b.date.localeCompare(a.date);
+    if(date) return date;
+    const created=b.createdAt.localeCompare(a.createdAt);
+    if(created) return created;
+    return String(b.service.id||'').localeCompare(String(a.service.id||''));
+  });
+  return combined.map(item=>item.kind==='deleted'
+    ? renderDeletedServiceRow(item.service)
+    : renderServiceRow(item.service,numbers.get(String(item.service.id)),!!specialResolver(item.service))).join('');
 }
 function wrapSvcTable(headHtml, listHtml){
   return `<div class="svc-scroll-pair">
@@ -831,55 +1048,78 @@ function wrapSvcTable(headHtml, listHtml){
     <div class="svc-body-scroll"><div class="svc-scroll-inner">${listHtml}</div></div>
   </div>`;
 }
-function renderTable(list, special){
-  const ordered=sortServices(list);
+function renderTable(list,special,deleted,specialResolver){
+  const current=Array.isArray(list)?list:[];
+  const removed=Array.isArray(deleted)?deleted:[];
+  const resolveSpecial=typeof specialResolver==='function'?specialResolver:()=>!!special;
   const head = special
     ? `<div class="svc-head abon-special"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Статус оплаты</div></div>`
     : `<div class="svc-head"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div></div>`;
-  return wrapSvcTable(head, `<div class="svc-list">${ordered.length?ordered.map((s,i)=>renderServiceRow(s,ordered.length-i,special)).join(''):'<div class="empty-filter">По заданным фильтрам услуг нет.</div>'}</div>`);
+  const rows=renderServiceRows(current,removed,resolveSpecial);
+  return wrapSvcTable(head, `<div class="svc-list">${rows||'<div class="empty-filter">По заданным фильтрам услуг нет.</div>'}</div>`);
 }
 function renderContract(c,ct,presetFilters){
   const id=ct.id;
+  const snapshotContract=ct._actSnapshotContract||null;
   const today=todayISO();
   const all=sortServices(contractServices(c,id).filter(s=>isProvided(s,today)));
   const f=presetFilters || getFilters(id);
   const list=filterServices(all,f);
+  const deleted=deletedServicesForContract(id,f);
   const t=displayContractTotals(c,ct,today);
   const filteredTotals=displayVisibleTotals(c,ct,list,today);
   const monthIsComplete=k=>servicesInReportingMonth(c,ct,k,today).length===list.filter(s=>monthKey(s.date)===k).length;
+  const currentIsSpecial=service=>ct.status==='Абонемент'&&monthIsComplete(monthKey(service.date))&&isAbonementSpecialMonth(c,ct,monthKey(service.date),today);
+  const deletedIsSpecial=service=>{
+    const presentation=service&&service.presentation||{};
+    return presentation.priceVisible===false&&presentation.paidVisible===false;
+  };
   let body='';
-  if(!list.length){ body='<div class="empty-filter">Нет услуг, соответствующих выбранным фильтрам.</div>'; }
+  if(!list.length&&!deleted.length){ body='<div class="empty-filter">Нет услуг, соответствующих выбранным фильтрам.</div>'; }
   else if(ct.actMode==='monthly'){
-    const groups={}; list.forEach(s=>(groups[monthKey(s.date)]??=[]).push(s));
+    const groups={};
+    list.forEach(service=>{
+      const key=monthKey(service.date);
+      (groups[key]??={current:[],deleted:[]}).current.push(service);
+    });
+    deleted.forEach(service=>{
+      const key=monthKey(snapshotSortValue(service,'date'));
+      (groups[key]??={current:[],deleted:[]}).deleted.push(service);
+    });
     body=Object.keys(groups).sort().reverse().map(k=>{
-      const g=sortServices(groups[k]);
-      const special=monthIsComplete(k)&&isAbonementSpecialMonth(c, ct, k, today);
+      const g=sortServices(groups[k].current);
+      const removed=groups[k].deleted;
+      const special=g.length>0&&monthIsComplete(k)&&isAbonementSpecialMonth(c, ct, k, today);
+      const allSpecial=g.length+removed.length>0&&g.every(service=>special)&&removed.every(deletedIsSpecial);
       const gs=special ? contractPriceForMonth(ct, k) : g.reduce((a,s)=>a+(Number(s.price)||0),0);
       const gp=monthIsComplete(k)?displayPaidForMonth(ct, k, g, special):g.reduce((total,s)=>total+paidOf(s),0);
-      return `<h3 class="svc-month-title">${esc(monthTitle(k))}</h3>${renderTable(g, special)}<div class="mtot">За ${esc(monthTitleInText(k))}: оказано на ${money(gs)}, оплачено ${money(gp)}, к оплате ${money(Math.max(0,gs-gp))}</div>`;
+      const monthTotals=g.length?`<div class="mtot">За ${esc(monthTitleInText(k))}: оказано на ${money(gs)}, оплачено ${money(gp)}, к оплате ${money(Math.max(0,gs-gp))}</div>`:'';
+      return `<h3 class="svc-month-title">${esc(monthTitle(k))}</h3>${renderTable(g,allSpecial,removed,()=>special)}${monthTotals}`;
     }).join('');
   }else{
-    const months=[...new Set(list.map(s=>monthKey(s.date)))];
-    const allSpecial=ct.status==='Абонемент' && months.length>0 && months.every(m=>monthIsComplete(m)&&isAbonementSpecialMonth(c,ct,m,today));
-    if(allSpecial) body=renderTable(list, true);
-    else if(ct.status==='Абонемент'){
-      const ordered=sortServices(list);
-      body=wrapSvcTable(`<div class="svc-head"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div></div>`,`<div class="svc-list">${ordered.map((s,i)=>renderServiceRow(s,ordered.length-i,monthIsComplete(monthKey(s.date))&&isAbonementSpecialMonth(c,ct,monthKey(s.date),today))).join('')}</div>`);
-    } else body=renderTable(list, false);
+    const allSpecial=list.length+deleted.length>0&&list.every(currentIsSpecial)&&deleted.every(deletedIsSpecial);
+    body=renderTable(list,allSpecial,deleted,currentIsSpecial);
   }
+  const title=snapshotContract?snapshotContract.label:contractLabel(ct);
+  const meta=snapshotContract?'':contractMeta(ct);
+  const basis=snapshotContract
+    ? (snapshotContract.basis?`<div>Основание: ${esc(snapshotContract.basis)}</div>`:'')
+    : basisBlockHtml(ct);
+  const filterControl=snapshotContract?'':filterToggleTemplate(id);
+  const filters=snapshotContract?'':filtersTemplate(id,f);
   return `<div class="contract-block" id="contract-${esc(id)}">
     <div class="contract-head">
-      <div class="contract-title">${esc(contractLabel(ct))}</div>
-      <div class="contract-meta">${contractMeta(ct)}</div>
-      <div class="contract-basis">${basisBlockHtml(ct)}</div>
-      <div class="contract-filter-control">${filterToggleTemplate(id)}</div>
+      <div class="contract-title">${esc(title||'Договор')}</div>
+      <div class="contract-meta">${meta}</div>
+      <div class="contract-basis">${basis}</div>
+      <div class="contract-filter-control">${filterControl}</div>
     </div>
-    ${filtersTemplate(id, f)}
+    ${filters}
     ${body}
     <div class="totals">${tot('Общая цена услуг',money(filteredTotals.sum))}${tot('Оплачено',money(filteredTotals.paid))}${tot('К оплате',money(filteredTotals.debt))}</div>
     ${list.length!==all.length?`<div class="muted" style="margin-top:7px">Показано ${filteredTotals.count} из ${t.count} услуг.</div>`:''}
-    ${(ct.sentDates||[]).length?`<div class="muted" style="margin-top:8px">Даты направления актов: ${ct.sentDates.map(fmtDate).join(', ')}</div>`:''}
-    ${compensationActHtml(ct)}
+    ${!snapshotContract&&(ct.sentDates||[]).length?`<div class="muted" style="margin-top:8px">Даты направления актов: ${ct.sentDates.map(fmtDate).join(', ')}</div>`:''}
+    ${snapshotContract?'':compensationActHtml(ct)}
   </div>`;
 }
 function wrapCompSvcTable(rows){
@@ -995,16 +1235,136 @@ function actFooterHtml(){
 function renderClient(c,db){
   CURRENT_CLIENT=c; CURRENT_DB=db;
   const root=document.getElementById('root');
-  const contracts=(c.contracts||[]).filter(ct=>ct.showInAct!==false);
+  const contracts=(c.contracts||[]).filter(ct=>ct.showInAct!==false).slice();
+  const knownContracts=new Set(contracts.map(contract=>String(contract.id)));
+  const diff=actChangeDiff();
+  const baselineContracts=new Map(((CURRENT_ACT_VIEW_STATE&&CURRENT_ACT_VIEW_STATE.baselineSnapshot&&CURRENT_ACT_VIEW_STATE.baselineSnapshot.contracts)||[])
+    .map(contract=>[String(contract.id),contract]));
+  ((diff&&diff.deletedServices)||[]).forEach(service=>{
+    const contractId=String(service.contractId||'');
+    if(!contractId||knownContracts.has(contractId)) return;
+    const saved=baselineContracts.get(contractId)||{id:contractId,label:'Договор',basis:'',actMode:'general',sortCreatedAt:''};
+    contracts.push({
+      id:contractId,
+      title:saved.label||'Договор',
+      actMode:saved.actMode==='monthly'?'monthly':'general',
+      createdAt:saved.sortCreatedAt||'',
+      showInAct:true,
+      _actSnapshotContract:saved
+    });
+    knownContracts.add(contractId);
+  });
   if(!contracts.length){root.innerHTML=`<div class="client-name">${esc(c.name)}</div><div class="state">Договоров пока нет.</div>`;return;}
   const today=todayISO();
-  const grand=contracts.reduce((acc,ct)=>{const t=displayContractTotals(c,ct,today);acc.sum+=t.sum;acc.paid+=t.paid;acc.debt+=t.debt;return acc;},{sum:0,paid:0,debt:0});
+  const grand=contracts.filter(ct=>!ct._actSnapshotContract).reduce((acc,ct)=>{const t=displayContractTotals(c,ct,today);acc.sum+=t.sum;acc.paid+=t.paid;acc.debt+=t.debt;return acc;},{sum:0,paid:0,debt:0});
   const sorted=contracts.slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
   const grandBlock = contracts.length>1
     ? `<div style="margin-top:4px"><h2 style="border-top:none;padding-top:0">Итого по всем договорам</h2><div class="grand-totals">${grandTot('Общая цена услуг',money(grand.sum))}${grandTot('Оплачено',money(grand.paid))}${grandTot('К оплате',money(grand.debt))}</div></div>`
     : '';
   root.innerHTML=`<h1 class="client-name">${esc(c.name)}</h1><div class="muted" style="margin-bottom:16px">Акты оказанных услуг по всем договорам и основаниям</div>${sorted.map(ct=>renderContract(c,ct)).join('')}${grandBlock}${actFooterHtml()}`;
   bindActScrollPairs(root);
+  applyActChangeHighlights(root);
+}
+function applyActChangeHighlights(scope){
+  const diff=actChangeDiff();
+  if(!diff||!scope) return;
+  const newIds=new Set((diff.newServiceIds||[]).map(String));
+  scope.querySelectorAll('.svc-row[data-service-id]').forEach(row=>{
+    const serviceId=String(row.dataset.serviceId||'');
+    if(newIds.has(serviceId)){
+      row.classList.add('act-service-new');
+      return;
+    }
+    const changed=diff.changedFieldsByServiceId&&diff.changedFieldsByServiceId[serviceId];
+    if(!Array.isArray(changed)||!changed.length) return;
+    const keys=new Set(changed.map(String));
+    row.querySelectorAll('[data-field-key]').forEach(field=>{
+      if(keys.has(String(field.dataset.fieldKey||''))) field.classList.add('act-field-changed');
+    });
+  });
+}
+function clearActChangeBanner(){
+  const current=document.querySelector('.act-change-banner');
+  if(current) current.remove();
+  document.body.classList.remove('act-change-banner-open');
+  document.body.style.removeProperty('--act-change-banner-height');
+}
+function syncActChangeBannerSpace(banner){
+  if(!banner||!banner.isConnected) return;
+  if(window.matchMedia('(max-width:720px)').matches){
+    banner.style.removeProperty('left');
+    banner.style.removeProperty('top');
+    banner.style.removeProperty('right');
+    banner.style.removeProperty('bottom');
+    document.body.classList.add('act-change-banner-open');
+    document.body.style.setProperty('--act-change-banner-height',(Math.ceil(banner.getBoundingClientRect().height)+12)+'px');
+  }else{
+    document.body.classList.remove('act-change-banner-open');
+    document.body.style.removeProperty('--act-change-banner-height');
+  }
+}
+function clampDesktopBanner(banner){
+  if(!banner||!banner.isConnected||window.matchMedia('(max-width:720px)').matches) return;
+  const rect=banner.getBoundingClientRect();
+  if(!banner.style.left&&!banner.style.top) return;
+  const left=Math.min(Math.max(8,rect.left),Math.max(8,window.innerWidth-rect.width-8));
+  const top=Math.min(Math.max(8,rect.top),Math.max(8,window.innerHeight-rect.height-8));
+  banner.style.left=left+'px';
+  banner.style.top=top+'px';
+  banner.style.right='auto';
+  banner.style.bottom='auto';
+}
+function bindDesktopBannerDrag(banner){
+  let drag=null;
+  const finish=event=>{
+    if(!drag) return;
+    if(event&&banner.hasPointerCapture&&banner.hasPointerCapture(drag.pointerId)) banner.releasePointerCapture(drag.pointerId);
+    drag=null;
+    banner.classList.remove('dragging');
+  };
+  banner.addEventListener('pointerdown',event=>{
+    if(window.matchMedia('(max-width:720px)').matches||event.button!==0||event.target.closest('.act-change-banner-close')) return;
+    const rect=banner.getBoundingClientRect();
+    banner.style.left=rect.left+'px';
+    banner.style.top=rect.top+'px';
+    banner.style.right='auto';
+    banner.style.bottom='auto';
+    drag={pointerId:event.pointerId,offsetX:event.clientX-rect.left,offsetY:event.clientY-rect.top};
+    banner.classList.add('dragging');
+    banner.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+  banner.addEventListener('pointermove',event=>{
+    if(!drag||event.pointerId!==drag.pointerId) return;
+    const rect=banner.getBoundingClientRect();
+    const maxLeft=Math.max(8,window.innerWidth-rect.width-8);
+    const maxTop=Math.max(8,window.innerHeight-rect.height-8);
+    banner.style.left=Math.min(Math.max(8,event.clientX-drag.offsetX),maxLeft)+'px';
+    banner.style.top=Math.min(Math.max(8,event.clientY-drag.offsetY),maxTop)+'px';
+  });
+  banner.addEventListener('pointerup',finish);
+  banner.addEventListener('pointercancel',finish);
+}
+function showActChangeBanner(){
+  clearActChangeBanner();
+  const diff=actChangeDiff();
+  if(!diff||!diff.hasChanges) return;
+  const banner=document.createElement('aside');
+  banner.className='act-change-banner';
+  banner.setAttribute('role','status');
+  banner.innerHTML='<span>Изменения с прошлого просмотра выделены цветом. При следующем открытии они повторно не выделятся.</span><button type="button" class="act-change-banner-close" aria-label="Закрыть сообщение">×</button>';
+  const onResize=()=>{
+    syncActChangeBannerSpace(banner);
+    clampDesktopBanner(banner);
+  };
+  banner.querySelector('.act-change-banner-close').addEventListener('click',()=>{
+    window.removeEventListener('resize',onResize);
+    clearActChangeBanner();
+  });
+  document.body.appendChild(banner);
+  bindDesktopBannerDrag(banner);
+  window.addEventListener('resize',onResize);
+  requestAnimationFrame(()=>syncActChangeBannerSpace(banner));
 }
 function checkHeaderWrap(){
   const logo = document.querySelector('header.brand img.logo');
@@ -1028,10 +1388,124 @@ function checkHeaderWrap(){
   checkHeaderWrap();
   setTimeout(checkHeaderWrap, 300);
 })();
+function waitForActPaint(){
+  return new Promise(resolve=>{
+    if(typeof requestAnimationFrame==='function') requestAnimationFrame(()=>resolve());
+    else setTimeout(resolve,0);
+  });
+}
+const TEST_MODE_FLAG_PREFIX='raleksiz:act:test-mode:v1:';
+const TEST_BASELINE_PREFIX='raleksiz:act:test-baseline:v1:';
+function initializeActViewMode(token,params){
+  const requested=params.get('test')==='1';
+  const flagKey=TEST_MODE_FLAG_PREFIX+token;
+  const baselineKey=TEST_BASELINE_PREFIX+token;
+  const windowMarker='raleksiz-act-test:'+token;
+  let stored=false;
+  try{
+    if(requested){
+      sessionStorage.setItem(flagKey,'1');
+      sessionStorage.removeItem(baselineKey);
+    }
+    stored=sessionStorage.getItem(flagKey)==='1';
+  }catch(error){
+    console.error('Тестовая сессия недоступна в sessionStorage',error);
+  }
+  if(requested) window.name=windowMarker;
+  CURRENT_ACT_MODE=requested||stored||window.name===windowMarker?'test':'client';
+  window.CURRENT_ACT_MODE=CURRENT_ACT_MODE;
+  if(requested){
+    params.delete('test');
+    const query=params.toString();
+    history.replaceState(history.state,'',location.pathname+(query?'?'+query:'')+location.hash);
+  }
+}
+function testBaselineFor(token,snapshot){
+  if(!snapshot) return null;
+  const key=TEST_BASELINE_PREFIX+token;
+  try{
+    const raw=sessionStorage.getItem(key);
+    if(raw){
+      const saved=JSON.parse(raw);
+      if(saved&&saved.schemaVersion===snapshot.schemaVersion) return saved;
+    }
+    sessionStorage.setItem(key,JSON.stringify(snapshot));
+  }catch(error){
+    console.error('Не удалось сохранить тестовую базовую версию акта',error);
+  }
+  return null;
+}
+function prepareActViewComparison(token,data){
+  const engine=window.RaleksizActChanges;
+  const snapshot=CURRENT_ACT_SNAPSHOT;
+  let state;
+  let baseline=null;
+  let initialized=false;
+  if(CURRENT_ACT_MODE==='test'){
+    baseline=testBaselineFor(token,snapshot);
+    initialized=!!baseline;
+    state={initialized,revision:0,baselineSnapshot:baseline,testMode:true};
+  }else{
+    state=data&&data.viewState&&typeof data.viewState==='object'
+      ? data.viewState
+      : {initialized:false,revision:0,baselineSnapshot:null};
+    initialized=!!state.initialized;
+    baseline=initialized?state.baselineSnapshot:null;
+  }
+  CURRENT_ACT_VIEW_STATE=state;
+  CURRENT_ACT_CHANGE_DIFF=null;
+  if(engine&&snapshot&&typeof engine.compareSnapshots==='function'){
+    try{
+      CURRENT_ACT_CHANGE_DIFF=engine.compareSnapshots(baseline,snapshot);
+    }catch(error){
+      console.error('Не удалось сравнить версии акта',error);
+    }
+  }
+  window.CURRENT_ACT_VIEW_STATE=CURRENT_ACT_VIEW_STATE;
+  window.CURRENT_ACT_CHANGE_DIFF=CURRENT_ACT_CHANGE_DIFF;
+}
+async function advanceClientActView(token,data){
+  if(CURRENT_ACT_MODE==='test') return;
+  const snapshot=CURRENT_ACT_SNAPSHOT;
+  const state=CURRENT_ACT_VIEW_STATE||{initialized:false,revision:0,baselineSnapshot:null};
+  if(!snapshot||!data.serverDataVersion||data.viewStateUnavailable) return;
+  if(!snapshot.hasServices&&!state.initialized) return;
+  await waitForActPaint();
+  try{
+    const response=await fetch(ACT_API+'view-state/advance',{
+      method:'POST',
+      cache:'no-store',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        c:token,
+        expectedRevision:Number(state.revision)||0,
+        serverDataVersion:data.serverDataVersion,
+        currentSnapshot:snapshot
+      })
+    });
+    const result=await response.json().catch(()=>null);
+    if(response.status===409) return;
+    if(!response.ok||!result||result.ok!==true){
+      console.error('Не удалось зафиксировать просмотренную версию акта',result);
+      return;
+    }
+    CURRENT_ACT_VIEW_STATE={
+      ...state,
+      initialized:result.skipped!=='no_services',
+      revision:Number(result.revision)||0,
+      baselineDataVersion:data.serverDataVersion,
+      baselineSnapshot:snapshot
+    };
+    window.CURRENT_ACT_VIEW_STATE=CURRENT_ACT_VIEW_STATE;
+  }catch(error){
+    console.error('Не удалось зафиксировать просмотренную версию акта',error);
+  }
+}
 async function loadAndRender(){
   const root=document.getElementById('root');
   const params=new URLSearchParams(location.search),token=params.get('c');
   if(!token){root.innerHTML='<div class="state err">Ссылка недействительна: отсутствует идентификатор.</div>';return;}
+  initializeActViewMode(token,params);
   try{
     const res=await fetch(ACT_API+'?c='+encodeURIComponent(token)+'&t='+Date.now(),{cache:'no-store'});
     if(!res.ok && res.status!==404) throw new Error('fetch failed');
@@ -1044,7 +1518,13 @@ async function loadAndRender(){
     c.contracts=Array.isArray(c.contracts)?c.contracts:[];
     c.services=Array.isArray(c.services)?c.services:[];
     const db={ customFields: Array.isArray(data.customFields)?data.customFields:[] };
+    CURRENT_CLIENT=c;
+    CURRENT_DB=db;
+    CURRENT_ACT_SNAPSHOT=buildCurrentActSnapshot(c,db);
+    prepareActViewComparison(token,data);
     renderClient(c,db);
+    showActChangeBanner();
+    await advanceClientActView(token,data);
   }catch(e){console.error(e);root.innerHTML='<div class="state err">Не удалось загрузить данные. Проверьте интернет-соединение и обновите страницу.</div>';}
 }
 bindActFilters();
