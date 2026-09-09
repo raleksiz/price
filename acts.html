@@ -342,19 +342,20 @@ tr.locked td{background:#FAFAFC;}
 .cf-pick{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;align-items:center;min-width:0;height:22px;margin:0;font-size:12.5px;font-weight:400;color:var(--ink);text-transform:none;letter-spacing:0;cursor:pointer;}
 .cf-pick input{width:16px;height:16px;margin:0;accent-color:var(--violet);}
 .cf-pick span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.cf-link-rows{margin:0;padding:0 0 0 1.2em;list-style:disc;}
-.cf-link-row{display:list-item;margin:0 0 8px;}
-.cf-link-row:last-child{margin-bottom:0;}
-.cf-link-row-inner{display:grid;grid-template-columns:20ch minmax(0,1fr) 16px;gap:8px;align-items:end;min-width:0;}
+.cf-link-rows{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;}
+.cf-link-row{display:grid;grid-template-columns:auto minmax(0,1fr) 16px;gap:8px;align-items:end;min-width:0;}
 .cf-link-row .field{margin-bottom:0;min-width:0;}
 .cf-link-name,.cf-link-url{width:100%;font-size:13px;padding:8px 10px;line-height:1.35;}
-.cf-link-name{max-width:20ch;}
+.cf-link-name{width:20ch;max-width:100%;}
 .cf-link-url{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cf-link-slot{width:16px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .cf-link-action{width:16px;height:16px;padding:0;border:0;background:transparent;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .cf-link-action svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
 @media (max-width:720px){
   .cf-picker-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .cf-link-row{grid-template-columns:minmax(0,1fr) 16px;gap:6px;}
+  .cf-link-row .field:first-child{grid-column:1 / -1;}
+  .cf-link-name{width:100%;}
 }
 .offer-cats{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px;}
 .offer-cats summary{font-size:12px;padding:2px 0;}
@@ -945,8 +946,6 @@ tr.fields-drag-over td{background:var(--soft);}
   margin:4px 0 0 16px;padding:0;list-style:disc;
 }
 .svc-row .c-cf li{margin:2px 0;}
-.svc-row .c-cf:has(.cf-link-list){font-size:13px;}
-.svc-row .c-cf .cf-link-list{font-size:13px;font-weight:400;line-height:1.35;}
 .svc-row .c-cf a{color:var(--violet);text-decoration:none;font-size:inherit;font-weight:inherit;}
 .svc-row .c-cf a:hover{text-decoration:underline;}
 .svc-row .c-codedesc,.svc-row .c-priceinfo{display:none;}
@@ -4906,13 +4905,11 @@ function cfLinkActionHtml(add){
   return `<button type="button" class="cf-link-action" onclick="removeCfLinkRow(this)" title="Удалить ссылку" aria-label="Удалить ссылку"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>`;
 }
 function cfLinkRowHtml(item, isLast){
-  return `<li class="cf-link-row">
-    <div class="cf-link-row-inner">
+  return `<div class="cf-link-row">
     <div class="field"><label>Имя</label><input class="cf-link-name" maxlength="20" value="${esc((item && item.name) || '')}"></div>
     <div class="field"><label>Адрес</label><input class="cf-link-url" value="${esc((item && item.url) || '')}" placeholder="https://"></div>
     <div class="cf-link-slot">${cfLinkActionHtml(!!isLast)}</div>
-    </div>
-  </li>`;
+  </div>`;
 }
 function refreshCfLinkRowButtons(wrap){
   if(!wrap) return;
@@ -4944,11 +4941,12 @@ function collectCfLinkRows(id){
   })).filter(x=>String(x.name).trim() || String(x.url).trim());
 }
 function cfEditorHtml(f, raw, pub){
-  const pubBox = `<label class="cf-public"><input type="checkbox" data-cf-public="${f.id}" ${pub?'checked':''}> Показывать заказчику в акте и PDF</label>`;
+  const pubLabel = f.type==='link' ? 'Показывать заказчику в Акте' : 'Показывать заказчику в акте и PDF';
+  const pubBox = `<label class="cf-public"><input type="checkbox" data-cf-public="${f.id}" ${pub?'checked':''}> ${pubLabel}</label>`;
   if(f.type==='link'){
     const links = parseCustomLinks(raw);
     const rows = links.length ? links : [{name:'',url:''}];
-    return `<div class="cf-row" data-cf-editor="${f.id}"><label>${esc(f.name)}</label><ul class="cf-link-rows" data-cf-links="${f.id}">${rows.map((item,i)=>cfLinkRowHtml(item, i===rows.length-1)).join('')}</ul>${pubBox}</div>`;
+    return `<div class="cf-row" data-cf-editor="${f.id}"><label>${esc(f.name)}</label><div class="cf-link-rows" data-cf-links="${f.id}">${rows.map((item,i)=>cfLinkRowHtml(item, i===rows.length-1)).join('')}</div>${pubBox}</div>`;
   }
   const val = String(raw??'');
   if(f.type==='longtext' || f.type==='bulleted')
