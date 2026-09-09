@@ -314,6 +314,9 @@ tr.locked td{background:#FAFAFC;}
 .modal{position:fixed;inset:0;background:rgba(30,20,60,.45);display:flex;align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;z-index:50;}
 .modal .card{max-width:640px;width:100%;margin:0 auto;min-width:0;}
 .modal .card.wide{max-width:900px;}
+.modal .card.service-form input,
+.modal .card.service-form select,
+.modal .card.service-form textarea{font-size:13px;}
 .sur-box{border:1.5px dashed #D6CCF0;border-radius:10px;padding:8px 10px;margin-bottom:14px;background:#FBF9FF;}
 .sur-item{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:3px 10px;align-items:start;padding:3px 0;font-size:12.5px;line-height:1.35;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink);margin-bottom:0;}
 .sur-item input{width:16px;height:16px;flex:0 0 auto;margin-top:1px;accent-color:var(--violet);}
@@ -3420,7 +3423,7 @@ function openServiceForm(clientId, contractId, svcId){
       ${s?`<button type="button" class="btn danger" onclick="deleteService('${clientId}','${svcId}')">Удалить</button>`:''}
       <button type="button" class="btn" onclick="saveService('${clientId}',${svcId?"'"+svcId+"'":'null'})">Сохранить</button>
     </div>
-  `);
+  `, false, 'service-form');
   window.__ctx = { 
     clientId, 
     contractId: effectiveContractId, 
