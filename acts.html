@@ -2591,7 +2591,7 @@ function onHashChange(){
 }
 function openClientInTab(id, ev){
   if(ev){ ev.preventDefault(); ev.stopPropagation(); }
-  window.open(location.pathname + location.search + '#client/' + encodeURIComponent(id), '_blank');
+  setView('client', id);
 }
 function bindClientNameEdit(){
   const title = document.getElementById('cName');
@@ -4420,7 +4420,7 @@ function renderAll(){
     return `
     <div class="svc-row all-row ${s.locked?'locked':''}">
       <div class="c-num">${i+1}</div>
-      <div class="c-client"><a href="#client/${c.id}" target="_blank" rel="noopener">${esc(c.name)}</a></div>
+      <div class="c-client"><a href="#client/${c.id}">${esc(c.name)}</a></div>
       <div class="c-basis">${basisLabel ? contractLinkHtml(ct) : '<span class="pill no">нет</span>'}</div>
       <div class="c-date">${fmtDate(s.date)||'<span class="pill no">нет</span>'}</div>
       <div class="c-code">${fmtSvcCode(s)}</div>
