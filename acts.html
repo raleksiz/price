@@ -762,6 +762,9 @@ details[open] summary::before{content:"▾ ";}
 .fields-order{white-space:nowrap;width:1%;}
 .fields-move{padding:2px 6px;line-height:1;}
 .fields-move:disabled{opacity:.35;cursor:default;}
+.fields-actions{white-space:nowrap;width:1%;}
+.fields-actions-inner{display:flex;flex-wrap:nowrap;gap:4px;align-items:center;}
+.fields-actions .icon-btn{padding:2px 5px;font-size:13px;line-height:1;flex-shrink:0;}
 tr.fields-drag-over td{background:var(--soft);}
 .fields-add-action{display:flex;align-items:stretch;}
 .client-title{margin:0 0 0 6px;}
@@ -5097,7 +5100,7 @@ function renderFields(){
     <button type="button" class="icon-btn fields-move" onclick="moveCustomField('${f.id}',-1)" ${i===0?'disabled':''} title="Выше">↑</button>
     <button type="button" class="icon-btn fields-move" onclick="moveCustomField('${f.id}',1)" ${i===last?'disabled':''} title="Ниже">↓</button></td>
     <td>${esc(f.name)}</td><td>${esc(CUSTOM_FIELD_TYPES[f.type]||f.type)}</td>
-    <td><button type="button" class="icon-btn" onclick="openFieldForm('${f.id}')">Изменить</button> <button type="button" class="icon-btn" onclick="delField('${f.id}')">Удалить</button></td></tr>`).join('')}
+    <td class="fields-actions"><span class="fields-actions-inner"><button type="button" class="icon-btn" onclick="openFieldForm('${f.id}')" title="Изменить" aria-label="Изменить">✏️</button><button type="button" class="icon-btn" onclick="delField('${f.id}')" title="Удалить" aria-label="Удалить">🗑</button></span></td></tr>`).join('')}
     </tbody></table></div>`;
 }
 function openFieldForm(id){
