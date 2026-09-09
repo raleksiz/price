@@ -743,7 +743,7 @@ details[open] summary::before{content:"▾ ";}
   box-sizing:border-box;
   font-size:13px;
 }
-.fields-add-row select{width:auto;min-width:14em;}
+.fields-add-row select{width:auto;min-width:11em;}
 .fields-add-action .btn{
   width:44px;
   min-width:44px;
@@ -1240,7 +1240,7 @@ tr.fields-drag-over td{background:var(--soft);}
         <div><label>Тип</label>
           <select id="newFieldType">
             <option value="text">Текст</option><option value="longtext">Длинный текст</option>
-            <option value="number">Число</option><option value="date">Дата</option><option value="bulleted">Маркированный список</option>
+            <option value="number">Число</option><option value="date">Дата</option><option value="bulleted">Список</option>
             <option value="link">Ссылка</option>
           </select></div>
         <div class="fields-add-action"><button type="button" class="btn" onclick="addCustomField()" title="Добавить" aria-label="Добавить">+</button></div>
@@ -4798,7 +4798,7 @@ function toggleSent(){
 }
 
 /* ====================== ДОПОЛНИТЕЛЬНЫЕ ГРАФЫ ====================== */
-const CUSTOM_FIELD_TYPES = {text:'текст',longtext:'длинный текст',number:'число',date:'дата',bulleted:'маркированный список',link:'ссылка'};
+const CUSTOM_FIELD_TYPES = {text:'текст',longtext:'длинный текст',number:'число',date:'дата',bulleted:'список',link:'ссылка'};
 function fieldTypeOptions(selected){
   return Object.keys(CUSTOM_FIELD_TYPES).map(k=>`<option value="${k}" ${k===selected?'selected':''}>${CUSTOM_FIELD_TYPES[k]}</option>`).join('');
 }
