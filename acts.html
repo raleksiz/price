@@ -353,9 +353,6 @@ tr.locked td{background:#FAFAFC;}
 .cf-link-action svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
 @media (max-width:720px){
   .cf-picker-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
-  .cf-link-row{grid-template-columns:minmax(0,1fr) 16px;gap:6px;}
-  .cf-link-row .field:first-child{grid-column:1 / -1;}
-  .cf-link-name{width:100%;}
 }
 .offer-cats{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px;}
 .offer-cats summary{font-size:12px;padding:2px 0;}
@@ -741,18 +738,21 @@ details[open] summary::before{content:"▾ ";}
 }
 .fields-add-row > *{flex:none;min-width:0;}
 .fields-add-row input,
-.fields-add-row select,
-.fields-add-action .btn{
+.fields-add-row select{
   height:44px;
   box-sizing:border-box;
+  font-size:13px;
 }
 .fields-add-row select{width:auto;min-width:14em;}
 .fields-add-action .btn{
-  width:auto;
-  padding:0 16px;
+  width:44px;
+  min-width:44px;
+  height:44px;
+  padding:0;
   border-radius:10px;
-  font-size:14px;
-  white-space:nowrap;
+  font-size:22px;
+  font-weight:700;
+  line-height:1;
 }
 .fields-handle{cursor:grab;color:#999;padding:0 4px;user-select:none;letter-spacing:-1px;font-size:14px;line-height:1;}
 .fields-handle:active{cursor:grabbing;}
@@ -1243,7 +1243,7 @@ tr.fields-drag-over td{background:var(--soft);}
             <option value="number">Число</option><option value="date">Дата</option><option value="bulleted">Маркированный список</option>
             <option value="link">Ссылка</option>
           </select></div>
-        <div class="fields-add-action"><button type="button" class="btn sm" onclick="addCustomField()">Добавить</button></div>
+        <div class="fields-add-action"><button type="button" class="btn" onclick="addCustomField()" title="Добавить" aria-label="Добавить">+</button></div>
       </div>
       <div id="fieldsList"></div>
     </div>
