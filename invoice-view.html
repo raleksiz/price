@@ -6,7 +6,7 @@
   <title>Счёт на оплату</title>
   <link rel="icon" type="image/png" sizes="32x32" href="acts_offer-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="acts_offer-180.png">
-  <script src="invoice.js?v=invoice-pdf-20260907c"></script>
+  <script src="invoice.js?v=invoice-unit-20260910a"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
@@ -70,7 +70,7 @@
     .invoice-items th,.invoice-items td{padding:9px 8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:left}
     .invoice-items th:nth-child(1){width:5%}.invoice-items th:nth-child(2){width:34%}.invoice-items th:nth-child(3){width:9%}.invoice-items th:nth-child(4){width:7%}.invoice-items th:nth-child(5){width:18%}.invoice-items th:nth-child(6){width:6%}.invoice-items th:nth-child(7){width:21%}
     .invoice-items th:not(:nth-child(2)),.invoice-items td:not(:nth-child(2)){text-align:center}
-    .invoice-items th:nth-child(3),.invoice-items th:nth-child(5),.invoice-items th:nth-child(7){white-space:nowrap;letter-spacing:0}
+    .invoice-items th:nth-child(3),.invoice-items th:nth-child(4),.invoice-items th:nth-child(5),.invoice-items th:nth-child(7),.invoice-items td:nth-child(4){white-space:nowrap;letter-spacing:0}
     .invoice-items .invoice-money{white-space:nowrap;font-variant-numeric:tabular-nums;line-height:1.15;overflow:hidden}
     .invoice-items th:last-child,.invoice-items td:last-child{border-right:0;text-align:right}
     .invoice-items tfoot td{border-bottom:0;font-weight:800;background:#fbf9fe}
@@ -86,7 +86,7 @@
       .invoice-party-qr-area .invoice-parties>div{min-width:0;padding:7px 9px}
       .invoice-qr-mobile{grid-column:2;grid-row:1;display:flex;width:100%;min-width:0;align-items:center;justify-content:center;padding:5px}
       .invoice-party-qr-area .invoice-qr-mobile canvas,.invoice-party-qr-area .invoice-qr-mobile img{display:block;width:100%!important;max-width:100%;height:auto!important}
-      .invoice-items{font-size:9px}.invoice-items th,.invoice-items td{padding:6px 2px}.invoice-items th:nth-child(1){width:6%}.invoice-items th:nth-child(2){width:31%}.invoice-items th:nth-child(3){width:11%;white-space:nowrap}.invoice-items th:nth-child(4){width:7%}.invoice-items th:nth-child(5){width:17%}.invoice-items th:nth-child(6){width:6%}.invoice-items th:nth-child(7){width:22%}.invoice-items .invoice-money{white-space:nowrap}
+      .invoice-items{font-size:9px}.invoice-items th,.invoice-items td{padding:6px 2px}.invoice-items th:nth-child(1){width:6%}.invoice-items th:nth-child(2){width:29%}.invoice-items th:nth-child(3){width:11%;white-space:nowrap}.invoice-items th:nth-child(4){width:9%;white-space:nowrap}.invoice-items th:nth-child(5){width:17%}.invoice-items th:nth-child(6){width:6%}.invoice-items th:nth-child(7){width:22%}.invoice-items .invoice-money{white-space:nowrap}
     }
     @media print{
       @page{size:A4;margin:12mm}

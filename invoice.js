@@ -48,6 +48,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 
   function documentHtml(d) {
     const payerInn = d.payerInn ? esc(d.payerInn) : '—';
+    const unit = d.unit === 'мес.' ? 'мес.' : 'усл.';
     return `<article class="invoice-sheet">
       <header class="invoice-head">
         <img class="invoice-logo" src="brand-logo.png" alt="RALEKSIZ HOUSE">
@@ -60,7 +61,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
         <div><span>ИНН</span><b>${RECIPIENT.inn}</b></div><div><span>р/с</span><b>${RECIPIENT.account}</b></div>
       </div><div class="invoice-qr invoice-qr-desktop" data-qr="${esc(paymentString(d))}"></div></section>
       <div class="invoice-party-qr-area"><section class="invoice-parties"><div><span>Плательщик</span><b>${esc(d.payer)}</b><small>ИНН ${payerInn}</small></div><div><span>Основание</span><b>${esc(d.basis)}</b></div></section><div class="invoice-qr invoice-qr-mobile" data-qr="${esc(paymentString(d))}"></div></div>
-      <table class="invoice-items"><thead><tr><th>№</th><th>Наименование услуг</th><th>Кол‑во</th><th>Ед.</th><th>Цена, ₽</th><th>НДС</th><th>Сумма, ₽</th></tr></thead><tbody><tr><td>1</td><td>Юридические услуги по ${esc(serviceBasis(d.basis))}</td><td>1</td><td>усл.</td><td class="invoice-money">${amountText(d.amount)}</td><td>—</td><td class="invoice-money">${amountText(d.amount)}</td></tr></tbody><tfoot><tr><td colspan="6">Итого к оплате</td><td class="invoice-money">${amountText(d.amount)}</td></tr></tfoot></table>
+      <table class="invoice-items"><thead><tr><th>№</th><th>Наименование услуг</th><th>Кол‑во</th><th>Ед.</th><th>Цена, ₽</th><th>НДС</th><th>Сумма, ₽</th></tr></thead><tbody><tr><td>1</td><td>Юридические услуги по ${esc(serviceBasis(d.basis))}</td><td>1</td><td>${unit}</td><td class="invoice-money">${amountText(d.amount)}</td><td>—</td><td class="invoice-money">${amountText(d.amount)}</td></tr></tbody><tfoot><tr><td colspan="6">Итого к оплате</td><td class="invoice-money">${amountText(d.amount)}</td></tr></tfoot></table>
       <div class="invoice-purpose"><span>Назначение платежа</span><b>${esc(d.purpose)}</b></div>
       <div class="invoice-sign">
         <div class="invoice-sign-line"><img class="invoice-sign-img" src="${PDF_SIGN_DATA}" alt="Подпись"></div>

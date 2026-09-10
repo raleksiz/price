@@ -1340,7 +1340,7 @@ tr.fields-drag-over td{background:var(--soft);}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="crm-core.js"></script>
 <script src="calculator.js"></script>
-<script src="invoice.js"></script>
+<script src="invoice.js?v=invoice-unit-20260910a"></script>
 <script>
 /* ====================== КОНСТАНТЫ ====================== */
 const PWD_HASH   = 'a8bf963cb177fcca6256c8c3bba7bcc9888f77eb0315ecd56895d957cb06974b';
@@ -5693,7 +5693,8 @@ async function saveInvoice(){
   if(!number || !date || !payer || !purpose || !(amount>0)){ err.textContent='Заполни номер, дату, сумму, плательщика и назначение платежа.'; return; }
   const invoiceNumber=Number(number);
   if(!Number.isSafeInteger(invoiceNumber) || invoiceNumber<1){ err.textContent='Номер счёта должен быть положительным целым числом.'; return; }
-  const invoice={id:uid(),number,date,amount,payer,payerInn,purpose,basis:invoiceBasisNominative(ct),createdAt:new Date().toISOString()};
+  const unit=ct.status==='Абонемент'?'мес.':'усл.';
+  const invoice={id:uid(),number,date,amount,payer,payerInn,purpose,basis:invoiceBasisNominative(ct),unit,createdAt:new Date().toISOString()};
   const key=invoiceWriteKey();
   if(!key){err.textContent='Для создания счёта нужен секретный ключ Cloudflare.';return;}
   let published;
