@@ -1492,11 +1492,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
         <button type="button" class="cal-icon-btn" id="calMobileArchiveButton" onclick="calendarToggleArchive()" aria-label="Архив"><svg class="cal-icon"><use href="#cal-i-archive"/></svg></button>
       </header>
       <header class="cal-app-header">
-        <div class="cal-brand">
-          <div class="cal-brand-mark"><img src="crm-32.png" alt=""></div>
-          <div class="cal-brand-copy"><strong>Календарь</strong><span>Рабочие задачи и события</span></div>
-        </div>
-        <div class="cal-toolbar">
+          <div class="cal-toolbar">
           <button type="button" class="cal-tool-button" onclick="calendarGoToday()" title="Перейти к текущей дате"><svg class="cal-icon"><use href="#cal-i-calendar"/></svg>Сегодня</button>
           <label class="cal-sr-only" for="calJumpDate">Перейти к дате</label>
           <div class="cal-jump-wrap"><input id="calJumpDate" class="cal-jump-field calendar-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" title="Перейти к дате"><button type="button" onclick="calendarJumpToDate()" aria-label="Перейти"><svg class="cal-icon"><use href="#cal-i-arrow"/></svg></button></div>
@@ -1508,7 +1504,6 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
       </header>
 
       <main class="cal-workspace">
-        <div class="cal-page-title-row"><h1 id="calDesktopTitle">Календарь</h1><span id="calViewCaption"></span></div>
         <div id="calConnectionError" class="cal-error-banner hidden" role="alert"></div>
         <section class="cal-quick-add" id="calQuickAdd" aria-label="Быстрое добавление записи">
           <div class="cal-quick-scroll">
@@ -6909,8 +6904,8 @@ function customFieldHtmlForPdf(s){
     if(cal.archive){calRenderDesktopArchive(box,list);return;}
     let sections=[];
     const noDate=list.filter(r=>!r.date),overdue=list.filter(r=>r.date&&r.status==='overdue');
-    sections.push(calDesktopSection('nodate','Без даты',noDate,false,'',false,'задачи без точного срока'));
-    sections.push(calDesktopSection('overdue','Просрочено',overdue,false,'overdue',false,'требует внимания'));
+    sections.push(calDesktopSection('nodate','Без даты',noDate,false,'',false,''));
+    sections.push(calDesktopSection('overdue','Просрочено',overdue,false,'overdue',false,''));
     const future=list.filter(r=>r.date&&r.status!=='overdue'),byMonth={};future.forEach(r=>(byMonth[calMonthKey(r.date)]||(byMonth[calMonthKey(r.date)]=[])).push(r));
     const current=calMonthKey(cal.serverDate||todayISO()),next=calMonthKey(calAddDays((current+'-28'),7));
     Object.keys(byMonth).sort().forEach(key=>sections.push(calDesktopSection('month:'+key,calMonthTitle(key),byMonth[key],key!==current&&key!==next,'',true,key===current?'текущий месяц':key===next?'следующий месяц':'')));
