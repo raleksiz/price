@@ -1126,7 +1126,14 @@ html.boot-route-calendar #view-calendar{display:block!important}
 
 .cal-quick-add{background:#fff;border:1px solid var(--cal-line);border-radius:13px;margin-bottom:12px;box-shadow:0 3px 14px rgba(31,25,50,.04);overflow:hidden}
 .cal-quick-scroll{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:thin}
-.cal-quick-main{display:grid;grid-template-columns:100px 220px minmax(190px,.78fr) minmax(300px,1.35fr) 34px 34px 34px;gap:10px;align-items:center;min-width:980px;padding:10px}
+.cal-quick-main{
+  display:grid;
+  grid-template-columns:100px 220px minmax(300px,1fr) 280px 34px 34px 34px;
+  gap:10px;
+  align-items:center;
+  min-width:980px;
+  padding:10px;
+}
 #calendarApp .cal-field,#calendarApp .cal-compact-field{width:100%;border:1px solid var(--cal-line);background:#fff;border-radius:8px;transition:border-color .15s,box-shadow .15s;margin:0;text-transform:none;letter-spacing:0}
 #calendarApp .cal-field:hover,#calendarApp .cal-compact-field:hover{border-color:var(--cal-line-strong)}
 #calendarApp .cal-field:focus,#calendarApp .cal-compact-field:focus{border-color:var(--cal-purple)}
@@ -1134,7 +1141,15 @@ html.boot-route-calendar #view-calendar{display:block!important}
 .cal-time-set{display:grid;grid-template-columns:36px 84px 84px;gap:8px}.cal-time-set input{min-width:0;text-align:center;padding:0 6px!important;font-variant-numeric:tabular-nums}
 .cal-icon-btn{width:34px;height:34px;border:1px solid var(--cal-line);border-radius:9px;display:inline-grid;place-items:center;background:var(--cal-surface);color:#625d6d;padding:0;position:relative}
 .cal-icon-btn:hover{border-color:var(--cal-purple-3);color:var(--cal-purple);background:#fbfaff}.cal-icon-btn.active{color:var(--cal-purple);background:var(--cal-purple-2);border-color:var(--cal-purple-3)}
-.cal-all-day-toggle{width:36px;height:36px}#calQuickTitle{height:66px!important}.cal-context-pair{display:grid;grid-template-rows:31px 31px;gap:4px;min-width:0}.cal-context-pair input{height:31px;padding:0 29px 0 9px;font-size:13px;min-width:0}
+.cal-all-day-toggle{width:36px;height:36px}#calQuickTitle{
+  height:66px!important;
+  padding:8px 10px!important;
+  line-height:1.35;
+  resize:none;
+  overflow-y:auto;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}.cal-context-pair{display:grid;grid-template-rows:31px 31px;gap:4px;min-width:0}.cal-context-pair input{height:31px;padding:0 29px 0 9px;font-size:13px;min-width:0}
 .cal-quick-filter{position:relative;min-width:0}.cal-quick-filter-clear{position:absolute;right:2px;top:2px;width:27px;height:27px;border:0;border-radius:7px;background:transparent;color:var(--cal-muted);display:none;place-items:center;padding:0;font-size:18px;line-height:1}.cal-quick-filter.has-value .cal-quick-filter-clear{display:grid}.cal-quick-filter-clear:hover{background:var(--cal-purple-2);color:var(--cal-purple)}
 .cal-quick-filter-results{position:fixed;z-index:2147483001;max-height:240px;overflow-y:auto;padding:5px;background:#fff;border:1px solid var(--cal-line-strong);border-radius:10px;box-shadow:0 14px 34px rgba(35,27,64,.18)}.cal-quick-filter-results button{display:block;width:100%;min-height:36px;padding:6px 8px;border:0;border-radius:7px;background:transparent;text-align:left}.cal-quick-filter-results button:hover,.cal-quick-filter-results button.active{background:var(--cal-purple-2);color:var(--cal-purple)}.cal-quick-filter-results strong,.cal-quick-filter-results small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cal-quick-filter-results strong{font-size:13px;font-weight:600}.cal-quick-filter-results small{margin-top:2px;color:var(--cal-muted);font-size:11px}.cal-quick-filter-empty{padding:8px;color:var(--cal-muted);font-size:12px}
 #calendarApp input:disabled,.cal-editor-panel input:disabled{opacity:1;cursor:not-allowed;background:#f0eff3!important;color:#777382!important;border-color:#d4d1da!important;box-shadow:inset 0 0 0 1px rgba(91,84,105,.04)}
@@ -1194,6 +1209,15 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
 }
 @media (max-width:900px) and (min-width:721px){
   .cal-brand{min-width:34px}.cal-brand-copy{display:none}.cal-jump-wrap{width:120px;flex-basis:120px}.cal-search-wrap{min-width:120px}.cal-tool-button{padding-inline:8px}
+}
+
+@media (min-width:721px){
+  #calendarApp .cal-fab{
+    display:none!important;
+  }
+}
+
+@media (max-width:720px){
 }
 
 @media (max-width:720px){
@@ -1515,7 +1539,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
                 <input class="cal-compact-field calendar-time-input" id="calQuickEnd" inputmode="text" maxlength="5" autocomplete="off" aria-label="Время окончания" data-timed-placeholder="Окончание" title="Время окончания в формате ЧЧ:ММ" disabled>
                 <input id="calQuickAllDay" type="checkbox" checked hidden onchange="calendarQuickAllDayChanged()">
               </div>
-              <input class="cal-compact-field" id="calQuickTitle" placeholder="Название задачи или события" maxlength="500" aria-label="Название">
+              <textarea class="cal-compact-field" id="calQuickTitle" placeholder="Название задачи или события" maxlength="500" aria-label="Название" rows="3"></textarea>
               <div class="cal-context-pair">
                 <div class="cal-quick-filter" data-quick-filter="client"><input class="cal-field" id="calQuickClient" placeholder="Заказчик — начните вводить" aria-label="Заказчик" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="calendarQuickFilterResults" aria-expanded="false" onfocus="calendarQuickFilterOpen('client')" oninput="calendarQuickFilterInput('client')" onkeydown="calendarQuickFilterKeydown('client',event)"><button type="button" class="cal-quick-filter-clear" onclick="event.stopPropagation();calendarQuickFilterClear('client')" aria-label="Очистить заказчика">×</button></div>
                 <div class="cal-quick-filter" data-quick-filter="contract"><input class="cal-field" id="calQuickContract" placeholder="Договор — начните вводить" aria-label="Договор" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="calendarQuickFilterResults" aria-expanded="false" onfocus="calendarQuickFilterOpen('contract')" oninput="calendarQuickFilterInput('contract')" onkeydown="calendarQuickFilterKeydown('contract',event)"><button type="button" class="cal-quick-filter-clear" onclick="event.stopPropagation();calendarQuickFilterClear('contract')" aria-label="Очистить договор">×</button></div>
