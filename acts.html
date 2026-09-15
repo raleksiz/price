@@ -1501,7 +1501,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
       </header>
       <header class="cal-app-header">
           <div class="cal-toolbar">
-          <button type="button" class="cal-tool-button" onclick="calendarGoToday()" title="Перейти к текущей дате"><svg class="cal-icon"><use href="#cal-i-calendar"/></svg>Сегодня</button>
+          <button type="button" class="cal-tool-button" onclick="calendarGoToday()" title="Перейти к текущей дате"><svg class="cal-icon"><use href="#cal-i-calendar"/></svg><span id="calTodayButtonText"></span></button><use href="#cal-i-calendar"/></svg>Сегодня</button>
           <label class="cal-sr-only" for="calJumpDate">Перейти к дате</label>
           <div class="cal-jump-wrap"><input id="calJumpDate" class="cal-jump-field calendar-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" title="Перейти к дате"><button type="button" onclick="calendarJumpToDate()" aria-label="Перейти"><svg class="cal-icon"><use href="#cal-i-arrow"/></svg></button></div>
           <div class="cal-search-wrap"><svg class="cal-icon"><use href="#cal-i-search"/></svg><input id="calSearch" type="search" placeholder="Поиск по календарю" autocomplete="off" oninput="calendarSetFilter('q',this.value)"><button type="button" class="cal-search-clear" onclick="calendarClearSearch()" aria-label="Очистить поиск"><svg class="cal-icon"><use href="#cal-i-close"/></svg></button></div>
@@ -7140,7 +7140,13 @@ function customFieldHtmlForPdf(s){
   }
 
   window.calendarActivate=function(){calEnsureInit();cal.archive=false;cal.selected.clear();cal.collapsed.clear();cal.expandedMobile.clear();cal.focusId=null;window.calendarRender();calLoadRecords(false);};
-  window.calendarRender=function(){calEnsureInit();calRender();window.calendarEnhanceCustomFields();};
+  window.calendarRender=function(){
+  calEnsureInit();
+  calRender();
+  const todayButtonText=document.getElementById('calTodayButtonText');
+  if(todayButtonText)todayButtonText.textContent=calIsoToRu(cal.serverDate||todayISO());
+  window.calendarEnhanceCustomFields();
+};
   window.calendarReload=function(){calEnsureInit();return calLoadRecords(true);};
   window.calendarToggleArchive=function(){cal.archive=!cal.archive;cal.selected.clear();cal.collapsed.clear();cal.focusId=null;window.calendarRender();};
   window.calendarArchiveFilter=function(mode){cal.filters.completed=mode!=='cancelled';cal.filters.cancelled=mode!=='completed';window.calendarRender();};
