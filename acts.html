@@ -6956,7 +6956,9 @@ function customFieldHtmlForPdf(s){
     const p=calParty(record),overdue=record.status==='overdue';
     const controls=`<div class="cal-mobile-controls"><button type="button" class="cal-mobile-flag${record.urgent?' active':''}" onclick="event.stopPropagation();calendarToggleUrgent('${calEscape(record.id)}')" aria-label="Срочно" aria-pressed="${record.urgent?'true':'false'}">${calIcon('flag')}</button><button type="button" class="cal-mobile-more" onclick="event.stopPropagation();calendarOpenRecordMenu('${calEscape(record.id)}',event)" aria-label="Действия">${calIcon('more')}</button></div>`;
     const since=record.firstMissedDate?Math.max(0,calDayDiff(cal.serverDate||todayISO(),record.firstMissedDate)):0;
-    const badges=(Number(record.moveCount)?'<span class="cal-chip moved">'+calIcon('repeat')+'Перенесено '+record.moveCount+' раза'+(since?' · '+since+' д.':'')+'</span>':'')+calReminderChip(record)+calSyncChip(record);
+    const badges=(Number(record.moveCount)?'<span class="cal-chip moved">'+calIcon('repeat')+'Перенесено '+record.moveCount+' р.'+(since?' · '+since+' д.':'')+'</span>':'')+calReminderChip(record)+calSyncChip(record);
+
+const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" title="Перенесено '+record.moveCount+' раз">'+calIcon('repeat')+record.moveCount+'</span>':'')+calReminderChip(record)+calSyncChip(record);
     if(focus)return `<article class="cal-mobile-card cal-focus-front${cal.selected.has(record.id)?' selected':''}" data-record-id="${calEscape(record.id)}">
       <div class="cal-mobile-actions"><button type="button" class="done" onclick="calendarMobileComplete('${calEscape(record.id)}')">Выполнено</button><button type="button" class="move" onclick="calendarOpenMove('${calEscape(record.id)}')">Перенести</button></div>
       <div class="cal-focus-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)">${controls}<div class="cal-mobile-date"><strong class="${overdue?'overdue':''}">${calEscape(calPrettyDate(record.date))}</strong><span>${calEscape(calTime(record))}</span></div><h3 class="cal-mobile-title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calEscape(p.text||'Без связи с заказчиком')}</div><div class="cal-mobile-meta">${badges}</div></div>
@@ -6967,7 +6969,7 @@ function customFieldHtmlForPdf(s){
       <div class="cal-mobile-actions"><button type="button" class="done" onclick="calendarMobileComplete('${calEscape(record.id)}')">Выполнено</button><button type="button" class="move" onclick="calendarOpenMove('${calEscape(record.id)}')">Перенести</button></div>
       <div class="cal-mobile-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)">
         <div class="cal-mobile-date"><strong class="${overdue?'overdue':''}">${calEscape(dateTitle)}</strong><span class="${overdue?'overdue-text':''}">${calEscape(dayText)}</span><span>${calEscape(calTime(record))}</span></div>
-        <div class="cal-mobile-content">${controls}<h3 class="cal-mobile-title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calEscape(p.text||'Без связи с заказчиком')}</div><div class="cal-mobile-meta">${badges}</div></div>
+        <div class="cal-mobile-content">${controls}<h3 class="cal-mobile-title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calEscape(p.text||'Без связи с заказчиком')}</div><div class="cal-mobile-meta">${compactBadges}</div></div>
       </div></article>`;
   }
   function calMobileArchiveCard(record){
