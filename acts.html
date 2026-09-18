@@ -314,6 +314,7 @@ tr.locked td{background:#FAFAFC;}
 }
 .modal{position:fixed;inset:0;background:rgba(30,20,60,.45);display:flex;align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;z-index:50;}
 .modal .card{max-width:640px;width:100%;margin:0 auto;min-width:0;}
+@media (max-width:720px){.modal{padding-bottom:calc(80px + env(safe-area-inset-bottom));}}
 .modal .card.wide{max-width:900px;}
 .modal .card.service-form input,
 .modal .card.service-form select,
@@ -1081,6 +1082,38 @@ tr.fields-drag-over td{background:var(--soft);}
   .svc-row.all-row.locked .c-edit{background:#FAFAFC;}
 }
 
+/* ===== Мобильные доработки: доп. поля, дата/код, надбавки, заказчики ===== */
+.client-jump{display:none;}
+.client-jump-input{padding:8px 10px;font-size:13px;min-height:34px;border-radius:8px;}
+.client-jump-drop{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:22;max-height:210px;overflow-y:auto;background:#fff;border:1.5px solid var(--line);border-radius:10px;box-shadow:0 10px 26px rgba(80,40,120,.16);}
+.client-jump-item{display:block;width:100%;text-align:left;border:0;background:#fff;padding:9px 10px;font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer;}
+.client-jump-item + .client-jump-item{border-top:1px solid #F0F0F3;}
+.client-jump-item:hover{background:var(--soft);}
+.client-jump-empty{padding:9px 10px;font-size:12px;color:var(--muted);}
+.cf-sel-cal{position:fixed;z-index:120;display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1.5px solid #C4B5FD;border-radius:10px;background:#fff;color:var(--violet);font-family:inherit;font-size:12.5px;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 8px 22px rgba(80,40,120,.22);}
+@media (max-width:720px){
+  /* доп. поле: строка «название + показ», само поле под ней */
+  .cf-row{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:5px;align-items:center;}
+  .cf-row > label:not(.cf-public){grid-column:1;grid-row:1;margin:0;min-width:0;overflow-wrap:anywhere;}
+  .cf-row > .cf-public{grid-column:2;grid-row:1;margin:0;justify-self:end;max-width:58%;text-align:left;}
+  .cf-row > *:not(label){grid-column:1 / -1;}
+  /* дата услуги + код в одной строке */
+  .grid2.svc-date-code-row{grid-template-columns:118px minmax(0,1fr);gap:8px;}
+  /* свёрнутые категории надбавок */
+  .sur-head{cursor:pointer;position:relative;padding-right:20px;}
+  .sur-head::after{content:"";position:absolute;right:4px;top:5px;width:7px;height:7px;border-right:2px solid #8B6FC7;border-bottom:2px solid #8B6FC7;transform:rotate(45deg);transition:transform .2s;}
+  .sur-box.sur-expanded .sur-head::after{transform:rotate(-135deg);}
+  .sur-list{position:relative;}
+  .sur-box:not(.sur-expanded) .sur-list{padding-bottom:12px;}
+  .sur-box:not(.sur-expanded) .sur-list > .sur-entry:nth-child(n+3){display:none;}
+  .sur-box:not(.sur-expanded) .sur-list::after{content:"";position:absolute;left:0;right:0;bottom:0;height:26px;background:linear-gradient(to bottom,rgba(251,249,255,0),#FBF9FF);pointer-events:none;}
+  /* высота сохранённых доп. полей — по содержимому каждого поля */
+  #cfEditors textarea.autogrow{min-height:38px;}
+  /* строка быстрого перехода к заказчику */
+  .clients-toolbar{position:sticky;top:46px;z-index:12;display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:6px;margin:-22px -20px 12px;padding:14px 20px 10px;background:var(--card);border-radius:16px 16px 0 0;}
+  .clients-toolbar #globalTotals{display:none;}
+  .client-jump{display:block;position:relative;min-width:0;}
+}
 </style>
 <style id="calendar-ui-styles">
 html.boot-route-calendar #view-clients{display:none!important}
@@ -1179,13 +1212,14 @@ html.boot-route-calendar #view-calendar{display:block!important}
 .cal-section{border-bottom:1px solid var(--cal-line)}.cal-section:last-child{border-bottom:0}.cal-section-head{width:100%;min-height:42px;border:0;background:#fcfcfe;display:flex;align-items:center;gap:9px;padding:0 12px;font-weight:600;text-align:left;cursor:pointer}.cal-section-head:hover{background:#faf9fd}.cal-section-head>strong{font-size:14px}.cal-section-head>small{color:var(--cal-muted);font-size:12px;font-weight:600;background:transparent;padding:0}.cal-section-head .chev{margin:0;order:-1;transition:transform .16s;display:grid;place-items:center}.cal-section-head .cal-section-meta{margin-left:auto;color:var(--cal-muted);font-size:12px;font-weight:500}.cal-section.collapsed .chev{transform:rotate(-90deg)}.cal-section.collapsed .cal-section-body{display:none}.cal-section[data-cal-section="nodate"]>.cal-section-head{background:#faf9ff}.cal-section[data-cal-section="overdue"]>.cal-section-head{color:var(--cal-red);background:var(--cal-red-soft)}
 .cal-day-separator{min-height:30px;display:flex;align-items:center;gap:10px;padding:0 12px 0 108px;color:#6d6877;font-size:12px;font-weight:600;background:#fdfdfe;border-top:1px solid #efedf3}.cal-day-separator:after{content:"";height:1px;background:var(--cal-line);flex:1}
 .cal-empty{padding:28px 12px;text-align:center;color:var(--cal-muted);font-size:12px}.cal-archive-info{padding:9px 12px;background:var(--cal-surface-2);color:var(--cal-muted);font-size:12px;border-bottom:1px solid var(--cal-line)}
-.cal-bulk-bar{position:sticky;top:59px;z-index:20;display:flex;align-items:center;gap:6px;margin:0 0 8px;padding:8px 10px;border-radius:11px;background:#312b43;color:#fff;box-shadow:0 9px 26px rgba(26,20,44,.22)}.cal-bulk-bar strong{margin-right:8px}.cal-bulk-bar button{border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.08);border-radius:8px;padding:7px 10px;height:auto;font-size:13px}.cal-bulk-bar button:hover{background:rgba(255,255,255,.16)}.cal-bulk-bar button.danger{margin-left:auto;background:rgba(242,89,106,.16)}
+.cal-bulk-bar{position:sticky;top:59px;z-index:20;display:flex;align-items:center;gap:6px;margin:0 0 8px;padding:8px 10px;border-radius:11px;background:#312b43;color:#fff;box-shadow:0 9px 26px rgba(26,20,44,.22)}.cal-bulk-bar strong{margin-right:8px}.cal-bulk-bar .cal-bulk-summary{border:0;background:transparent;display:flex;align-items:center;gap:8px;padding:7px 4px}.cal-bulk-bar button{border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.08);border-radius:8px;padding:7px 10px;height:auto;font-size:13px}.cal-bulk-bar button:hover{background:rgba(255,255,255,.16)}.cal-bulk-bar button.danger{margin-left:auto;background:rgba(242,89,106,.16)}
 
 .cal-overlay{position:fixed;inset:0;z-index:120;background:rgba(31,24,48,.17);opacity:0;pointer-events:none;transition:opacity .18s}.cal-overlay.open{opacity:1;pointer-events:auto}
 .cal-editor-panel{position:absolute;z-index:2;right:14px;top:72px;width:min(470px,39vw);min-width:410px;max-height:calc(100vh - 90px);background:#fff;box-shadow:-16px 0 46px rgba(29,22,51,.18);transform:translateX(calc(100% + 30px));transition:transform .2s ease;display:flex;flex-direction:column;border:1px solid #e5e3eb;border-radius:14px;overflow:hidden}.cal-overlay.open .cal-editor-panel{transform:translateX(0)}
 .cal-editor-head{padding:12px 14px 10px;border-bottom:1px solid #e5e3eb;display:block;min-height:88px}.cal-editor-title-wrap{display:flex;align-items:flex-start;gap:8px}.cal-editor-head h2{display:none;margin:0 auto 0 0;font-size:17px;font-weight:600}.cal-editor-desktop-name{flex:1;min-width:0;min-height:38px;max-height:106px;padding:5px 2px;border:0;background:transparent;resize:none;overflow:hidden;font-size:17px;font-weight:600;line-height:1.35}.cal-editor-x{width:34px;height:34px;flex:0 0 34px;border:0;border-radius:9px;background:transparent;color:#777382;font-size:22px;line-height:1}.cal-editor-x:hover{background:var(--cal-purple-2);color:var(--cal-purple)}.cal-editor-meta{display:flex;align-items:center;gap:6px;margin-top:7px}.cal-editor-meta-spacer{flex:1}.cal-editor-mobile-actions{display:none}.cal-editor-head .btn{min-height:32px;padding:0 10px;border:1px solid #e5e3eb;border-radius:8px;background:#fff;font-size:12px;font-weight:500}.cal-editor-head .cal-editor-save{background:#6946e8;color:#fff;border-color:#6946e8}.cal-editor-name-field{display:none}
 .cal-editor-body{min-height:0;overflow-y:auto;padding:15px 18px 18px;flex:1}.cal-editor-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:9px}.cal-editor-field{grid-column:span 6;min-width:0;margin:0;position:relative}.cal-editor-field.full{grid-column:1/-1}.cal-editor-field.third{grid-column:span 4}.cal-editor-field.quarter{grid-column:span 3}.cal-editor-field label{display:block;color:#777382;font-size:12px;margin:0 0 5px;text-transform:none;letter-spacing:0;font-weight:400}.cal-editor-field input,.cal-editor-field select,.cal-editor-field textarea{width:100%;border:1px solid #e5e3eb;border-radius:9px;padding:9px 10px;background:#fff;font-size:14px;min-height:40px;color:#24222d}.cal-editor-field textarea{resize:none;min-height:78px;overflow:hidden}.cal-editor-field input:focus,.cal-editor-field select:focus,.cal-editor-field textarea:focus{border-color:#6946e8}.cal-editor-all-day{grid-column:span 2;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #e5e3eb;border-radius:9px;padding:8px;font-size:12px;text-transform:none;letter-spacing:0;margin:17px 0 0;color:#555}.cal-editor-all-day input{width:17px;height:17px;accent-color:#6946e8}.cal-editor-history{grid-column:1/-1;background:#fff5da;color:#76501b;border-radius:9px;padding:9px 10px;font-size:12px;line-height:1.4}.cal-editor-error{grid-column:1/-1;background:#fff0f2;color:#a52a23;border-radius:9px;padding:9px 10px;font-size:12px}.cal-reminder-hint{display:block;color:#777382;font-size:11px;margin-top:4px;line-height:1.35}
 .cal-editor-filter-field{z-index:4}.cal-editor-filter-results{position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:30;max-height:210px;overflow-y:auto;padding:5px;background:#fff;border:1px solid var(--cal-line-strong);border-radius:10px;box-shadow:0 14px 34px rgba(35,27,64,.18)}.cal-editor-filter-results button{display:block;width:100%;min-height:38px;padding:7px 9px;border:0;border-radius:7px;background:transparent;text-align:left;color:var(--cal-ink)}.cal-editor-filter-results button:hover,.cal-editor-filter-results button:focus{background:var(--cal-purple-2);color:var(--cal-purple)}.cal-editor-filter-results strong,.cal-editor-filter-results small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cal-editor-filter-results strong{font-size:13px;font-weight:600}.cal-editor-filter-results small{margin-top:2px;color:var(--cal-muted);font-size:11px}.cal-editor-filter-empty{padding:9px;color:var(--cal-muted);font-size:12px}
+.cal-filter-mobile-only{display:none!important}.cal-filter-combo-control{position:relative;display:block}.cal-filter-combo-control input{width:100%;min-width:0;height:34px;border:1px solid #e5e3eb;border-radius:8px;padding:0 7px;background:#fff;font-size:13px}.cal-filter-drop{position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:40;max-height:212px;overflow-y:auto;padding:5px;background:#fff;border:1px solid var(--cal-line-strong);border-radius:10px;box-shadow:0 14px 34px rgba(35,27,64,.18)}.cal-filter-combo-control.drop-up .cal-filter-drop{top:auto;bottom:calc(100% + 5px)}.cal-filter-drop button{display:block;width:100%;min-height:38px;padding:7px 9px;border:0;border-radius:7px;background:transparent;text-align:left;color:var(--cal-ink)}.cal-filter-drop button:hover,.cal-filter-drop button:focus{background:var(--cal-purple-2);color:var(--cal-purple)}.cal-filter-drop button strong,.cal-filter-drop button small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cal-filter-drop button strong{font-size:13px;font-weight:600}.cal-filter-drop button small{margin-top:2px;color:var(--cal-muted);font-size:11px}.cal-filter-drop-empty{padding:9px;color:var(--cal-muted);font-size:12px}
 .cal-editor-grid.new-record #calendarEditorName,.cal-editor-grid.new-record #calendarEditorDescription{min-height:72px}.cal-column-options{display:grid;gap:7px;margin:10px 0}.cal-column-options label{display:flex;align-items:center;gap:8px;text-transform:none}.cal-column-options input{width:18px;height:18px}.cal-move-summary{display:grid;gap:3px;padding:9px 10px;margin:4px 0 10px;border-radius:9px;background:var(--cal-purple-2)}.cal-move-summary strong{font-size:13px}.cal-move-summary span{font-size:12px;color:var(--cal-muted)}.cal-move-field{display:grid;gap:5px;font-size:12px;color:var(--cal-muted)}.cal-move-field input{height:40px;border:1px solid var(--cal-line);border-radius:9px;padding:0 10px;background:#fff;color:var(--cal-ink)}.cal-move-desktop-grid{display:grid;grid-template-columns:minmax(126px,1.25fr) 92px minmax(92px,.8fr) minmax(92px,.8fr);gap:8px;align-items:end}.cal-move-all-day{height:40px;border:1px solid var(--cal-line);border-radius:9px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:0}.cal-move-all-day input{width:16px;height:16px}.cal-move-all-day .cal-icon{width:17px;height:17px}.cal-move-all-day span{display:none}
 .cal-editor-history details{margin:0}.cal-editor-history summary{cursor:pointer;font-weight:600}.cal-editor-history ul{margin:7px 0 0 18px;padding:0}.cal-editor-history li+li{margin-top:3px}
 #calendarFilterOverlay{background:transparent}.cal-filter-panel{position:absolute;right:12px;top:58px;width:340px;max-width:calc(100vw - 24px);padding:13px;background:#fff;border:1px solid #e5e3eb;border-radius:12px;box-shadow:0 18px 45px rgba(35,27,64,.14)}.cal-filter-panel-head{display:flex;align-items:center;margin-bottom:10px}.cal-filter-panel-head h2{font-size:14px;margin:0 auto 0 0}.cal-filter-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px}.cal-filter-grid label{display:grid;gap:4px;font-size:12px;color:#777382;margin:0;text-transform:none;letter-spacing:0}.cal-filter-grid input,.cal-filter-grid select{width:100%;min-width:0;height:34px;border:1px solid #e5e3eb;border-radius:8px;padding:0 7px;background:#fff;font-size:13px}.cal-filter-search,.cal-filter-jump{display:none!important}.cal-filter-jump-control{position:relative;display:block}.cal-filter-jump-control button{position:absolute;right:2px;top:2px;width:38px;height:38px;border:0;border-radius:9px;background:transparent;color:#6946e8;display:grid;place-items:center}.cal-filter-toggles{grid-column:1/-1;display:flex;gap:7px;flex-wrap:wrap}.cal-filter-toggles button{border:1px solid #e5e3eb;background:#fff;border-radius:8px;padding:7px 9px;font-size:12px;font-weight:500}.cal-filter-toggles button.active{background:#f0ecff;border-color:#d8cdfd;color:#6946e8}
@@ -1232,7 +1266,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   .cal-mobile-header{height:54px;padding:env(safe-area-inset-top) 12px 0 16px;display:flex;align-items:center;gap:8px;background:rgba(244,240,250,.96);border-bottom:1px solid var(--cal-line);position:sticky;top:0;z-index:40;backdrop-filter:blur(12px)}
   .cal-mobile-header h1{margin:0;font-size:17px;line-height:1.1;letter-spacing:-.01em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cal-mobile-header .cal-icon-btn{width:40px;height:40px;padding:0;border:0;border-radius:10px;background:transparent;color:#455b77}.cal-mobile-header .cal-icon-btn:active,.cal-mobile-header .cal-icon-btn.active{background:var(--cal-purple-2);color:var(--cal-purple)}.cal-mobile-header .cal-icon{width:20px;height:20px}
   .cal-filter-count{position:absolute;top:3px;right:2px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--cal-red);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;border:2px solid var(--cal-bg)}
-  .cal-error-banner{margin:8px 10px 0}.cal-loading{padding:32px 10px}.cal-mobile-view{display:block;padding:10px 10px 26px}
+  .cal-error-banner{margin:8px 10px 0}.cal-loading{margin:8px 10px 0;padding:6px 10px;border-radius:9px;background:var(--cal-purple-2);color:var(--cal-purple);font-size:12px;line-height:1.3}.cal-mobile-view{display:block;padding:10px 10px 26px}
   .cal-mobile-section{margin-bottom:20px}.cal-mobile-section.cal-focus-deck{margin-bottom:12px}.cal-mobile-section-head{min-height:36px;display:flex;align-items:center;gap:7px;padding:0 2px;cursor:pointer}.cal-mobile-section-head h2{
   margin:0;
   font-size:15px;
@@ -1295,8 +1329,8 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   .cal-mobile-date{border-right:1px solid var(--cal-line);padding-right:8px;min-width:0;display:flex;flex-direction:column;gap:3px;color:var(--cal-muted);font-size:12px;line-height:1.25}.cal-mobile-date strong{font-size:14px;line-height:1.2;color:var(--cal-ink);margin:0}.cal-mobile-date strong.overdue{color:var(--cal-red)}.cal-mobile-date .overdue-text{color:var(--cal-red);font-weight:700}.cal-mobile-content{min-width:0}.cal-mobile-title{margin:0 72px 4px 0;font-size:14px;line-height:1.3;font-weight:500;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}.cal-mobile-party{color:#5d6d82;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;clear:both}.cal-mobile-meta{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}.cal-mobile-meta .cal-chip{min-height:21px;padding:1px 6px;border:0;border-radius:8px;font-size:12px;font-weight:700;color:#52647a;background:#eef2f6}.cal-mobile-meta .cal-chip .cal-icon{width:15px;height:15px}.cal-mobile-meta .cal-chip.moved{color:var(--cal-amber);background:var(--cal-amber-soft)}.cal-mobile-meta .cal-chip.sync-error{color:var(--cal-red);background:var(--cal-red-soft)}.cal-mobile-controls{position:absolute;right:4px;top:3px;display:flex;z-index:5}.cal-mobile-more,.cal-mobile-flag{position:relative;width:36px;height:36px;border:0;border-radius:9px;background:transparent;color:#455b77;display:grid;place-items:center;padding:0}.cal-mobile-flag.active{color:var(--cal-amber);background:var(--cal-amber-soft)}.cal-mobile-flag.active .cal-icon{fill:none}.cal-mobile-more .cal-icon,.cal-mobile-flag .cal-icon{width:20px;height:20px}
   .cal-mobile-archive-card{touch-action:pan-y}.cal-mobile-archive-card .cal-mobile-surface{border-left-color:#b9c2ce}.cal-mobile-archive-card .cal-mobile-title{margin-top:3px}.cal-mobile-archive-status{padding-right:70px;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cal-mobile-archive-status.completed{color:var(--cal-green)}.cal-mobile-archive-status.cancelled{color:#6f6978}.cal-archive-origin{font-size:10px!important;color:#8a96a5!important}.cal-mobile-restore{position:relative;width:36px;height:36px;border:0;border-radius:9px;background:transparent;color:var(--cal-green);display:grid;place-items:center;padding:0}.cal-mobile-restore .cal-icon{width:19px;height:19px}
   .cal-fab{position:fixed;right:max(15px,calc((100vw - 460px)/2 + 15px));bottom:calc(72px + env(safe-area-inset-bottom));width:50px;height:50px;border-radius:16px;border:0;background:linear-gradient(135deg,var(--cal-purple),#5B21B6);color:#fff;display:grid;place-items:center;box-shadow:0 9px 21px rgba(110,59,140,.30);z-index:44}.cal-fab .cal-icon{width:25px;height:25px}
-  .cal-bulk-desktop-only{display:none!important}.cal-bulk-mobile-only{display:grid!important}.cal-bulk-bar{position:fixed;left:50%;bottom:62px;transform:translateX(-50%);width:min(100%,460px);min-height:55px;margin:0;padding:5px 8px;border-radius:0;background:#233249;color:#fff;z-index:60;display:grid;grid-template-columns:1fr repeat(5,44px);align-items:center;gap:2px;overflow:visible}.cal-bulk-bar.cal-bulk-archive{grid-template-columns:1fr repeat(3,44px)}.cal-bulk-bar strong{margin:0;padding:0 6px;font-size:14px;white-space:nowrap}.cal-bulk-bar button{width:44px;min-width:44px;height:44px;padding:0;border:0;border-radius:9px;background:transparent;color:#fff;display:grid;place-items:center;font-size:0}.cal-bulk-bar button:before{font-size:18px}.cal-bulk-bar button[data-cal-action="complete"]:before{content:"✓"}.cal-bulk-bar button[data-cal-action="urgent"]:before{content:"⚑"}.cal-bulk-bar button[data-cal-action="cancel"]:before{content:"⊘"}.cal-bulk-bar button[data-cal-action="restore"]:before{content:"↶"}.cal-bulk-bar button[data-cal-action="delete"]:before{content:"⌫"}.cal-bulk-bar button[data-cal-action="close"]:before{content:"×"}.cal-bulk-bar button.danger{margin:0;background:transparent;color:#fff}
-  .cal-overlay{background:rgba(19,31,49,.35)}.cal-editor-panel{left:50%;right:auto;top:auto;bottom:0;width:min(100%,460px);min-width:0;max-height:94vh;border:0;border-radius:20px 20px 0 0;box-shadow:0 -16px 48px rgba(20,35,57,.2);transform:translate(-50%,102%)}.cal-overlay.open .cal-editor-panel{transform:translate(-50%,0)}.cal-editor-panel:before{content:"";width:38px;height:4px;border-radius:2px;background:#c5cfdb;margin:7px auto 3px;flex:0 0 auto}.cal-editor-head{min-height:46px;padding:6px 10px 6px 14px;display:flex;align-items:center;gap:8px}.cal-editor-title-wrap{display:block;flex:1;min-width:0}.cal-editor-head h2{display:block;font-size:17px;white-space:nowrap}.cal-editor-desktop-name,.cal-editor-x,.cal-editor-meta{display:none}.cal-editor-mobile-actions{display:flex;gap:5px}.cal-editor-head .btn{min-height:34px;padding:0 8px;font-size:12px}.cal-editor-name-field{display:block}.cal-editor-body{padding:10px 12px 14px;max-height:calc(94vh - 55px)}.cal-editor-grid{gap:8px}.cal-editor-field{grid-column:span 6}.cal-editor-field.third{grid-column:span 4}.cal-editor-field.quarter{grid-column:span 3}.cal-editor-field label{position:absolute;top:5px;left:10px;color:#708096;font-size:11px;line-height:1;z-index:2;pointer-events:none;margin:0}.cal-editor-field input,.cal-editor-field select,.cal-editor-field textarea{border:1px solid #ccd6e2;border-radius:10px;padding:17px 9px 6px;min-height:45px;font-size:14px}.cal-editor-field textarea{min-height:45px;line-height:1.35}.cal-editor-all-day{grid-column:span 2;min-height:45px;border:1px solid #ccd6e2;border-radius:10px;margin:0;padding:0 8px;font-size:0}.cal-editor-all-day .cal-icon{width:18px;height:18px}.cal-editor-history{border-radius:10px;font-size:13px}.cal-editor-error{border-radius:10px;font-size:13px}
+  .cal-bulk-desktop-only{display:none!important}.cal-bulk-mobile-only{display:grid!important}.cal-bulk-bar{position:fixed;left:50%;bottom:62px;transform:translateX(-50%);width:min(100%,460px);min-height:55px;margin:0;padding:5px 8px;border-radius:0;background:#233249;color:#fff;z-index:60;display:grid;grid-template-columns:1fr repeat(4,44px);align-items:center;gap:2px;overflow:visible}.cal-bulk-bar.cal-bulk-archive{grid-template-columns:1fr repeat(2,44px)}.cal-bulk-bar strong{margin:0;padding:0 6px;font-size:14px;white-space:nowrap}.cal-bulk-bar button{width:44px;min-width:44px;height:44px;padding:0;border:0;border-radius:9px;background:transparent;color:#fff;display:grid;place-items:center;font-size:0}.cal-bulk-bar button:before{font-size:18px}.cal-bulk-bar button[data-cal-action="complete"]:before{content:"✓"}.cal-bulk-bar button[data-cal-action="urgent"]:before{content:"⚑"}.cal-bulk-bar button[data-cal-action="cancel"]:before{content:"⊘"}.cal-bulk-bar button[data-cal-action="restore"]:before{content:"↶"}.cal-bulk-bar button[data-cal-action="delete"]:before{content:"⌫"}.cal-bulk-bar button[data-cal-action="close"]:before{content:"×"}.cal-bulk-bar button.danger{margin:0;background:transparent;color:#fff}.cal-bulk-bar .cal-bulk-summary{width:auto;min-width:0;height:44px;padding:0 6px;display:flex;align-items:center;gap:7px;justify-content:flex-start;font-size:14px;text-align:left}.cal-bulk-bar .cal-bulk-summary:before{content:none}.cal-bulk-bar .cal-bulk-summary .cal-icon{width:17px;height:17px;flex:0 0 17px}.cal-bulk-bar .cal-bulk-summary strong{min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cal-overlay{background:rgba(19,31,49,.35)}.cal-editor-panel{left:50%;right:auto;top:auto;bottom:0;width:min(100%,460px);min-width:0;max-height:94vh;border:0;border-radius:20px 20px 0 0;box-shadow:0 -16px 48px rgba(20,35,57,.2);transform:translate(-50%,102%)}.cal-overlay.open .cal-editor-panel{transform:translate(-50%,0)}.cal-editor-panel:before{content:"";width:38px;height:4px;border-radius:2px;background:#c5cfdb;margin:7px auto 3px;flex:0 0 auto}.cal-editor-head{min-height:46px;padding:6px 10px 6px 14px;display:flex;align-items:center;gap:8px}.cal-editor-title-wrap{display:block;flex:1;min-width:0}.cal-editor-head h2{display:block;font-size:17px;white-space:nowrap}.cal-editor-desktop-name,.cal-editor-x,.cal-editor-meta{display:none}.cal-editor-mobile-actions{display:flex;gap:5px}.cal-editor-head .btn{min-height:34px;padding:0 8px;font-size:12px}.cal-editor-name-field{display:block}.cal-editor-body{padding:10px 12px calc(78px + env(safe-area-inset-bottom));max-height:calc(94vh - 55px)}.cal-editor-grid{gap:8px}.cal-editor-field{grid-column:span 6}.cal-editor-field.third{grid-column:span 4}.cal-editor-field.quarter{grid-column:span 3}.cal-editor-field label{position:absolute;top:5px;left:10px;color:#708096;font-size:11px;line-height:1;z-index:2;pointer-events:none;margin:0}.cal-editor-field input,.cal-editor-field select,.cal-editor-field textarea{border:1px solid #ccd6e2;border-radius:10px;padding:17px 9px 6px;min-height:45px;font-size:14px}.cal-editor-field textarea{min-height:45px;line-height:1.35}.cal-editor-all-day{grid-column:span 2;min-height:45px;border:1px solid #ccd6e2;border-radius:10px;margin:0;padding:0 8px;font-size:0}.cal-editor-all-day .cal-icon{width:18px;height:18px}.cal-editor-history{border-radius:10px;font-size:13px}.cal-editor-error{border-radius:10px;font-size:13px}
   #calendarFilterOverlay{background:rgba(19,31,49,.35)}.cal-filter-panel{left:50%;right:auto;top:auto;bottom:0;transform:translate(-50%,102%);width:min(100%,460px);max-width:none;border:0;border-radius:20px 20px 0 0;padding:11px 10px 10px;transition:transform .22s;overflow:visible}.cal-overlay.open .cal-filter-panel{transform:translate(-50%,0)}.cal-filter-panel:before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:#c5cfdb;margin:-4px auto 7px}.cal-filter-panel-head{min-height:38px;margin:0}.cal-filter-panel-head h2{font-size:17px}.cal-filter-grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:7px}.cal-filter-grid label{
   position:relative;
   grid-column:span 6;
@@ -1327,7 +1361,25 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   font-size:14px;
 }.cal-filter-jump-control input{padding-right:38px}.cal-filter-toggles{grid-column:span 4;display:grid;grid-template-columns:1fr 1fr;gap:7px}.cal-filter-toggles button{min-width:0;min-height:43px;border:1px solid #ccd6e2;border-radius:10px;padding:5px;display:grid;place-items:center}.cal-filter-toggles button span{display:none}.cal-filter-toggles button .cal-icon{width:18px;height:18px}.cal-filter-toggles button.active,.cal-archive-statuses button.active{color:var(--cal-purple);border-color:#87a7ce;background:var(--cal-purple-2)}.cal-archive-statuses{grid-column:span 4;display:none;grid-template-columns:1fr 1fr;gap:7px}.cal-archive-statuses button{min-height:43px;border:1px solid #ccd6e2;border-radius:10px;background:#fff;color:#65758a;display:grid;place-items:center}.archive-mode .cal-filter-jump{display:none!important}.archive-mode .cal-archive-statuses{display:grid}
   .cal-filter-panel-head{min-height:0;height:0}.cal-filter-panel-head h2{display:none}.cal-filter-panel-head .cal-more{position:absolute;right:10px;top:-17px;width:34px;height:34px;border-radius:10px;background:#fff;box-shadow:0 4px 13px rgba(20,35,57,.16);z-index:5}
-  .cal-confirm-dialog{width:min(calc(100% - 28px),390px);border-radius:16px;padding:16px}.cal-dialog-actions{grid-template-columns:repeat(3,minmax(0,1fr))}.cal-dialog-actions.two{grid-template-columns:repeat(2,minmax(0,1fr))}.cal-menu{left:50%!important;top:auto!important;bottom:0;width:min(100%,460px);transform:translateX(-50%);border:0;border-radius:20px 20px 0 0;padding:12px 10px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -16px 48px rgba(20,35,57,.2)}.cal-menu button{min-height:48px;padding:0 10px;border-radius:10px;font-weight:600}.cal-menu button+button{border-top:1px solid #E4E5EA;border-radius:0}.cal-toast{bottom:82px;width:min(calc(100% - 24px),436px);min-height:48px;border-radius:12px;background:#233249;display:flex;align-items:center;gap:8px}
+  .cal-confirm-dialog{width:min(calc(100% - 28px),390px);border-radius:16px;padding:16px}.cal-dialog-actions{grid-template-columns:repeat(3,minmax(0,1fr))}.cal-dialog-actions.two{grid-template-columns:repeat(2,minmax(0,1fr))}.cal-menu{max-width:calc(100vw - 16px);padding:6px;border-radius:12px;box-shadow:0 14px 38px rgba(20,35,57,.24)}.cal-menu button{min-height:44px;padding:0 10px;border-radius:10px;font-weight:600}
+  body>.cal-menu.cal-menu-grid{min-width:auto;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(60px,auto);gap:2px}
+  .cal-menu.cal-menu-grid button{width:auto;min-height:58px;padding:6px 6px;display:grid;justify-items:center;align-content:center;gap:4px;border-radius:9px;font-size:10.5px;font-weight:600;line-height:1.1;text-align:center;white-space:nowrap}
+  .cal-menu.cal-menu-grid button .cal-icon{width:19px;height:19px}
+  .cal-select-mark{display:none;position:absolute;left:6px;top:6px;width:22px;height:22px;border-radius:7px;background:#fff;border:1.5px solid #aab7c7;color:transparent;place-items:center;z-index:8}
+  .cal-select-mark .cal-icon{width:14px;height:14px}
+  .cal-mobile-surface{position:relative}
+  body.cal-selection-mode .cal-select-mark{display:grid}
+  body.cal-selection-mode .cal-mobile-card>.cal-mobile-surface{padding-left:30px}
+  body.cal-selection-mode .cal-focus-front .cal-focus-surface{padding-left:34px}
+  body.cal-selection-mode .cal-mobile-card.selected>.cal-mobile-surface>.cal-select-mark,body.cal-selection-mode .cal-focus-front.selected .cal-focus-surface>.cal-select-mark{background:var(--cal-purple);border-color:var(--cal-purple);color:#fff}
+  .cal-mobile-flag{overflow:hidden;flex:0 0 36px}
+  .cal-focus-front .cal-mobile-date{padding-right:76px;flex-wrap:wrap;row-gap:2px}
+  .cal-focus-front .cal-mobile-date span{white-space:normal;overflow:visible;text-overflow:clip;max-width:100%}
+  .cal-focus-mini strong{white-space:normal;overflow:visible;text-overflow:clip}
+  .cal-mobile-meta .cal-location-mark,.cal-mobile-meta .cal-sync-mark{min-height:21px;padding:0 2px;border:0;background:transparent;display:inline-grid;place-items:center;color:#52647a}
+  .cal-mobile-meta .cal-location-mark .cal-icon,.cal-mobile-meta .cal-sync-mark .cal-icon{width:15px;height:15px}
+  .cal-mobile-meta .cal-sync-mark.sync-pending{color:var(--cal-amber)}
+  .cal-mobile-meta .cal-sync-mark.sync-error{color:var(--cal-red)}.cal-toast{bottom:82px;width:min(calc(100% - 24px),436px);min-height:48px;border-radius:12px;background:#233249;display:flex;align-items:center;gap:8px}
   .cal-confirm-dialog.cal-move-dialog{left:50%;top:auto;bottom:0;transform:translateX(-50%);width:min(100%,460px);border-radius:20px 20px 0 0;padding:16px 12px calc(14px + env(safe-area-inset-bottom))}.cal-move-dialog:before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:#c5cfdb;margin:-8px auto 10px}.cal-move-dialog .cal-dialog-actions{grid-template-columns:repeat(2,1fr)}
   .cal-date-rail{position:fixed;left:50%;bottom:calc(62px + env(safe-area-inset-bottom));transform:translate(-50%,105%);width:min(100%,460px);z-index:170;padding:8px 9px;background:#233249;display:flex;gap:6px;overflow-x:auto;opacity:0;pointer-events:none;transition:.18s}.cal-date-rail.open{transform:translate(-50%,0);opacity:1;pointer-events:auto}.cal-date-option{flex:0 0 auto;min-width:74px;min-height:42px;border:1px solid rgba(255,255,255,.22);border-radius:10px;background:#31435d;color:#fff;padding:5px 9px;font-size:12px;font-weight:600}.cal-date-option.cancel{background:#654052}.cal-date-option.target{background:#6E3B8C;border-color:#d9c3ee;transform:translateY(-3px)}
 }
@@ -1344,6 +1396,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
 .cal-editor-link.approved{background:var(--cal-green-soft);color:var(--cal-green)}
 .cal-editor-link button{flex:0 0 auto;border:1px solid var(--cal-purple-3);border-radius:8px;background:#fff;color:var(--cal-purple);padding:6px 8px;font-size:12px;font-weight:600}
 .cal-editor-error.pending{background:var(--cal-amber-soft);color:#76501b}
+@media (max-width:720px){.cal-filter-desktop-only{display:none!important}.cal-filter-mobile-only{display:grid!important}}
 .cal-sync-mark{vertical-align:middle;margin-left:2px}.cal-sync-mark.sync-pending{color:var(--cal-amber)}.cal-sync-mark.sync-error{color:var(--cal-red)}
 .cal-chip.sync-pending,.cal-chip.sync-error{width:24px;height:21px;padding:1px 4px;justify-content:center}
 .cal-chip.sync-pending{color:var(--cal-amber);border-color:#ecd59f;background:var(--cal-amber-soft);cursor:pointer}
@@ -1440,6 +1493,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
     <symbol id="cal-i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
     <symbol id="cal-i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
     <symbol id="cal-i-sync" viewBox="0 0 24 24"><path d="M20 7h-5V2M4 17h5v5M19 12a7 7 0 0 0-12-5l-3 3M5 12a7 7 0 0 0 12 5l3-3"/></symbol>
+    <symbol id="cal-i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 5H6a2 2 0 0 0-2 2v9"/></symbol>
   </svg>
   <nav class="mobile-crm-nav" aria-label="Разделы CRM">
     <button type="button" class="mobile-crm-nav-btn active" data-view="clients" onclick="calendarNavigate('clients')" aria-label="Заказчики"><svg class="cal-icon"><use href="#cal-i-user"/></svg><span>Заказчики</span></button>
@@ -1504,6 +1558,10 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
       <div class="clients-toolbar">
         <h2 class="clients-page-title">Заказчики</h2>
         <div id="globalTotals"></div>
+        <div class="client-jump" id="clientJump">
+          <input type="text" id="clientJumpInput" class="client-jump-input" placeholder="Быстрый переход к заказчику" autocomplete="off" oninput="onClientJumpInput()" onfocus="onClientJumpInput()">
+          <div class="client-jump-drop hidden" id="clientJumpDrop"></div>
+        </div>
         <button type="button" class="icon-btn-toggle" id="showHiddenBtn" onclick="toggleShowHiddenClients()" title="Показывать скрытых" aria-label="Показывать скрытых" aria-pressed="false"><span aria-hidden="true">👁</span></button>
         <button type="button" class="btn sm clients-add-btn" onclick="openClientForm(null)">+ Заказчик</button>
       </div>
@@ -3125,7 +3183,7 @@ function renderClients(){
   } else {
     box.innerHTML = list.map(c=>{
       const t = clientAllTotals(c);
-      return `<div class="cl-card ${c.pinned?'pinned':''} ${c.hidden?'hiddenc':''}" onclick="openClientInTab('${c.id}', event)">
+      return `<div class="cl-card ${c.pinned?'pinned':''} ${c.hidden?'hiddenc':''}" id="clientCard-${c.id}" onclick="openClientInTab('${c.id}', event)">
         <div class="cl-body"><div class="cl-name">${esc(c.name)||'Без наименования'}</div></div>
         <div class="cl-bar" onclick="event.stopPropagation()">
           <span class="cl-amt ${t.debt?'bad':'ok'}">${money(t.debt)}</span>
@@ -3142,6 +3200,42 @@ function renderClients(){
   document.getElementById('globalTotals').innerHTML =
     `<span class="client-debt-chip" title="Предстоящие оплаты"><b style="color:${debt?'#dc2626':'#16a34a'}">${money(debt)}</b></span>`;
 }
+function clientJumpSuggestions(query){
+  const needle = String(query||'').trim().toLowerCase();
+  if(!needle) return [];
+  return sortedClients()
+    .filter(c=>!c.hidden && String(c.name||'').toLowerCase().includes(needle))
+    .slice(0, 8);
+}
+function closeClientJump(){
+  const drop = document.getElementById('clientJumpDrop');
+  if(!drop) return;
+  drop.innerHTML = '';
+  drop.classList.add('hidden');
+}
+function onClientJumpInput(){
+  const input = document.getElementById('clientJumpInput');
+  const drop = document.getElementById('clientJumpDrop');
+  if(!input || !drop) return;
+  if(!String(input.value||'').trim()){ closeClientJump(); return; }
+  const list = clientJumpSuggestions(input.value);
+  drop.innerHTML = list.length
+    ? list.map(c=>`<button type="button" class="client-jump-item" onclick="clientJumpGo('${c.id}')">${esc(c.name)||'Без наименования'}</button>`).join('')
+    : '<div class="client-jump-empty">Ничего не найдено</div>';
+  drop.classList.remove('hidden');
+}
+function clientJumpGo(id){
+  const input = document.getElementById('clientJumpInput');
+  if(input){ input.value = ''; input.blur(); }
+  closeClientJump();
+  const card = document.getElementById('clientCard-'+id);
+  if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+}
+document.addEventListener('pointerdown', event=>{
+  const target = event.target;
+  if(target && target.closest && target.closest('#clientJump')) return;
+  closeClientJump();
+}, true);
 function toggleShowHiddenClients(){
   showHiddenClients = !showHiddenClients;
   renderClients();
@@ -3808,8 +3902,8 @@ function openServiceForm(clientId, contractId, svcId){
 
   openModal(`
     <h1>${s?'Услуга':'Новая услуга'} · ${esc(c.name)}</h1>
-    <div class="grid2">
-      <div class="field"><label>Дата оказания услуги</label><input type="text" id="svcDate" class="crm-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" value="${esc(crmDateDisplay(cur.date||''))}" onchange="onSvcDateChange()"></div>
+    <div class="grid2 svc-date-code-row">
+      <div class="field"><label>Дата услуги</label><input type="text" id="svcDate" class="crm-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" value="${esc(crmDateDisplay(cur.date||''))}" onchange="onSvcDateChange()"></div>
       <div class="field"><label>Код услуги</label><select id="svcCode" onchange="onCodeChange()">${codeOpts}</select></div>
     </div>
     ${s && s.legacyCatalogCode ? `<div class="muted" style="margin:-2px 0 10px">Архивная позиция сохранена с прежней стоимостью; для нового расчёта выберите актуальный код услуги.</div>` : ''}
@@ -3876,6 +3970,7 @@ function openServiceForm(clientId, contractId, svcId){
     if(customFieldHasStoredValue(f, raw)) renderCfEditor(f, v, pub, customFieldCalendarText(raw));
   });
   document.querySelectorAll('#modalRoot textarea.autogrow').forEach(autoGrowTextarea);
+  requestAnimationFrame(()=>document.querySelectorAll('#modalRoot textarea.autogrow').forEach(autoGrowTextarea));
 }
 function autoGrowTextarea(el){
   if(!el) return;
@@ -4096,9 +4191,11 @@ function renderSurcharges(){
   if(!list.length){ box.innerHTML=''; return; }
   const selected = new Set((window.__ctx.surSel || []).map(i => Number(i)));
   const display = catSurchargesForDisplay(item.cat, item.code);
-  box.innerHTML = `<div class="sur-box"><h3 style="margin-bottom:4px">${esc((DB.catShort&&DB.catShort[item.cat])||item.cat)}</h3>
-    <div class="muted" style="margin-bottom:4px">Отметь применимые корректировки. Количественные надбавки указываются счётчиком, фактические расходы — одной суммой.</div>
-    ${display.map(({item:x, index:i})=>{
+  const catKey = String(item.cat==null ? '' : item.cat);
+  const catExpanded = !!(window.__ctx && window.__ctx.surExpanded && window.__ctx.surExpanded[catKey]);
+  box.innerHTML = `<div class="sur-box${catExpanded?' sur-expanded':''}" data-sur-cat="${esc(catKey)}"><div class="sur-head" role="button" tabindex="0" aria-expanded="${catExpanded?'true':'false'}" onclick="toggleSurCategory(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSurCategory(this);}"><h3 style="margin-bottom:4px">${esc((DB.catShort&&DB.catShort[item.cat])||item.cat)}</h3>
+    <div class="muted" style="margin-bottom:4px">Отметь применимые корректировки. Количественные надбавки указываются счётчиком, фактические расходы — одной суммой.</div></div>
+    <div class="sur-list">${display.map(({item:x, index:i})=>{
       const actualExpenses = isActualExpenseSurcharge(x);
       const requiredIndex = actualExpenses ? surchargeRequiredIndex(list, x) : -1;
       const requiredMissing = requiredIndex >= 0 && !selected.has(requiredIndex);
@@ -4112,7 +4209,7 @@ function renderSurcharges(){
         ? `<div class="muted" style="margin:-1px 0 5px 25px">Сначала отметь «${esc(x.requiresSurcharge)}».</div>`
         : '';
       const claimCredit = /зач[её]т при заказе претензии/i.test(String(x.name||''));
-      return `<div>
+      return `<div class="sur-entry">
         <label class="sur-item${claimCredit?' sur-item-claim-credit':''}">
           <input type="checkbox" class="sur-cb" value="${i}" ${checked?'checked':''} ${requiredMissing?'disabled':''} onchange="onSurChange()">
           <span>${esc(x.name)}${x.type==='manual'&&!claimCredit?' <span class="muted">(вручную)</span>':''}</span>
@@ -4133,8 +4230,19 @@ function renderSurcharges(){
           ${showExtra && !claimCredit?`<input type="number" min="0" step="1" class="sur-extra-amount" data-sur-extra="${i}" value="${Number(m.extraAmount)||0}" placeholder="Факт. расходы, ₽" oninput="onSurMetaChange()">`: ''}`}
         </div>` : ''}
       </div>`;
-    }).join('')}</div>`;
+    }).join('')}</div></div>`;
   box.querySelectorAll('textarea.autogrow').forEach(autoGrowTextarea);
+}
+function toggleSurCategory(el){
+  const box = el && el.closest ? el.closest('.sur-box') : null;
+  if(!box) return;
+  const cat = box.getAttribute('data-sur-cat') || '';
+  window.__ctx = window.__ctx || {};
+  const map = window.__ctx.surExpanded = window.__ctx.surExpanded || {};
+  map[cat] = !map[cat];
+  box.classList.toggle('sur-expanded', !!map[cat]);
+  const head = box.querySelector('.sur-head');
+  if(head) head.setAttribute('aria-expanded', map[cat] ? 'true' : 'false');
 }
 function refreshSurchargeAmtLabels(){
   const item = priceItem(document.getElementById('svcCode')?.value);
@@ -4243,6 +4351,13 @@ function onSurChange(){
   recalc();
 }
 function onManualPrice(){ window.__ctx.manual = true; recalc(true); }
+function surchargeUnitAmount(a){
+  const count = Number(a && a.count) || 0;
+  const total = Number(a && a.amount) || 0;
+  if(!(count > 1)) return total;
+  const extra = Number(a && a.extraAmount) || 0;
+  return Math.round((total - extra) / count);
+}
 function recalc(keepPrice){
   syncSurMetaFromDom();
   const ct = ctxContract();
@@ -4282,8 +4397,12 @@ function recalc(keepPrice){
   if(item){
     const parts = [`база ${money(r.base)}`];
     withExecutorApplied(r.applied, exec).forEach(a=>{
-      const suffix = !a.actualExpenses && a.count > 1 ? ' × ' + Number(a.count) : '';
-      parts.push(esc(a.name) + ' (' + money(a.amount) + suffix + ')');
+      const count = Number(a.count) || 0;
+      const extraAmount = Number(a.extraAmount) || 0;
+      const detail = !a.actualExpenses && count > 1
+        ? money(surchargeUnitAmount(a)) + ' × ' + count + (extraAmount ? ' + ' + money(extraAmount) : '') + ' = ' + money(a.amount)
+        : money(a.amount);
+      parts.push(esc(a.name) + ' (' + detail + ')');
     });
     cl.innerHTML = parts.join(' → ') + ' = <b>' + money(shown) + '</b>';
     cl.classList.remove('hidden');
@@ -5392,7 +5511,7 @@ function collectCfLinkRows(id){
   })).filter(x=>String(x.name).trim() || String(x.url).trim());
 }
 function cfEditorHtml(f, raw, pub){
-  const pubLabel = f.type==='link' ? 'Показывать заказчику в Акте' : 'Показывать заказчику в акте и PDF';
+  const pubLabel = f.type==='link' ? 'Показывать в Акте' : 'Показывать в акте и PDF';
   const pubBox = `<label class="cf-public"><input type="checkbox" data-cf-public="${f.id}" ${pub?'checked':''}> ${pubLabel}</label>`;
   if(f.type==='link'){
     const links = parseCustomLinks(raw);
@@ -6385,7 +6504,7 @@ function cfCalendarTextEditorHtml(f,calendarText){
   return `<textarea class="autogrow cal-cf-calendar-text${value.trim()?'':' hidden'}" data-cf-calendar="${f.id}" rows="1" oninput="autoGrowTextarea(this)" aria-label="Текст из календаря">${esc(value)}</textarea>`;
 }
 function cfEditorHtml(f,raw,pub,calendarText){
-  const pubLabel=f.type==='link'?'Показывать заказчику в Акте':'Показывать заказчику в акте и PDF';
+  const pubLabel=f.type==='link'?'Показывать в Акте':'Показывать в акте и PDF';
   const pubBox=`<label class="cf-public"><input type="checkbox" data-cf-public="${f.id}" ${pub?'checked':''}> ${pubLabel}</label>`;
   const calendarBox=cfCalendarTextEditorHtml(f,calendarText);
   if(f.type==='link'){
@@ -6484,7 +6603,7 @@ function customFieldHtmlForPdf(s){
     editing:null, editorKey:null, editorBaseline:'', editorSource:null, dialogAction:null,
     focusId:null, toastTimer:null, pendingSync:false, dateDrag:null, suppressClickUntil:0, expandedMobile:new Set(),
     linkApproval:{client:false,contract:false}, linkCandidate:null, customAnchor:null,
-    editorChoices:{client:[],contract:[]}, quickChoices:{client:[],contract:[]}, quickFilterKind:null, quickActiveIndex:0
+    editorChoices:{client:[],contract:[]}, quickChoices:{client:[],contract:[]}, filterChoices:{client:[],contract:[]}, quickFilterKind:null, quickActiveIndex:0
   };
 
   function calUuid(){
@@ -6600,8 +6719,10 @@ function customFieldHtmlForPdf(s){
           <div class="cal-filter-grid">
             <label class="cal-filter-search"><span class="cal-filter-label">Поиск</span><input id="calendarFilterQ" type="search" oninput="calendarSetFilter('q',this.value)"></label>
 <label class="cal-filter-jump"><span class="cal-filter-label">Перейти к дате</span><span class="cal-filter-jump-control"><input id="calendarFilterJump" class="calendar-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ"><button type="button" onclick="calendarFilterJumpToDate()" aria-label="Перейти">${calIcon('arrow')}</button></span></label>
-<label class="cal-filter-client"><span class="cal-filter-label">Заказчик</span><select id="calendarFilterClient" onchange="calendarFilterClientChanged()"></select></label>
-<label class="cal-filter-contract"><span class="cal-filter-label">Договор</span><select id="calendarFilterContract" onchange="calendarFilterContractChanged()"></select></label>
+<label class="cal-filter-client cal-filter-desktop-only"><span class="cal-filter-label">Заказчик</span><select id="calendarFilterClient" onchange="calendarFilterClientChanged()"></select></label>
+<label class="cal-filter-contract cal-filter-desktop-only"><span class="cal-filter-label">Договор</span><select id="calendarFilterContract" onchange="calendarFilterContractChanged()"></select></label>
+<label class="cal-filter-client cal-filter-mobile-only cal-filter-combo"><span class="cal-filter-label">Заказчик</span><span class="cal-filter-combo-control"><input id="calendarFilterClientInput" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="calendarFilterClientResults" autocomplete="off" placeholder="Все / начните вводить" onfocus="calendarFilterComboOpen('client')" oninput="calendarFilterComboInput('client')"><div class="cal-filter-drop hidden" id="calendarFilterClientResults" role="listbox"></div></span></label>
+<label class="cal-filter-contract cal-filter-mobile-only cal-filter-combo"><span class="cal-filter-label">Договор</span><span class="cal-filter-combo-control"><input id="calendarFilterContractInput" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="calendarFilterContractResults" autocomplete="off" placeholder="Все / начните вводить" onfocus="calendarFilterComboOpen('contract')" oninput="calendarFilterComboInput('contract')"><div class="cal-filter-drop hidden" id="calendarFilterContractResults" role="listbox"></div></span></label>
 <label class="cal-filter-from"><span class="cal-filter-label">Период с</span><input id="calendarFilterFrom" class="calendar-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" oninput="calendarSetFilter('from',this.value)"></label>
 <label class="cal-filter-to"><span class="cal-filter-label">по</span><input id="calendarFilterTo" class="calendar-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" oninput="calendarSetFilter('to',this.value)"></label>
             <div class="cal-archive-statuses">
@@ -6631,9 +6752,11 @@ function customFieldHtmlForPdf(s){
     custom.addEventListener('pointerdown',event=>{if(event.target===custom)window.calendarCustomClose();});
     document.addEventListener('pointerdown',event=>{
       const menu=document.getElementById('calendarRecordMenu');
-      if(menu && !menu.classList.contains('hidden') && !menu.contains(event.target) && !event.target.closest('.cal-more')) menu.classList.add('hidden');
+      const menuOpener=event.target.closest('button');
+      if(menu && !menu.classList.contains('hidden') && !menu.contains(event.target) && !/calendarOpen(Record|State)Menu/.test(menuOpener&&menuOpener.getAttribute('onclick')||'')) menu.classList.add('hidden');
       if(!event.target.closest('.cal-editor-filter-field'))calCloseEditorFilters();
       if(!event.target.closest('.cal-quick-filter')&&!event.target.closest('.cal-quick-filter-results'))calCloseQuickFilters();
+      if(!event.target.closest('.cal-filter-combo'))calCloseFilterCombos();
       const dialog=document.getElementById('calendarDialogOverlay');
       if(dialog&&dialog.classList.contains('cal-floating-dialog')&&event.target===dialog)window.calendarDialogClose();
       if(!event.target.closest('.cal-mobile-card'))document.querySelectorAll('.cal-mobile-card').forEach(card=>card.classList.remove('swipe-left','swipe-right'));
@@ -6935,7 +7058,12 @@ function customFieldHtmlForPdf(s){
   function calSyncChip(record){
     if(!record.sync||!['pending','error','disconnected'].includes(record.sync.state))return '';
     const pending=record.sync.state==='pending',code=record.sync.errorCode?' · '+record.sync.errorCode:'',title=pending?'Ожидает синхронизации с Google Calendar':'Ошибка синхронизации'+code;
-    return '<button type="button" class="cal-chip '+(pending?'sync-pending':'sync-error')+'" title="'+calEscape(title)+'" onclick="event.stopPropagation();calendarShowSyncError(\''+calEscape(record.id)+'\')" aria-label="'+calEscape(title)+'">'+calIcon('sync')+'</button>';
+    return '<button type="button" class="cal-sync-mark '+(pending?'sync-pending':'sync-error')+'" title="'+calEscape(title)+'" onclick="event.stopPropagation();calendarShowSyncError(\''+calEscape(record.id)+'\')" aria-label="'+calEscape(title)+'">'+calIcon('sync')+'</button>';
+  }
+  function calLocationMark(record){
+    const place=String(record.location||'').trim();if(!place)return '';
+    const link=/^https?:\/\//i.test(place),tag=link?'a':'span';
+    return '<'+tag+' class="cal-location-mark"'+(link?' href="'+calEscape(place)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"':'')+' title="'+calEscape(place)+'" aria-label="Место или ссылка: '+calEscape(place)+'">'+calIcon('pin')+'</'+tag+'>';
   }
   function calReminderChip(record){
     const count=record.reminders&&record.reminders.length;if(!count)return '';
@@ -7037,18 +7165,18 @@ function customFieldHtmlForPdf(s){
     const p=calParty(record),overdue=record.status==='overdue';
     const controls=`<div class="cal-mobile-controls"><button type="button" class="cal-mobile-flag${record.urgent?' active':''}" onclick="event.stopPropagation();calendarToggleUrgent('${calEscape(record.id)}')" aria-label="Срочно" aria-pressed="${record.urgent?'true':'false'}">${calIcon('flag')}</button><button type="button" class="cal-mobile-more" onclick="event.stopPropagation();calendarOpenRecordMenu('${calEscape(record.id)}',event)" aria-label="Действия">${calIcon('more')}</button></div>`;
     const since=record.firstMissedDate?Math.max(0,calDayDiff(cal.serverDate||todayISO(),record.firstMissedDate)):0;
-    const badges=(Number(record.moveCount)?'<span class="cal-chip moved">'+calIcon('repeat')+'Перенесено '+record.moveCount+' р.'+(since?' · '+since+' д.':'')+'</span>':'')+calReminderChip(record)+calSyncChip(record);
+    const badges=(Number(record.moveCount)?'<span class="cal-chip moved">'+calIcon('repeat')+'Перенесено '+record.moveCount+' р.'+(since?' · '+since+' д.':'')+'</span>':'')+calReminderChip(record)+calSyncChip(record)+calLocationMark(record);
 
-const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" title="Перенесено '+record.moveCount+' раз">'+calIcon('repeat')+record.moveCount+'</span>':'')+calReminderChip(record)+calSyncChip(record);
+const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" title="Перенесено '+record.moveCount+' раз">'+calIcon('repeat')+record.moveCount+'</span>':'')+calReminderChip(record)+calSyncChip(record)+calLocationMark(record);
     if(focus)return `<article class="cal-mobile-card cal-focus-front${cal.selected.has(record.id)?' selected':''}" data-record-id="${calEscape(record.id)}">
       <div class="cal-mobile-actions"><div class="cal-mobile-action-side"><button type="button" class="done" onclick="calendarMobileComplete('${calEscape(record.id)}')">${calIcon('check')}Готово</button></div><div class="cal-mobile-action-side"><button type="button" class="move" onclick="calendarOpenMove('${calEscape(record.id)}')">Перенести</button></div></div>
-      <div class="cal-focus-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)">${controls}<div class="cal-mobile-date"><strong class="${overdue?'overdue':''}">${calEscape(calPrettyDate(record.date))}</strong><span>${calEscape(calTime(record))}</span></div><h3 class="cal-mobile-title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calEscape(p.text||'Без связи с заказчиком')}</div><div class="cal-mobile-meta">${badges}</div></div>
+      <div class="cal-focus-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)">${controls}<span class="cal-select-mark" aria-hidden="true">${calIcon('check')}</span><div class="cal-mobile-date"><strong class="${overdue?'overdue':''}">${calEscape(calPrettyDate(record.date))}</strong><span>${calEscape(calTime(record))}</span></div><h3 class="cal-mobile-title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calEscape(p.text||'Без связи с заказчиком')}</div><div class="cal-mobile-meta">${badges}</div></div>
     </article>`;
     const dateTitle=record.date?calPrettyDate(record.date):'—';
     const dayText=record.date?(overdue?'Просрочено':calDateLong(record.date).split(' · ')[1]||''):'Без даты';
     return `<article class="cal-mobile-card${cal.selected.has(record.id)?' selected':''}" data-record-id="${calEscape(record.id)}">
       <div class="cal-mobile-actions"><div class="cal-mobile-action-side"><button type="button" class="done" onclick="calendarMobileComplete('${calEscape(record.id)}')">${calIcon('check')}Готово</button></div><div class="cal-mobile-action-side"><button type="button" class="move" onclick="calendarOpenMove('${calEscape(record.id)}')">Перенести</button></div></div>
-      <div class="cal-mobile-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)">
+      <div class="cal-mobile-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)"><span class="cal-select-mark" aria-hidden="true">${calIcon('check')}</span>
         <div class="cal-mobile-date"><strong class="${overdue?'overdue':''}">${calEscape(dateTitle)}</strong><span class="${overdue?'overdue-text':''}">${calEscape(dayText)}</span><span>${calEscape(calTime(record))}</span></div>
         <div class="cal-mobile-content">${controls}<h3 class="cal-mobile-title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calEscape(p.text||'Без связи с заказчиком')}</div><div class="cal-mobile-meta">${compactBadges}</div></div>
       </div></article>`;
@@ -7056,7 +7184,7 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
   function calMobileArchiveCard(record){
     const p=calParty(record),action=calMoscowAction(record),completed=record.status==='completed';
     return `<article class="cal-mobile-card cal-mobile-archive-card${cal.selected.has(record.id)?' selected':''}" data-record-id="${calEscape(record.id)}" data-archive-card="true">
-      <div class="cal-mobile-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)">
+      <div class="cal-mobile-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)"><span class="cal-select-mark" aria-hidden="true">${calIcon('check')}</span>
         <div class="cal-mobile-date"><strong>${calEscape(calPrettyDate(record.date))}</strong><span>${calEscape(calTime(record))}</span><span class="cal-archive-origin">исходная дата</span></div>
         <div class="cal-mobile-content"><div class="cal-mobile-controls"><button type="button" class="cal-mobile-restore" onclick="event.stopPropagation();calendarArchiveRestore('${calEscape(record.id)}')" aria-label="Вернуть в работу">${calIcon('repeat')}</button><button type="button" class="cal-mobile-more" onclick="event.stopPropagation();calendarOpenRecordMenu('${calEscape(record.id)}',event)" aria-label="Действия">${calIcon('more')}</button></div><div class="cal-mobile-archive-status ${completed?'completed':'cancelled'}">${completed?'Выполнено':'Отменено'} · ${calEscape(action.date)} · ${calEscape(action.detail.replace(/^\S+\s*/,''))}</div><h3 class="cal-mobile-title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calEscape(p.text||'Без связи с заказчиком')}</div>${Number(record.moveCount)?'<div class="cal-mobile-meta"><span class="cal-chip moved">'+calIcon('repeat')+record.moveCount+'</span></div>':''}</div>
       </div>
@@ -7095,15 +7223,74 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
   }
   function calBulkHtml(){
     if(!cal.selected.size)return '';
-    if(cal.archive)return `<div class="cal-bulk-bar cal-bulk-archive"><strong>Выбрано: ${cal.selected.size}</strong><button type="button" data-cal-action="restore" onclick="calendarBulk('restore')">Восстановить</button><button type="button" data-cal-action="delete" class="danger" onclick="calendarBulk('delete')">Удалить</button><button type="button" data-cal-action="close" onclick="calendarClearSelection()">Закрыть</button></div>`;
-    return `<div class="cal-bulk-bar"><strong>Выбрано: ${cal.selected.size}</strong><button type="button" data-cal-action="complete" onclick="calendarBulk('complete')">Выполнено</button><button type="button" class="cal-bulk-desktop-only" data-cal-action="urgent" onclick="calendarBulk('urgent',true)">Срочно</button><button type="button" class="cal-bulk-desktop-only" data-cal-action="unurgent" onclick="calendarBulk('urgent',false)">Снять срочность</button><button type="button" class="cal-bulk-mobile-only" data-cal-action="urgent" onclick="calendarBulk('urgent')">Срочно</button><button type="button" data-cal-action="cancel" onclick="calendarBulk('cancel')">Отменить</button><button type="button" data-cal-action="delete" class="danger" onclick="calendarBulk('delete')">Удалить</button><button type="button" class="cal-bulk-mobile-only" data-cal-action="close" onclick="calendarClearSelection()">Закрыть</button></div>`;
+    const summary=`<button type="button" class="cal-bulk-summary" data-cal-action="close" onclick="calendarClearSelection()" aria-label="Выйти из режима выделения">${calIcon('close')}<strong>Выбрано: ${cal.selected.size}</strong></button>`;
+    if(cal.archive)return `<div class="cal-bulk-bar cal-bulk-archive">${summary}<button type="button" data-cal-action="restore" onclick="calendarBulk('restore')">Восстановить</button><button type="button" data-cal-action="delete" class="danger" onclick="calendarBulk('delete')">Удалить</button></div>`;
+    return `<div class="cal-bulk-bar">${summary}<button type="button" data-cal-action="complete" aria-label="Выполнить" onclick="calendarBulk('complete')">Выполнено</button><button type="button" class="cal-bulk-desktop-only" data-cal-action="urgent" onclick="calendarBulk('urgent',true)">Срочно</button><button type="button" class="cal-bulk-desktop-only" data-cal-action="unurgent" onclick="calendarBulk('urgent',false)">Снять срочность</button><button type="button" class="cal-bulk-mobile-only" data-cal-action="urgent" aria-label="Срочность" onclick="calendarBulk('urgent')">Срочность</button><button type="button" data-cal-action="cancel" aria-label="Отменить" onclick="calendarBulk('cancel')">Отменить</button><button type="button" data-cal-action="delete" class="danger" aria-label="Удалить" onclick="calendarBulk('delete')">Удалить</button></div>`;
   }
 
+  function calFilterComboInput(kind){return document.getElementById(kind==='client'?'calendarFilterClientInput':'calendarFilterContractInput');}
+  function calFilterComboBox(kind){return document.getElementById(kind==='client'?'calendarFilterClientResults':'calendarFilterContractResults');}
+  function calCloseFilterCombos(except){
+    ['client','contract'].forEach(kind=>{
+      if(kind===except)return;
+      const box=calFilterComboBox(kind),input=calFilterComboInput(kind);
+      if(box){box.classList.add('hidden');box.innerHTML='';}
+      if(input){input.setAttribute('aria-expanded','false');const wrap=input.closest('.cal-filter-combo-control');if(wrap)wrap.classList.remove('drop-up');}
+    });
+  }
+  function calFilterComboChoices(kind){
+    const input=calFilterComboInput(kind),query=String(input&&input.value||'').trim().toLocaleLowerCase('ru');
+    if(kind==='client')return calClientList().filter(client=>String(client.name||'').toLocaleLowerCase('ru').includes(query)).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ru')).slice(0,40).map(client=>({client}));
+    const chosen=calClientList().find(client=>client.id===cal.filters.client),pool=[],seen=new Set();
+    (chosen?[chosen]:calClientList()).forEach(owner=>(owner.contracts||[]).forEach(contract=>pool.push({client:owner,contract})));
+    return pool.filter(item=>{
+      const label=contractLabel(item.contract);
+      if(!(label+' '+String(item.client.name||'')).toLocaleLowerCase('ru').includes(query))return false;
+      if(seen.has(label))return false;seen.add(label);return true;
+    }).sort((a,b)=>contractLabel(a.contract).localeCompare(contractLabel(b.contract),'ru')).slice(0,40);
+  }
+  function calRenderFilterCombo(kind){
+    const input=calFilterComboInput(kind),box=calFilterComboBox(kind);if(!input||!box)return;
+    calCloseFilterCombos(kind);
+    const choices=calFilterComboChoices(kind);cal.filterChoices[kind]=choices;
+    box.innerHTML=choices.length?choices.map((choice,index)=>{
+      const main=kind==='client'?String(choice.client.name||''):contractLabel(choice.contract),detail=kind==='contract'?String(choice.client.name||''):((choice.client.contracts||[]).length+' договоров');
+      return '<button type="button" role="option" onclick="calendarFilterComboPick(\''+kind+'\','+index+')"><strong>'+calEscape(main)+'</strong><small>'+calEscape(detail)+'</small></button>';
+    }).join(''):'<div class="cal-filter-drop-empty">Совпадений нет</div>';
+    box.classList.remove('hidden');input.setAttribute('aria-expanded','true');
+    const wrap=input.closest('.cal-filter-combo-control');
+    if(wrap)requestAnimationFrame(()=>{const rect=input.getBoundingClientRect();wrap.classList.toggle('drop-up',rect.bottom+box.offsetHeight+14>window.innerHeight);});
+  }
+  window.calendarFilterComboOpen=function(kind){calRenderFilterCombo(kind);};
+  window.calendarFilterComboInput=function(kind){
+    const input=calFilterComboInput(kind);
+    if(input&&!input.value.trim()&&(kind==='client'?cal.filters.client:cal.filters.contract)){
+      if(kind==='client')cal.filters.client='';else cal.filters.contract='';
+      window.calendarRender();
+    }
+    calRenderFilterCombo(kind);
+  };
+  window.calendarFilterComboPick=function(kind,index){
+    const choice=(cal.filterChoices[kind]||[])[index];if(!choice)return;
+    if(kind==='client'){
+      const client=choice.client;cal.filters.client=client.id||'';
+      if(cal.filters.contract&&!(client.contracts||[]).some(contract=>contractLabel(contract)===cal.filters.contract))cal.filters.contract='';
+    }else{
+      const label=contractLabel(choice.contract);cal.filters.contract=label;
+      if(!cal.filters.client){const owners=calFindContractOwners(label),clients=[...new Set(owners.map(owner=>owner.client.id))];if(clients.length===1)cal.filters.client=clients[0];}
+    }
+    calCloseFilterCombos();window.calendarRender();
+  };
   function calRenderFilterOptions(){
     const allClients=calClientList(),owners=cal.filters.contract?calFindContractOwners(cal.filters.contract):[],allowedClients=!cal.filters.client&&owners.length?[...new Map(owners.map(owner=>[owner.client.id,owner.client])).values()]:allClients;
     const clientSelect=document.getElementById('calendarFilterClient');if(clientSelect){clientSelect.innerHTML='<option value="">Все заказчики</option>'+allowedClients.map(c=>'<option value="'+calEscape(c.id)+'">'+calEscape(c.name||'')+'</option>').join('');clientSelect.value=cal.filters.client;}
     const chosen=allClients.find(c=>c.id===cal.filters.client),contracts=chosen?(chosen.contracts||[]):allClients.flatMap(c=>(c.contracts||[])),labels=[...new Set(contracts.map(contractLabel))];
     const contractSelect=document.getElementById('calendarFilterContract');if(contractSelect){contractSelect.innerHTML='<option value="">Все договоры</option>'+labels.map(label=>'<option value="'+calEscape(label)+'">'+calEscape(label)+'</option>').join('');contractSelect.value=cal.filters.contract;}
+    ['client','contract'].forEach(kind=>{
+      const input=calFilterComboInput(kind);if(!input||document.activeElement===input)return;
+      if(kind==='client'){const client=allClients.find(item=>item.id===cal.filters.client);input.value=client?String(client.name||''):'';}
+      else input.value=cal.filters.contract||'';
+    });
   }
   function calRender(){
     if(!cal.initialized)return;
@@ -7116,6 +7303,7 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
     const desktopArchive=document.getElementById('calDesktopArchiveButton'),mobileArchive=document.getElementById('calMobileArchiveButton');[desktopArchive,mobileArchive].forEach(button=>{if(button){button.classList.toggle('active',cal.archive);button.setAttribute('aria-pressed',String(cal.archive));button.setAttribute('aria-label',cal.archive?'Вернуться к календарю':'Архив');}});
     const quick=document.getElementById('calQuickAdd');if(quick)quick.classList.toggle('hidden',cal.archive);
     const fab=document.querySelector('.cal-fab');if(fab)fab.classList.toggle('hidden',cal.archive||cal.selected.size>0);
+    document.body.classList.toggle('cal-selection-mode',cal.selected.size>0);
     const count=calFilterCount(),mobileCount=document.getElementById('calFilterCount'),desktopCount=document.getElementById('calDesktopFilterCount');if(mobileCount){mobileCount.textContent=count;mobileCount.classList.toggle('hidden',!count);}if(desktopCount){desktopCount.textContent=count;desktopCount.classList.toggle('hidden',!count);}
     const search=document.getElementById('calSearch');if(search&&search.value!==cal.filters.q)search.value=cal.filters.q;
     const clear=document.querySelector('.cal-search-clear');if(clear)clear.classList.toggle('visible',!!cal.filters.q);
@@ -7148,7 +7336,8 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
     box.innerHTML='<span>Найдена карточка CRM: '+calEscape(labels.join(' и '))+'. Текст записи останется без автоматической связи, пока вы её не подтвердите.</span><button type="button" onclick="calendarApproveSuggestedLinks()">Связать с календарной записью</button>';box.classList.remove('hidden');
   }
   function calFillEditor(record,source){
-    const data=record||{title:'',description:'',date:null,allDay:true,startTime:'10:00',endTime:'',location:'',reminders:DEFAULT_REMINDERS,clientId:source&&source.clientId,clientText:'',contractId:source&&source.contractId,contractText:'',urgent:false};
+    const prefill=!record&&source&&source.prefill?source.prefill:null;
+    const data=record||Object.assign({title:'',description:'',date:null,allDay:true,startTime:'10:00',endTime:'',location:'',reminders:DEFAULT_REMINDERS,clientId:source&&source.clientId,clientText:'',contractId:source&&source.contractId,contractText:'',urgent:false},prefill||{});
     document.getElementById('calendarEditorForm').classList.toggle('new-record',!record);
     document.getElementById('calendarEditorTitle').textContent=record?'Календарная запись':'Новая запись';
     document.getElementById('calendarEditorName').value=data.title||'';document.getElementById('calendarEditorDesktopName').value=data.title||'';document.getElementById('calendarEditorDescription').value=data.description||'';document.getElementById('calendarEditorDate').value=calIsoToRu(data.date);
@@ -7274,12 +7463,12 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
   };
   window.calendarSetFilter=function(key,value){cal.filters[key]=value;window.calendarRender();};
   window.calendarToggleFilter=function(key){cal.filters[key]=!cal.filters[key];const btn=document.getElementById('calendarFilter'+key.charAt(0).toUpperCase()+key.slice(1));if(btn)btn.classList.toggle('active',cal.filters[key]);window.calendarRender();};
-  window.calendarClearFilters=function(){cal.filters={q:'',client:'',contract:'',from:'',to:'',urgent:false,moved:false,completed:true,cancelled:true};['calendarFilterQ','calendarFilterFrom','calendarFilterTo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});window.calendarRender();};
+  window.calendarClearFilters=function(){cal.filters={q:'',client:'',contract:'',from:'',to:'',urgent:false,moved:false,completed:true,cancelled:true};['calendarFilterQ','calendarFilterFrom','calendarFilterTo','calendarFilterClientInput','calendarFilterContractInput'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});calCloseFilterCombos();window.calendarRender();};
   window.calendarFilterClientChanged=function(){const sel=document.getElementById('calendarFilterClient'),client=calClientList().find(item=>item.id===sel.value);cal.filters.client=sel.value;if(cal.filters.contract&&client&&!(client.contracts||[]).some(contract=>contractLabel(contract)===cal.filters.contract))cal.filters.contract='';window.calendarRender();};
   window.calendarFilterContractChanged=function(){const sel=document.getElementById('calendarFilterContract');cal.filters.contract=sel.value;if(!cal.filters.client&&sel.value){const owners=calFindContractOwners(sel.value),clients=[...new Set(owners.map(owner=>owner.client.id))];if(clients.length===1)cal.filters.client=clients[0];}window.calendarRender();};
   window.calendarOpenFilters=function(){const overlay=document.getElementById('calendarFilterOverlay');overlay.classList.toggle('archive-mode',cal.archive);calRenderFilterOptions();document.getElementById('calendarFilterQ').value=cal.filters.q;document.getElementById('calendarFilterFrom').value=cal.filters.from;document.getElementById('calendarFilterTo').value=cal.filters.to;['urgent','moved','completed','cancelled'].forEach(k=>{const id='calendarFilter'+k.charAt(0).toUpperCase()+k.slice(1),b=document.getElementById(id);if(b)b.classList.toggle('active',!!cal.filters[k]);});calOpenOverlay('calendarFilterOverlay');};
   window.calendarFilterJumpToDate=function(){const mobile=document.getElementById('calendarFilterJump'),desktop=document.getElementById('calJumpDate');if(desktop&&mobile)desktop.value=mobile.value;window.calendarCloseFilters();window.calendarJumpToDate();};
-  window.calendarCloseFilters=function(){calCloseOverlay('calendarFilterOverlay');};
+  window.calendarCloseFilters=function(){calCloseFilterCombos();calCloseOverlay('calendarFilterOverlay');};
   window.calendarToggleColumns=function(){
     calDialog('<header><h3>Видимые графы</h3><button type="button" class="cal-more" onclick="calendarDialogClose()" aria-label="Закрыть">×</button></header><div class="cal-column-options"><label><input type="checkbox" checked disabled> Дата и время</label><label><input type="checkbox" checked disabled> Название</label><label><input type="checkbox" checked disabled> Заказчик и договор</label><label><input type="checkbox" '+(cal.columns.reminders?'checked':'')+' onchange="calendarSetColumn(\'reminders\',this.checked)"> Напоминания</label></div>','cal-columns-panel');
   };
@@ -7409,18 +7598,30 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
     catch(error){calSetError(error.code==='network_error'?'Запись не отправлена. Введённые данные оставлены в строке; повторите сохранение после восстановления связи.':calErrorMessage(error),false);}
   };
 
-  function calPlaceMenu(menu,event){if(menu.parentElement!==document.body)document.body.appendChild(menu);menu.classList.remove('hidden');menu.style.removeProperty('bottom');const rect=event.currentTarget.getBoundingClientRect(),w=Math.max(215,menu.offsetWidth),h=menu.offsetHeight;menu.style.left=Math.max(8,Math.min(window.innerWidth-w-8,rect.right-w))+'px';menu.style.top=Math.max(8,Math.min(window.innerHeight-h-8,rect.bottom+3))+'px';}
+  function calPlaceMenu(menu,event){
+    if(menu.parentElement!==document.body)document.body.appendChild(menu);
+    menu.classList.remove('hidden');menu.style.removeProperty('bottom');
+    const rect=event.currentTarget.getBoundingClientRect(),grid=menu.classList.contains('cal-menu-grid');
+    const w=grid?menu.offsetWidth:Math.max(215,menu.offsetWidth),h=menu.offsetHeight;
+    menu.style.left=Math.max(8,Math.min(window.innerWidth-w-8,rect.right-w))+'px';
+    const below=rect.bottom+3,above=rect.top-h-3;
+    menu.style.top=(below+h>window.innerHeight-8&&above>=8?above:Math.max(8,Math.min(window.innerHeight-h-8,below)))+'px';
+  }
   window.calendarOpenRecordMenu=function(id,event){
     const r=cal.records.find(x=>x.id===id);if(!r)return;cal.menuId=id;cal.menuFromFocus=!!event.currentTarget.closest('.cal-focus-front');const menu=document.getElementById('calendarRecordMenu'),active=calIsActive(r),archived=calIsArchived(r),mobile=window.matchMedia('(max-width:720px)').matches;
     if(mobile){
-      menu.innerHTML=active?'<button type="button" onclick="calendarMenuSelect()">'+calIcon('check')+'Выделить</button><button type="button" onclick="calendarMenuAction(\'cancel\')">'+calIcon('ban')+'Отменить запись</button><button type="button" class="danger" onclick="calendarMenuDelete()">'+calIcon('trash')+'Удалить</button>':'<button type="button" onclick="calendarMenuSelect()">'+calIcon('check')+'Выделить</button>'+(archived?'<button type="button" onclick="calendarMenuAction(\'restore\')">'+calIcon('repeat')+'Вернуть в работу</button>':'')+'<button type="button" class="danger" onclick="calendarMenuDelete()">'+calIcon('trash')+'Удалить</button>';
+      menu.classList.add('cal-menu-grid');
+      const secondary=active?'<button type="button" onclick="calendarMenuAction(\'cancel\')">'+calIcon('ban')+'<span>Отменить</span></button>':(archived?'<button type="button" onclick="calendarMenuAction(\'restore\')">'+calIcon('repeat')+'<span>Вернуть</span></button>':'');
+      menu.innerHTML='<button type="button" onclick="calendarMenuSelect()">'+calIcon('check')+'<span>Выделить</span></button><button type="button" onclick="calendarMenuCopy()">'+calIcon('copy')+'<span>Копировать</span></button>'+secondary+'<button type="button" class="danger" onclick="calendarMenuDelete()">'+calIcon('trash')+'<span>Удалить</span></button>';
     }else{
+      menu.classList.remove('cal-menu-grid');
       menu.innerHTML=(active?'<button type="button" onclick="calendarMenuEdit()">Редактировать</button><button type="button" onclick="calendarMenuMove()">Перенести</button><button type="button" onclick="calendarMenuAction(\'complete\')">Выполнено</button><button type="button" onclick="calendarMenuAction(\'cancel\')">Отменить</button>':'')+(r.sync&&r.sync.googleEventId?'<button type="button" onclick="calendarOpenGoogle()">Открыть в Google Calendar</button>':'')+(archived?'<button type="button" onclick="calendarMenuAction(\'restore\')">Восстановить</button>':'')+'<button type="button" onclick="calendarMenuSelect()">Выделить</button><button type="button" class="danger" onclick="calendarMenuDelete()">Удалить</button>';
     }
     calPlaceMenu(menu,event);
   };
   window.calendarOpenStateMenu=function(id,event){
     const r=cal.records.find(x=>x.id===id);if(!r)return;cal.menuId=id;cal.menuFromFocus=false;const menu=document.getElementById('calendarRecordMenu');
+    menu.classList.remove('cal-menu-grid');
     menu.innerHTML=calIsActive(r)?'<button type="button" onclick="calendarMenuAction(\'complete\')">'+calIcon('check')+'Выполнено</button><button type="button" onclick="calendarMenuAction(\'cancel\')">'+calIcon('ban')+'Отменить</button>':'<button type="button" onclick="calendarMenuAction(\'restore\')">'+calIcon('repeat')+'Вернуть в работу</button>';
     calPlaceMenu(menu,event);
   };
@@ -7429,6 +7630,10 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
   window.calendarMenuMove=function(){const id=cal.menuId;calHideMenu();window.calendarOpenMove(id);};
   window.calendarMenuAction=function(action){const id=cal.menuId;calHideMenu();if(action==='cancel')return calConfirm('Отменить запись?','Она перейдёт в архив, а событие будет удалено из Google Calendar.','Отменить запись',()=>calAction(id,'cancel'),true);calAction(id,action);};
   window.calendarMenuSelect=function(){const id=cal.menuId,scroll=cal.menuFromFocus;calHideMenu();cal.selected.add(id);window.calendarRender();if(scroll)requestAnimationFrame(()=>{const card=[...document.querySelectorAll('.cal-mobile-section:not(.cal-focus-deck) .cal-mobile-card')].find(node=>node.dataset.recordId===id);if(card)card.scrollIntoView({behavior:'smooth',block:'center'});});};
+  window.calendarMenuCopy=function(){
+    const source=cal.records.find(x=>x.id===cal.menuId);calHideMenu();if(!source)return;
+    window.calendarOpenEditor(null,{prefill:{title:source.title||'',description:source.description||'',clientId:source.clientId||null,clientText:source.clientText||'',contractId:source.contractId||null,contractText:source.contractText||'',location:source.location||'',reminders:Array.isArray(source.reminders)?source.reminders.slice():DEFAULT_REMINDERS,urgent:!!source.urgent}});
+  };
   window.calendarMenuDelete=function(){const id=cal.menuId;calHideMenu();calConfirm('Удалить запись?','Запись исчезнет из CRM и Google Calendar. Восстановление доступно семь дней.','Удалить',()=>calAction(id,'delete'),true);};
   window.calendarOpenGoogle=function(){const r=cal.records.find(x=>x.id===cal.menuId);calHideMenu();if(r&&r.sync&&r.sync.googleEventId&&r.sync.googleCalendarId){const raw=r.sync.googleEventId+' '+r.sync.googleCalendarId,eid=btoa(raw).replace(/=+$/,'');window.open('https://calendar.google.com/calendar/event?eid='+encodeURIComponent(eid),'_blank','noopener');}};
   window.calendarShowSyncError=function(id){
@@ -7499,6 +7704,139 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
   };
   if(window.__CALENDAR_STAGE2_TEST__)window.__calendarStage2Test={isoToRu:calIsoToRu,ruToIso:calRuToIso,dateInputIso:calDateInputIso,dateInputDisplay:calDateInputDisplay,validTime:calValidTime,addDays:calAddDays,dayDiff:calDayDiff,parseReminders:calParseReminders,remindersToText:calRemindersToText,snapshot:calSnapshot,recordSort:calRecordSort,desktopTimeHtml:calDesktopTimeHtml,api:calApi,editorPayload:calEditorRecordPayload,editorFilterChoices:calEditorFilterChoices,quickFilterChoices:calQuickFilterChoices,state:cal};
   document.addEventListener('DOMContentLoaded',()=>{calEnsureInit();if(currentView==='calendar')window.calendarActivate();});
+})();
+
+/* Мобильные модальные формы: активное поле остаётся видимым при открытой экранной клавиатуре */
+(function(){
+  const isMobile=()=>window.matchMedia('(max-width:720px)').matches;
+  const isField=el=>!!el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA'||el.tagName==='SELECT');
+  const inModal=el=>!!el.closest('.modal, .cal-editor-panel, .cal-filter-panel, .cal-confirm-dialog, .cal-overlay');
+  let timer=null;
+  function keepVisible(){
+    const el=document.activeElement;
+    if(!isField(el)||!inModal(el))return;
+    const view=window.visualViewport,bottom=view?view.height+view.offsetTop:window.innerHeight,rect=el.getBoundingClientRect();
+    if(rect.bottom>bottom-14||rect.top<10)el.scrollIntoView({block:'center',behavior:'smooth'});
+  }
+  function schedule(delay){clearTimeout(timer);timer=setTimeout(keepVisible,delay);}
+  document.addEventListener('focusin',()=>{if(isMobile())schedule(300);});
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',()=>{if(isMobile())schedule(120);});
+    window.visualViewport.addEventListener('scroll',()=>{if(isMobile())schedule(200);});
+  }
+})();
+
+/* Календарная запись из выделенного текста дополнительного поля услуги */
+(function(){
+  const isMobile=()=>window.matchMedia('(max-width:720px)').matches;
+  let bubble=null,pending=null,timer=null;
+
+  function hide(){
+    if(bubble){bubble.remove();bubble=null;}
+    pending=null;
+  }
+  function fieldSelection(){
+    const el=document.activeElement;
+    if(!el||(el.tagName!=='TEXTAREA'&&el.tagName!=='INPUT'))return null;
+    if(!el.closest||!el.closest('.cf-row[data-cf-editor]'))return null;
+    if(el.selectionStart==null||el.selectionStart===el.selectionEnd)return null;
+    const text=String(el.value||'').slice(el.selectionStart,el.selectionEnd);
+    if(!text.trim())return null;
+    return {text,node:el,rect:el.getBoundingClientRect()};
+  }
+  function cardSelection(){
+    const sel=window.getSelection&&window.getSelection();
+    if(!sel||sel.isCollapsed||!sel.rangeCount)return null;
+    const text=sel.toString();
+    if(!text.trim())return null;
+    const range=sel.getRangeAt(0),host=range.commonAncestorContainer;
+    const el=host&&host.nodeType===1?host:(host&&host.parentElement);
+    const box=el&&el.closest?el.closest('.c-cf'):null;
+    if(!box)return null;
+    const rect=range.getBoundingClientRect();
+    return {text,node:box,rect:rect&&(rect.width||rect.height)?rect:box.getBoundingClientRect()};
+  }
+  function partyFor(node){
+    if(node.closest('.modal')){
+      const ctx=window.__ctx||{};
+      return {clientId:ctx.clientId||null,contractId:ctx.contractId||null};
+    }
+    const row=node.closest('.svc-row'),button=row?row.querySelector('.c-edit[onclick]'):null;
+    const match=button?String(button.getAttribute('onclick')||'').match(/openServiceForm\('([^']*)','([^']*)'/):null;
+    if(match)return {clientId:match[1]||null,contractId:match[2]||null};
+    return {clientId:currentClientId||null,contractId:currentContractId||null};
+  }
+  function pad2(value){const text=String(value).trim();return text.length<2?'0'+text:text;}
+  function validTime(hour,minute){const h=Number(hour),m=Number(minute);return h>=0&&h<=23&&m>=0&&m<=59;}
+  function parseSelectedText(raw){
+    const src=String(raw||'').replace(/\s+/g,' ').trim();
+    let rest=src,date=null,startTime='',endTime='';
+    const dateMatch=rest.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+    if(dateMatch){
+      const day=Number(dateMatch[1]),month=Number(dateMatch[2]);
+      if(day>=1&&day<=31&&month>=1&&month<=12){
+        date=dateMatch[3]+'-'+pad2(dateMatch[2])+'-'+pad2(dateMatch[1]);
+        rest=rest.slice(0,dateMatch.index)+' '+rest.slice(dateMatch.index+dateMatch[0].length);
+      }
+    }
+    const timeMatch=rest.match(/(\d{1,2}):(\d{2})(?:\s*[-–—]\s*(\d{1,2}):(\d{2}))?/);
+    if(timeMatch&&validTime(timeMatch[1],timeMatch[2])){
+      startTime=pad2(timeMatch[1])+':'+timeMatch[2];
+      if(timeMatch[3]!=null&&validTime(timeMatch[3],timeMatch[4]))endTime=pad2(timeMatch[3])+':'+timeMatch[4];
+      rest=rest.slice(0,timeMatch.index)+' '+rest.slice(timeMatch.index+timeMatch[0].length);
+    }
+    let title=rest.replace(/\s+/g,' ').replace(/^[\s—–\-:;,.•·]+/,'').replace(/[\s—–\-:;,]+$/,'').replace(/\s+([:;,])/g,'$1').trim();
+    if(!title)title=src;
+    return {title,date:date||null,allDay:!startTime,startTime,endTime};
+  }
+  function place(rect){
+    if(!bubble)return;
+    const width=bubble.offsetWidth||140,height=bubble.offsetHeight||34;
+    let top=rect.bottom+8;
+    if(top+height>window.innerHeight-8)top=Math.max(8,rect.top-height-8);
+    const left=Math.max(8,Math.min(window.innerWidth-width-8,(rect.left+rect.right)/2-width/2));
+    bubble.style.left=left+'px';
+    bubble.style.top=top+'px';
+  }
+  function run(){
+    const info=pending;
+    hide();
+    if(!info||typeof window.calendarOpenEditor!=='function')return;
+    const party=partyFor(info.node),parsed=parseSelectedText(info.text);
+    window.calendarOpenEditor(null,{clientId:party.clientId||null,contractId:party.contractId||null,prefill:{title:parsed.title,date:parsed.date,allDay:parsed.allDay,startTime:parsed.startTime,endTime:parsed.endTime}});
+  }
+  function show(info){
+    hide();
+    pending=info;
+    bubble=document.createElement('button');
+    bubble.type='button';
+    bubble.className='cf-sel-cal';
+    bubble.innerHTML='<svg class="cal-icon" aria-hidden="true"><use href="#cal-i-calendar"/></svg><span>В календарь</span>';
+    bubble.addEventListener('pointerdown',event=>event.preventDefault());
+    bubble.addEventListener('mousedown',event=>event.preventDefault());
+    bubble.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();run();});
+    document.body.appendChild(bubble);
+    place(info.rect);
+  }
+  function refresh(){
+    if(!isMobile()){hide();return;}
+    if(typeof window.calendarOpenEditor!=='function'){hide();return;}
+    const info=fieldSelection()||cardSelection();
+    if(!info){hide();return;}
+    show(info);
+  }
+  function schedule(){clearTimeout(timer);timer=setTimeout(refresh,160);}
+  document.addEventListener('selectionchange',schedule);
+  document.addEventListener('select',schedule,true);
+  document.addEventListener('mouseup',schedule);
+  document.addEventListener('touchend',schedule);
+  document.addEventListener('pointerdown',event=>{
+    const target=event.target;
+    if(bubble&&!(target&&target.closest&&target.closest('.cf-sel-cal')))hide();
+  },true);
+  document.addEventListener('scroll',hide,true);
+  window.addEventListener('resize',hide);
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')hide();});
 })();
 
 
