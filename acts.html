@@ -6938,7 +6938,7 @@ function customFieldHtmlForPdf(s){
     editing:null, editorKey:null, editorBaseline:'', editorSource:null, dialogAction:null,
     focusId:null, toastTimer:null, pendingSync:false, dateDrag:null, suppressClickUntil:0, expandedMobile:new Set(),
     linkApproval:{client:false,contract:false}, linkCandidate:null, customAnchor:null,
-    editorChoices:{client:[],contract:[]}, quickChoices:{client:[],contract:[]}, filterChoices:{client:[],contract:[]}, quickFilterKind:null, quickActiveIndex:0
+    editorChoices:{client:[],contract:[]}, quickChoices:{client:[],contract:[]}, filterChoices:{client:[],contract:[]}, quickFilterKind:null, quickActiveIndex:0, quickSaving:false
   };
 
   function calUuid(){
@@ -7161,7 +7161,7 @@ function customFieldHtmlForPdf(s){
     const root=document.getElementById('modalRoot');
     if(root){new MutationObserver(()=>window.calendarEnhanceCustomFields()).observe(root,{childList:true,subtree:true});}
     const quickTitle=document.getElementById('calQuickTitle'),quickSave=document.getElementById('calQuickSaveButton');
-    if(quickTitle&&quickSave)quickTitle.addEventListener('input',()=>{quickSave.disabled=!quickTitle.value.trim();});
+    if(quickTitle&&quickSave)quickTitle.addEventListener('input',()=>{if(cal.quickSaving){quickSave.disabled=true;return;}quickSave.disabled=!quickTitle.value.trim();});
     const quickScroll=document.querySelector('.cal-quick-scroll');if(quickScroll)quickScroll.addEventListener('scroll',calCloseQuickFilters,{passive:true});
     const quickReminders=document.getElementById('calQuickReminders');
     if(quickReminders){quickReminders.addEventListener('input',()=>calValidateReminderField(quickReminders));quickReminders.addEventListener('blur',()=>calNormalizeReminderField(quickReminders));}
@@ -8059,15 +8059,73 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
   window.calendarQuickFilterClear=function(kind){
     const input=calQuickInput(kind);if(!input)return;input.value='';if(kind==='client'){const contract=calQuickInput('contract');if(contract)contract.value='';}calSyncQuickFilterClears();input.focus();calRenderQuickFilter(kind);
   };
+  function calReadQuickDraft(){
+    const start=document.getElementById('calQuickStart'),end=document.getElementById('calQuickEnd');
+    return {
+      date:document.getElementById('calQuickDate').value,
+      title:document.getElementById('calQuickTitle').value,
+      client:document.getElementById('calQuickClient').value,
+      contract:document.getElementById('calQuickContract').value,
+      description:document.getElementById('calQuickDescription').value,
+      location:document.getElementById('calQuickLocation').value,
+      reminders:document.getElementById('calQuickReminders').value,
+      allDay:document.getElementById('calQuickAllDay').checked,
+      urgent:document.getElementById('calQuickUrgent').classList.contains('active'),
+      start:start.value,end:end.value,startTimed:start.dataset.timed||'',endTimed:end.dataset.timed||''
+    };
+  }
+  function calClearQuickRow(){
+    ['calQuickDate','calQuickTitle','calQuickClient','calQuickContract','calQuickDescription','calQuickLocation'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    calCloseQuickFilters();calSyncQuickFilterClears();
+    const reminders=document.getElementById('calQuickReminders');if(reminders){reminders.value=calRemindersToText(DEFAULT_REMINDERS);reminders.setAttribute('aria-invalid','false');}
+    document.getElementById('calQuickAllDay').checked=true;
+    const urgent=document.getElementById('calQuickUrgent');if(urgent){urgent.classList.remove('active');urgent.setAttribute('aria-pressed','false');}
+    const start=document.getElementById('calQuickStart'),end=document.getElementById('calQuickEnd');
+    if(start)delete start.dataset.timed;if(end)delete end.dataset.timed;
+    const save=document.getElementById('calQuickSaveButton');if(save)save.disabled=true;
+    window.calendarQuickAllDayChanged();
+  }
+  function calRestoreQuickDraft(draft){
+    if(!draft)return;
+    document.getElementById('calQuickDate').value=draft.date||'';
+    document.getElementById('calQuickTitle').value=draft.title||'';
+    document.getElementById('calQuickClient').value=draft.client||'';
+    document.getElementById('calQuickContract').value=draft.contract||'';
+    document.getElementById('calQuickDescription').value=draft.description||'';
+    document.getElementById('calQuickLocation').value=draft.location||'';
+    const reminders=document.getElementById('calQuickReminders');if(reminders)reminders.value=draft.reminders||'';
+    document.getElementById('calQuickAllDay').checked=!!draft.allDay;
+    const start=document.getElementById('calQuickStart'),end=document.getElementById('calQuickEnd');
+    if(draft.startTimed)start.dataset.timed=draft.startTimed;else delete start.dataset.timed;
+    if(draft.endTimed)end.dataset.timed=draft.endTimed;else delete end.dataset.timed;
+    window.calendarQuickAllDayChanged();
+    if(!draft.allDay){start.value=draft.start||'';end.value=draft.end||'';}
+    const urgent=document.getElementById('calQuickUrgent');if(urgent){urgent.classList.toggle('active',!!draft.urgent);urgent.setAttribute('aria-pressed',String(!!draft.urgent));}
+    calSyncQuickFilterClears();
+    ['calQuickTitle','calQuickDescription','calQuickLocation','calQuickReminders'].forEach(id=>{const el=document.getElementById(id);if(el)calAutoGrow(el);});
+  }
   window.calendarQuickSave=async function(){
+    if(cal.quickSaving)return;
     const title=document.getElementById('calQuickTitle').value.trim();if(!title){calSetError('Укажите название записи.',false);document.getElementById('calQuickTitle').focus();return;}
     const date=calRuToIso(document.getElementById('calQuickDate').value,true);if(date===undefined){calSetError('Проверьте дату.',false);return;}
     const allDay=document.getElementById('calQuickAllDay').checked,start=allDay?null:calValidTime(document.getElementById('calQuickStart').value,true),end=allDay?null:calValidTime(document.getElementById('calQuickEnd').value,true);if(start===undefined||end===undefined||start&&end&&end<=start){calSetError('Проверьте время начала и окончания.',false);return;}
     const clientText=document.getElementById('calQuickClient').value.trim(),client=calFindClient(clientText),contractText=document.getElementById('calQuickContract').value.trim(),contract=calFindContract(client,contractText);
     let reminders;try{reminders=calParseReminders(document.getElementById('calQuickReminders').value);}catch(error){calSetError(calErrorMessage(error),false);return;}
     const payload={title,date,allDay,startTime:start,endTime:end,clientId:client?client.id:null,clientText,contractId:contract?contract.id:null,contractText,urgent:document.getElementById('calQuickUrgent').classList.contains('active'),reminders,description:document.getElementById('calQuickDescription').value.trim(),location:document.getElementById('calQuickLocation').value.trim()};
-    try{const result=await calApi('/api/records',{method:'POST',body:JSON.stringify(payload)});calReplaceRecord(result.record);['calQuickDate','calQuickTitle','calQuickClient','calQuickContract','calQuickDescription','calQuickLocation'].forEach(id=>document.getElementById(id).value='');calCloseQuickFilters();calSyncQuickFilterClears();document.getElementById('calQuickReminders').value=calRemindersToText(DEFAULT_REMINDERS);document.getElementById('calQuickAllDay').checked=true;document.getElementById('calQuickUrgent').classList.remove('active');const quickStart=document.getElementById('calQuickStart'),quickEnd=document.getElementById('calQuickEnd');delete quickStart.dataset.timed;delete quickEnd.dataset.timed;const quickSave=document.getElementById('calQuickSaveButton');if(quickSave)quickSave.disabled=true;window.calendarQuickAllDayChanged();calSetError('');window.calendarRender();calToastCreated(result.record);calKickSync();}
-    catch(error){calSetError(error.code==='network_error'?'Запись не отправлена. Введённые данные оставлены в строке; повторите сохранение после восстановления связи.':calErrorMessage(error),false);}
+    const draft=calReadQuickDraft();
+    cal.quickSaving=true;
+    calClearQuickRow();
+    try{
+      const result=await calApi('/api/records',{method:'POST',body:JSON.stringify(payload)});
+      calReplaceRecord(result.record);calSetError('');window.calendarRender();calToastCreated(result.record);calKickSync();
+    }catch(error){
+      calRestoreQuickDraft(draft);
+      calSetError(error.code==='network_error'?'Запись не отправлена. Введённые данные оставлены в строке; повторите сохранение после восстановления связи.':calErrorMessage(error),false);
+    }finally{
+      cal.quickSaving=false;
+      const save=document.getElementById('calQuickSaveButton'),titleField=document.getElementById('calQuickTitle');
+      if(save)save.disabled=!(titleField&&titleField.value.trim());
+    }
   };
 
   function calPlaceMenu(menu,event){
