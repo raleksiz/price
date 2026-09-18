@@ -1208,24 +1208,16 @@ html.boot-route-calendar #view-calendar{display:block!important}
 .cal-empty{padding:28px 12px;text-align:center;color:var(--cal-muted);font-size:12px}.cal-archive-info{padding:9px 12px;background:var(--cal-surface-2);color:var(--cal-muted);font-size:12px;border-bottom:1px solid var(--cal-line)}
 .cal-bulk-bar{position:sticky;top:59px;z-index:20;display:flex;align-items:center;gap:6px;margin:0 0 8px;padding:8px 10px;border-radius:11px;background:#312b43;color:#fff;box-shadow:0 9px 26px rgba(26,20,44,.22)}.cal-bulk-bar strong{margin-right:8px}.cal-bulk-bar .cal-bulk-summary{border:0;background:transparent;display:flex;align-items:center;gap:8px;padding:7px 4px}.cal-bulk-bar button{border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.08);border-radius:8px;padding:7px 10px;height:auto;font-size:13px}.cal-bulk-bar button:hover{background:rgba(255,255,255,.16)}.cal-bulk-bar button.danger{margin-left:auto;background:rgba(242,89,106,.16)}
 
-.cal-overlay{position:fixed;inset:0;z-index:120;background:rgba(31,24,48,.17);opacity:0;pointer-events:none;transition:opacity .18s}.cal-overlay.open{opacity:1;pointer-events:auto}
-.cal-editor-panel{position:absolute;z-index:2;right:14px;top:72px;width:min(470px,39vw);min-width:410px;max-height:calc(100vh - 90px);background:#fff;box-shadow:-16px 0 46px rgba(29,22,51,.18);transform:translateX(calc(100% + 30px));transition:transform .2s ease;display:flex;flex-direction:column;border:1px solid #e5e3eb;border-radius:14px;overflow:hidden}.cal-overlay.open .cal-editor-panel{transform:translateX(0)}
-.cal-editor-head{padding:12px 14px 10px;border-bottom:1px solid #e5e3eb;display:block;min-height:88px}.cal-editor-title-wrap{display:flex;align-items:flex-start;gap:8px}.cal-editor-head h2{display:none;margin:0 auto 0 0;font-size:17px;font-weight:600}.cal-editor-desktop-name{flex:1;min-width:0;min-height:45px;max-height:92px;padding:6px;border:0;border-radius:7px;background:#faf9fc;resize:none;overflow:hidden;font-size:17px;font-weight:600;line-height:1.3;letter-spacing:-.01em;color:var(--ink)}.cal-editor-x{width:34px;height:34px;flex:0 0 34px;border:0;border-radius:9px;background:transparent;color:#777382;font-size:22px;line-height:1}.cal-editor-x:hover{background:var(--cal-purple-2);color:var(--cal-purple)}.cal-editor-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:7px}.cal-editor-meta-spacer{flex:1}.cal-editor-mobile-actions{display:none}.cal-editor-head .btn{min-height:32px;padding:0 10px;border:1px solid #e5e3eb;border-radius:8px;background:#fff;font-size:12px;font-weight:500}.cal-editor-head .cal-editor-save{background:#6946e8;color:#fff;border-color:#6946e8}.cal-editor-name-field{display:none}
+.cal-overlay{position:fixed;inset:0;z-index:400;background:rgba(31,24,48,.17);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s,visibility .18s}.cal-overlay.open{opacity:1;visibility:visible;pointer-events:auto}
+.cal-editor-panel{position:fixed;z-index:401;right:14px;top:72px;width:min(470px,39vw);min-width:410px;max-height:calc(100vh - 90px);background:#fff;box-shadow:-16px 0 46px rgba(29,22,51,.18);transform:translateX(calc(100% + 30px));transition:transform .2s ease;display:flex;flex-direction:column;border:1px solid #e5e3eb;border-radius:14px;overflow:hidden}.cal-overlay.open .cal-editor-panel{transform:translateX(0)}
+.cal-editor-head{padding:12px 14px 10px;border-bottom:1px solid #e5e3eb;display:block;min-height:88px}.cal-editor-title-wrap{display:flex;align-items:flex-start;gap:8px}.cal-editor-head h2{display:none;margin:0 auto 0 0;font-size:17px;font-weight:600}.cal-editor-desktop-name{flex:1;min-width:0;min-height:45px;max-height:92px;padding:6px;border:0;border-radius:7px;background:#faf9fc;resize:none;overflow:hidden;font-size:17px;font-weight:600;line-height:1.3;letter-spacing:-.01em;color:var(--ink)}.cal-editor-x{width:34px;height:34px;flex:0 0 34px;border:0;border-radius:9px;background:transparent;color:#777382;font-size:22px;line-height:1}.cal-editor-x:hover{background:var(--cal-purple-2);color:var(--cal-purple)}.cal-editor-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:7px}.cal-editor-meta-spacer{flex:1}.cal-editor-mobile-actions{display:none}.cal-editor-head .btn{min-height:32px;padding:0 10px;border:1px solid #e5e3eb;border-radius:8px;background:#fff;font-size:12px;font-weight:500}.cal-editor-head .cal-editor-save{background:#6946e8;color:#fff;border-color:#6946e8}
 .cal-editor-meta .cal-chip{border:0;background:var(--cal-blue-soft);color:var(--cal-blue);padding:4px 8px;font-size:12px}
 .cal-editor-meta .cal-chip.urgent{background:var(--cal-amber-soft);color:var(--cal-amber)}
 .cal-editor-meta .cal-chip.moved{background:#fff3dd;color:#9b6200}
-.cal-editor-sheet-row{grid-column:1/-1;display:grid;grid-template-columns:minmax(138px,1.4fr) 36px minmax(84px,.8fr) minmax(84px,.8fr);gap:7px;align-items:end}
-.cal-editor-sheet-row.context{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-.cal-editor-sheet-row > .cal-editor-field,.cal-editor-sheet-row > .cal-editor-all-day{grid-column:auto;width:100%;margin:0}
-.cal-editor-sheet-row .cal-editor-field input{min-height:38px;height:38px;padding:0 10px}
-.cal-editor-all-day{display:flex;align-items:center;justify-content:center;position:relative;width:36px;min-width:36px;height:38px;border:1px solid #e5e3eb;border-radius:9px;padding:0;font-size:12px;text-transform:none;letter-spacing:0;color:#555;cursor:pointer}
-.cal-editor-all-day input{position:absolute;inset:0;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
-.cal-editor-all-day:has(input:checked){background:var(--cal-purple-2);color:var(--cal-purple);border-color:var(--cal-purple-3)}
-.cal-editor-info-grid{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}
-.cal-editor-info-grid > .cal-editor-field,.cal-place-stack > .cal-editor-field{grid-column:auto;width:100%}
-.cal-editor-info-grid textarea{height:38px;min-height:38px}
-.cal-place-stack{display:grid;gap:7px;min-width:0}
-.cal-editor-sync{display:flex;align-items:center;gap:6px;color:var(--cal-red);background:var(--cal-red-soft);border-radius:8px;padding:7px 8px;font-size:12px}
+.cal-editor-all-day{display:flex;align-items:center;justify-content:center;position:relative;grid-column:span 2;min-height:45px;border:1px solid #e5e3eb;border-radius:9px;padding:0 8px;font-size:12px;text-transform:none;letter-spacing:0;color:#555;cursor:pointer;margin:0}
+.cal-editor-all-day input{width:17px;height:17px;margin:0;accent-color:#6946e8;cursor:pointer}
+.cal-editor-sheet-row,.cal-editor-sheet-row.context,.cal-editor-info-grid,.cal-place-stack{display:contents;grid-column:1/-1;width:100%;min-width:0}
+.cal-editor-sync{display:flex;align-items:center;gap:6px;color:var(--cal-red);background:var(--cal-red-soft);border-radius:8px;padding:7px 8px;font-size:12px;grid-column:1/-1}
 .cal-editor-sync .cal-icon{width:16px;height:16px;flex:0 0 16px}
 .cal-editor-sync button{margin-left:auto;border:1px solid #e5e3eb;background:#fff;border-radius:8px;padding:4px 7px;font-size:12px;color:var(--ink)}
 .cal-editor-body{min-height:0;overflow-y:auto;padding:15px 18px 18px;flex:1}.cal-editor-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:9px}.cal-editor-field{grid-column:span 6;min-width:0;margin:0;position:relative}.cal-editor-field.full{grid-column:1/-1}.cal-editor-field.third{grid-column:span 4}.cal-editor-field.quarter{grid-column:span 3}.cal-editor-field label{display:block;color:#777382;font-size:12px;margin:0 0 5px;text-transform:none;letter-spacing:0;font-weight:400}.cal-editor-field input,.cal-editor-field select,.cal-editor-field textarea{width:100%;border:1px solid #e5e3eb;border-radius:9px;padding:9px 10px;background:#fff;font-size:15px;min-height:40px;color:var(--ink)}.cal-editor-field textarea{resize:none;min-height:78px;overflow:hidden}.cal-editor-field input:focus,.cal-editor-field select:focus,.cal-editor-field textarea:focus{border-color:#6946e8}.cal-editor-history{grid-column:1/-1;background:#fff5da;color:#76501b;border-radius:9px;padding:9px 10px;font-size:12px;line-height:1.4}.cal-editor-error{grid-column:1/-1;background:#fff0f2;color:#a52a23;border-radius:9px;padding:9px 10px;font-size:12px}.cal-reminder-hint{display:block;color:#777382;font-size:11px;margin-top:4px;line-height:1.35}
@@ -1261,9 +1253,26 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   #calendarBulkBar{
     display:none!important;
   }
-}
-
-@media (max-width:720px){
+  .cal-editor-name-field{display:none}
+  .cal-editor-sheet-row{
+    display:grid;grid-column:1/-1;
+    grid-template-columns:minmax(138px,1.4fr) 36px minmax(84px,.8fr) minmax(84px,.8fr);
+    gap:7px;align-items:end;
+  }
+  .cal-editor-sheet-row.context{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .cal-editor-sheet-row > .cal-editor-field,
+  .cal-editor-sheet-row > .cal-editor-all-day{grid-column:auto;width:100%;margin:0}
+  .cal-editor-sheet-row .cal-editor-field input{min-height:38px;height:38px;padding:0 10px}
+  .cal-editor-all-day{width:36px;min-width:36px;height:38px;min-height:38px;padding:0;grid-column:auto}
+  .cal-editor-all-day input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
+  .cal-editor-all-day:has(input:checked){background:var(--cal-purple-2);color:var(--cal-purple);border-color:var(--cal-purple-3)}
+  .cal-editor-info-grid{
+    display:grid;grid-column:1/-1;grid-template-columns:1fr 1fr;gap:9px;align-items:start
+  }
+  .cal-editor-info-grid > .cal-editor-field,
+  .cal-place-stack > .cal-editor-field{grid-column:auto;width:100%}
+  .cal-editor-info-grid textarea{height:38px;min-height:38px}
+  .cal-place-stack{display:grid;gap:7px;min-width:0}
 }
 
 @media (max-width:720px){
@@ -1422,7 +1431,6 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
 }
 
 /* Final prototype-alignment pass. */
-.cal-editor-field textarea{min-height:40px}
 .cal-title-cell{display:block}.cal-title-text{min-width:0;overflow-wrap:anywhere}
 .cal-editor-grid.new-record #calendarEditorName,.cal-editor-grid.new-record #calendarEditorDescription{min-height:72px}
 .cal-editor-link{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:9px;background:var(--cal-purple-2);color:#55476a;font-size:12px;line-height:1.35}
@@ -1474,6 +1482,132 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   .cal-picker-item{grid-template-columns:19px 92px minmax(0,1fr);min-height:48px}
   .cal-editor-link{display:grid;grid-template-columns:1fr;padding:8px 9px}.cal-editor-link button{width:100%}
   .cf-pick>.cal-cf-action{width:30px;height:30px}
+}
+
+#calendarEditorOverlay{z-index:400}
+#calendarEditorOverlay .cal-editor-panel{
+  position:fixed;z-index:401;display:flex;flex-direction:column;background:#fff;overflow:hidden;
+}
+#calendarEditorOverlay .cal-editor-head .btn{
+  width:auto;min-width:0;background:#fff;color:var(--ink);border:1px solid #e5e3eb;box-shadow:none;
+  font-weight:500;text-transform:none;letter-spacing:0;
+}
+#calendarEditorOverlay .cal-editor-head .cal-editor-save,
+#calendarEditorOverlay .cal-editor-mobile-actions .cal-editor-save{
+  background:#6946e8;color:#fff;border-color:#6946e8;
+}
+#calendarEditorOverlay .cal-editor-field{margin:0}
+#calendarEditorOverlay .cal-editor-field label{text-transform:none;letter-spacing:0;font-weight:400}
+#calendarEditorOverlay .cal-editor-field input,
+#calendarEditorOverlay .cal-editor-field select,
+#calendarEditorOverlay .cal-editor-field textarea{
+  width:100%;max-width:100%;font-family:inherit;color:var(--ink);background:#fff;resize:none;box-sizing:border-box;
+}
+#calendarEditorOverlay textarea{min-height:0}
+#calendarEditorOverlay .cal-editor-sheet-row,
+#calendarEditorOverlay .cal-editor-sheet-row.context,
+#calendarEditorOverlay .cal-editor-info-grid{grid-column:1/-1;width:100%;min-width:0}
+
+@media (max-width:720px){
+  #calendarEditorOverlay .cal-editor-panel{
+    left:50%;right:auto;top:auto;bottom:0;width:min(100%,460px);min-width:0;max-width:none;max-height:94vh;
+    border:0;border-radius:20px 20px 0 0;box-shadow:0 -16px 48px rgba(20,35,57,.2);transform:translate(-50%,102%);
+  }
+  #calendarEditorOverlay.open .cal-editor-panel{transform:translate(-50%,0)}
+  #calendarEditorOverlay .cal-editor-sheet-row,
+  #calendarEditorOverlay .cal-editor-sheet-row.context,
+  #calendarEditorOverlay .cal-editor-info-grid,
+  #calendarEditorOverlay .cal-place-stack{display:contents}
+  #calendarEditorOverlay .cal-editor-name-field{display:grid;grid-column:1/-1}
+  #calendarEditorOverlay .cal-editor-desktop-name,
+  #calendarEditorOverlay .cal-editor-x,
+  #calendarEditorOverlay .cal-editor-meta{display:none!important}
+  #calendarEditorOverlay .cal-editor-mobile-actions{display:flex;gap:5px;flex:0 0 auto}
+  #calendarEditorOverlay .cal-editor-head{
+    min-height:46px;padding:6px 10px 6px 14px;display:flex;align-items:center;gap:8px;
+  }
+  #calendarEditorOverlay .cal-editor-title-wrap{display:block;flex:1;min-width:0}
+  #calendarEditorOverlay .cal-editor-head h2{
+    display:block;margin:0;font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  #calendarEditorOverlay .cal-editor-head .btn{min-height:34px;padding:0 8px;font-size:12px}
+  #calendarEditorOverlay .cal-editor-body{
+    padding:10px 12px calc(18px + env(safe-area-inset-bottom));max-height:calc(94vh - 55px);overflow-y:auto;flex:1;min-height:0;
+  }
+  #calendarEditorOverlay .cal-editor-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px}
+  #calendarEditorOverlay .cal-editor-field{grid-column:span 6;position:relative;min-width:0}
+  #calendarEditorOverlay .cal-editor-field.full{grid-column:1/-1}
+  #calendarEditorOverlay .cal-editor-field.third{grid-column:span 4}
+  #calendarEditorOverlay .cal-editor-field.quarter{grid-column:span 3}
+  #calendarEditorOverlay .cal-editor-field label{
+    position:absolute;top:5px;left:10px;margin:0;color:#708096;font-size:11px;line-height:1;z-index:2;pointer-events:none;display:block;
+  }
+  #calendarEditorOverlay .cal-editor-field input,
+  #calendarEditorOverlay .cal-editor-field select,
+  #calendarEditorOverlay .cal-editor-field textarea{
+    border:1px solid #ccd6e2;border-radius:10px;padding:17px 9px 6px;min-height:45px;height:auto;font-size:14px;
+  }
+  #calendarEditorOverlay .cal-editor-field textarea{min-height:45px;line-height:1.35;overflow:hidden}
+  #calendarEditorOverlay .cal-editor-grid.new-record #calendarEditorName,
+  #calendarEditorOverlay .cal-editor-grid.new-record #calendarEditorDescription{min-height:72px}
+  #calendarEditorOverlay .cal-editor-all-day{
+    display:flex;align-items:center;justify-content:center;grid-column:span 2;width:auto;min-width:0;height:auto;min-height:45px;
+    margin:0;padding:0 8px;border:1px solid #ccd6e2;border-radius:10px;font-size:0;position:relative;
+  }
+  #calendarEditorOverlay .cal-editor-all-day input{
+    position:static;inset:auto;opacity:1;width:17px;height:17px;margin:0;
+  }
+  #calendarEditorOverlay .cal-editor-all-day .cal-icon{width:18px;height:18px}
+  #calendarEditorOverlay .cal-editor-sync{grid-column:1/-1}
+  #calendarEditorOverlay .cal-editor-info-grid textarea{height:auto;min-height:45px}
+}
+
+@media (min-width:721px){
+  #calendarEditorOverlay .cal-editor-panel{
+    left:auto;right:14px;top:72px;bottom:auto;width:min(470px,39vw);min-width:410px;max-height:calc(100vh - 90px);
+    border:1px solid #e5e3eb;border-radius:14px;box-shadow:-16px 0 46px rgba(29,22,51,.18);transform:translateX(calc(100% + 36px));
+  }
+  #calendarEditorOverlay.open .cal-editor-panel{transform:translateX(0)}
+  #calendarEditorOverlay .cal-editor-name-field{display:none!important}
+  #calendarEditorOverlay .cal-editor-head{display:block;min-height:88px;padding:12px 14px 10px}
+  #calendarEditorOverlay .cal-editor-title-wrap{display:flex;align-items:flex-start;gap:8px}
+  #calendarEditorOverlay .cal-editor-head h2{display:none}
+  #calendarEditorOverlay .cal-editor-desktop-name{display:block;flex:1;min-width:0}
+  #calendarEditorOverlay .cal-editor-x{display:grid;place-items:center}
+  #calendarEditorOverlay .cal-editor-meta{display:flex}
+  #calendarEditorOverlay .cal-editor-mobile-actions{display:none!important}
+  #calendarEditorOverlay .cal-editor-sheet-row{
+    display:grid;grid-template-columns:minmax(138px,1.4fr) 36px minmax(84px,.8fr) minmax(84px,.8fr);gap:7px;align-items:end;
+  }
+  #calendarEditorOverlay .cal-editor-sheet-row.context{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  #calendarEditorOverlay .cal-editor-sheet-row > .cal-editor-field,
+  #calendarEditorOverlay .cal-editor-sheet-row > .cal-editor-all-day{grid-column:auto;width:100%;margin:0}
+  #calendarEditorOverlay .cal-editor-field label{
+    position:static;display:block;margin:0 0 5px;font-size:12px;color:#777382;top:auto;left:auto;
+  }
+  #calendarEditorOverlay .cal-editor-field input,
+  #calendarEditorOverlay .cal-editor-sheet-row .cal-editor-field input,
+  #calendarEditorOverlay .cal-editor-field select{
+    min-height:38px;height:38px;padding:0 10px;font-size:15px;border:1px solid #e5e3eb;border-radius:9px;
+  }
+  #calendarEditorOverlay .cal-editor-field textarea{
+    min-height:78px;height:auto;padding:9px 10px;font-size:15px;border:1px solid #e5e3eb;border-radius:9px;
+  }
+  #calendarEditorOverlay .cal-editor-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}
+  #calendarEditorOverlay .cal-editor-info-grid > .cal-editor-field,
+  #calendarEditorOverlay .cal-place-stack > .cal-editor-field{grid-column:auto;width:100%}
+  #calendarEditorOverlay .cal-editor-info-grid textarea{height:38px;min-height:38px}
+  #calendarEditorOverlay .cal-place-stack{display:grid;gap:7px;grid-column:auto;min-width:0;width:auto}
+  #calendarEditorOverlay .cal-editor-all-day{
+    width:36px;min-width:36px;height:38px;min-height:38px;padding:0;grid-column:auto;border:1px solid #e5e3eb;border-radius:9px;
+  }
+  #calendarEditorOverlay .cal-editor-all-day input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
+  #calendarEditorOverlay .cal-editor-all-day:has(input:checked){
+    background:var(--cal-purple-2);color:var(--cal-purple);border-color:var(--cal-purple-3);
+  }
+}
+@media (max-width:1030px) and (min-width:721px){
+  #calendarEditorOverlay .cal-editor-panel{right:8px;top:64px;width:min(430px,calc(100vw - 70px));min-width:min(390px,calc(100vw - 28px));max-height:calc(100vh - 76px)}
 }
 
 </style>
@@ -6722,7 +6856,7 @@ function customFieldHtmlForPdf(s){
       <div class="cal-overlay" id="calendarEditorOverlay" aria-hidden="true">
         <section class="cal-editor-panel" role="dialog" aria-modal="true" aria-labelledby="calendarEditorTitle">
           <header class="cal-editor-head">
-            <div class="cal-editor-title-wrap"><h2 id="calendarEditorTitle">Календарная запись</h2><textarea id="calendarEditorDesktopName" class="cal-editor-desktop-name" rows="1" maxlength="500" aria-label="Название"></textarea><button type="button" class="cal-editor-x" onclick="calendarRequestCloseEditor()" aria-label="Закрыть">×</button></div>
+            <div class="cal-editor-title-wrap"><h2 id="calendarEditorTitle">Календарная запись</h2><textarea id="calendarEditorDesktopName" class="cal-editor-desktop-name" rows="1" maxlength="500" aria-label="Название" placeholder="Название"></textarea><button type="button" class="cal-editor-x" onclick="calendarRequestCloseEditor()" aria-label="Закрыть">×</button></div>
             <div class="cal-editor-meta"><span class="cal-chip" id="calendarEditorStatus">Предстоящее</span><span class="cal-chip urgent hidden" id="calendarEditorUrgentMeta">Срочно</span><span class="cal-chip moved hidden" id="calendarEditorMovedMeta">Перенесено</span><span class="cal-editor-meta-spacer"></span><button type="button" class="btn ghost" onclick="calendarRequestCloseEditor()">Отмена</button><button type="button" class="btn cal-editor-save" onclick="calendarSaveEditor()">Сохранить</button></div>
             <div class="cal-editor-mobile-actions"><button type="button" class="btn ghost" onclick="calendarRequestCloseEditor()">Отмена</button><button type="button" class="btn cal-editor-save" onclick="calendarSaveEditor()">Сохранить</button></div>
           </header>
@@ -7600,9 +7734,10 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
     calHideEditorLinkSuggestion();calCloseEditorFilters();(kind==='client'?contractField:document.getElementById('calendarEditorReminders'))?.focus();
   };
   window.calendarOpenEditor=function(id,source){
-    if(!source && Date.now()<cal.suppressClickUntil)return;
     calEnsureInit();calHideMenu();const record=id?cal.records.find(r=>r.id===id):null;if(id&&!record){calSetError('Запись не найдена. Обновите календарь.',true);return;}
-    cal.editing=record||null;cal.editorKey=calUuid();cal.editorSource=source||null;calFillEditor(record,source||null);calOpenOverlay('calendarEditorOverlay');setTimeout(()=>(window.matchMedia('(max-width:720px)').matches?document.getElementById('calendarEditorName'):document.getElementById('calendarEditorDesktopName')).focus(),220);
+    cal.editing=record||null;cal.editorKey=calUuid();cal.editorSource=source||null;calFillEditor(record,source||null);
+    const panel=document.querySelector('#calendarEditorOverlay .cal-editor-panel');if(panel){panel.style.transition='';panel.style.transform='';}
+    calOpenOverlay('calendarEditorOverlay');setTimeout(()=>(window.matchMedia('(max-width:720px)').matches?document.getElementById('calendarEditorName'):document.getElementById('calendarEditorDesktopName')).focus(),220);
   };
   window.calendarOpenReminders=function(id){
     window.calendarOpenEditor(id);setTimeout(()=>{const field=document.getElementById('calendarEditorReminders');if(field){field.scrollIntoView({behavior:'smooth',block:'center'});field.focus();}},260);
