@@ -1485,10 +1485,13 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   body.cal-selection-mode .cal-select-mark{display:grid}
   body.cal-selection-mode .cal-mobile-card.selected>.cal-mobile-surface>.cal-select-mark{background:var(--cal-purple);border-color:var(--cal-purple);color:#fff}
   .cal-mobile-flag{overflow:hidden;flex:0 0 36px}
-  .cal-mobile-meta .cal-location-mark,.cal-mobile-meta .cal-sync-mark{min-height:21px;padding:0 2px;border:0;background:transparent;display:inline-grid;place-items:center;color:#52647a}
+  .cal-mobile-meta .cal-location-mark,.cal-mobile-meta .cal-sync-mark{min-height:21px;padding:0 2px;border:0;background:transparent;display:inline-grid;place-items:center}
+  .cal-mobile-meta .cal-location-mark{color:#52647a}
   .cal-mobile-meta .cal-location-mark .cal-icon,.cal-mobile-meta .cal-sync-mark .cal-icon{width:15px;height:15px}
-  .cal-mobile-meta .cal-sync-mark.sync-pending{color:var(--cal-amber)}
-  .cal-mobile-meta .cal-sync-mark.sync-error{color:var(--cal-red)}.cal-toast{bottom:82px;width:min(calc(100% - 24px),436px);min-height:48px;border-radius:12px;background:#233249;display:flex;align-items:center;gap:8px}
+  #calendarApp .cal-mobile-meta .cal-sync-mark,
+  #calendarApp .cal-mobile-meta .cal-sync-mark.sync-pending,
+  #calendarApp .cal-mobile-meta .cal-sync-mark.sync-error{color:var(--cal-red)}
+  .cal-toast{bottom:82px;width:min(calc(100% - 24px),436px);min-height:48px;border-radius:12px;background:#233249;display:flex;align-items:center;gap:8px}
   .cal-confirm-dialog.cal-move-dialog{left:50%;top:auto;bottom:0;transform:translateX(-50%);width:min(100%,460px);border-radius:20px 20px 0 0;padding:16px 12px calc(14px + env(safe-area-inset-bottom))}.cal-move-dialog:before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:#c5cfdb;margin:-8px auto 10px}.cal-move-dialog .cal-dialog-actions{grid-template-columns:repeat(2,1fr)}
   .cal-date-rail{position:fixed;left:50%;bottom:calc(62px + env(safe-area-inset-bottom));transform:translate(-50%,105%);width:min(100%,460px);z-index:170;padding:8px 9px;background:#233249;display:flex;gap:6px;overflow-x:auto;opacity:0;pointer-events:none;transition:.18s}.cal-date-rail.open{transform:translate(-50%,0);opacity:1;pointer-events:auto}.cal-date-option{flex:0 0 auto;min-width:74px;min-height:42px;border:1px solid rgba(255,255,255,.22);border-radius:10px;background:#31435d;color:#fff;padding:5px 9px;font-size:12px;font-weight:600}.cal-date-option.cancel{background:#654052}.cal-date-option.target{background:#6E3B8C;border-color:#d9c3ee;transform:translateY(-3px)}
 }
@@ -1505,9 +1508,18 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
 .cal-editor-link button{flex:0 0 auto;border:1px solid var(--cal-purple-3);border-radius:8px;background:#fff;color:var(--cal-purple);padding:6px 8px;font-size:12px;font-weight:600}
 .cal-editor-error.pending{background:var(--cal-amber-soft);color:#76501b}
 @media (max-width:720px){.cal-filter-desktop-only{display:none!important}.cal-filter-mobile-only{display:grid!important}}
-.cal-sync-mark{vertical-align:middle;margin-left:2px}.cal-sync-mark.sync-pending,.cal-sync-mark.sync-error{color:var(--cal-red)}
+.cal-sync-mark{vertical-align:middle;margin-left:2px}
+#calendarApp .cal-sync-mark,
+#calendarApp .cal-sync-mark.sync-pending,
+#calendarApp .cal-sync-mark.sync-error{
+  color:var(--cal-red);
+}
+#calendarApp .cal-sync-mark .cal-icon{color:inherit;stroke:currentColor}
 .cal-chip.sync-pending,.cal-chip.sync-error{width:24px;height:21px;padding:1px 4px;justify-content:center}
-.cal-chip.sync-pending{color:var(--cal-amber);border-color:#ecd59f;background:var(--cal-amber-soft);cursor:pointer}
+#calendarApp .cal-chip.sync-pending,
+#calendarApp .cal-chip.sync-error{
+  color:var(--cal-red);border-color:#f0c1c7;background:var(--cal-red-soft);cursor:pointer
+}
 .cal-chip.sync-pending .cal-icon,.cal-chip.sync-error .cal-icon{width:15px;height:15px}
 .cal-filter-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:7px;margin-top:2px}.cal-filter-actions button{border:1px solid var(--cal-line);background:#fff;border-radius:8px;padding:7px 10px;font-size:12px}.cal-filter-actions button.primary{border-color:var(--cal-purple);background:var(--cal-purple);color:#fff}
 #calendarDialogOverlay.cal-floating-dialog{background:transparent;z-index:70}
@@ -1527,7 +1539,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   .cal-mobile-section.cal-focus-deck .cal-mobile-section-head{padding-bottom:5px}.cal-mobile-section.cal-focus-deck .cal-mobile-section-head h2{font-size:16px}
   .cal-mobile-section[data-mobile-section="nodate"]{margin-bottom:10px}.cal-mobile-view>.cal-mobile-section:last-of-type{margin-bottom:10px}
   .cal-more-row{width:100%;min-height:38px;border:1px dashed #bdc9d8;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--cal-purple);font-size:13px;font-weight:700;background:rgba(255,255,255,.55)}
-  .cal-mobile-meta .cal-chip.sync-pending{color:var(--cal-amber);background:var(--cal-amber-soft)}
+  .cal-mobile-meta .cal-chip.sync-pending,.cal-mobile-meta .cal-chip.sync-error{color:var(--cal-red);background:var(--cal-red-soft)}
 
 #calendarApp .cal-mobile-meta .cal-reminder-chip{
   font-size:12px;
