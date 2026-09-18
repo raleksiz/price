@@ -214,7 +214,7 @@ tr.locked td{background:#FAFAFC;}
 .clients,.contracts-grid{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;}
 .clients-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:14px;min-width:0;}
 .clients-page-title{margin:0;font-size:15px;font-weight:700;flex-shrink:0;line-height:1.2;}
-.clients-toolbar #globalTotals{display:flex;align-items:center;min-width:0;}
+.clients-toolbar #globalTotals{display:none;}
 .icon-btn-toggle{position:relative;background:#fff;border:1.5px solid var(--line);border-radius:8px;width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;color:#666;flex-shrink:0;}
 .icon-btn-toggle:hover{border-color:var(--violet);color:var(--violet);}
 .icon-btn-toggle.active{border-color:var(--violet);background:var(--soft);color:var(--violet);}
@@ -320,6 +320,13 @@ tr.locked td{background:#FAFAFC;}
 .modal .card.service-form select,
 .modal .card.service-form textarea{font-size:13px;}
 .sur-box{border:1.5px dashed #D6CCF0;border-radius:10px;padding:8px 10px;margin-bottom:14px;background:#FBF9FF;}
+.sur-head{cursor:pointer;position:relative;padding-right:20px;}
+.sur-head::after{content:"";position:absolute;right:4px;top:5px;width:7px;height:7px;border-right:2px solid #8B6FC7;border-bottom:2px solid #8B6FC7;transform:rotate(45deg);transition:transform .2s;}
+.sur-box.sur-expanded .sur-head::after{transform:rotate(-135deg);}
+.sur-list{position:relative;}
+.sur-box:not(.sur-expanded) .sur-list{padding-bottom:12px;}
+.sur-box:not(.sur-expanded) .sur-list > .sur-entry:nth-child(n+3){display:none;}
+.sur-box:not(.sur-expanded) .sur-list::after{content:"";position:absolute;left:0;right:0;bottom:0;height:26px;background:linear-gradient(to bottom,rgba(251,249,255,0),#FBF9FF);pointer-events:none;}
 .sur-item{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:3px 10px;align-items:start;padding:3px 0;font-size:12.5px;line-height:1.35;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink);margin-bottom:0;}
 .sur-item input{width:16px;height:16px;flex:0 0 auto;margin-top:1px;accent-color:var(--violet);}
 .sur-item span{min-width:0;}
@@ -338,8 +345,11 @@ tr.locked td{background:#FAFAFC;}
 .sur-extra.sur-extra-base-contract .sur-base-price{grid-column:auto;width:90px;min-width:90px;max-width:90px;min-height:34px;height:100%;align-self:stretch;}
 .sur-extra.sur-extra-claim-credit .sur-comment,
 .sur-extra.sur-extra-base-contract .sur-comment{grid-column:auto;}
-.cf-row{border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-bottom:9px;background:#fff;}
-.cf-public{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:11.5px;color:#666;text-transform:none;letter-spacing:0;font-weight:500;}
+.cf-row{border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-bottom:9px;background:#fff;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:5px;align-items:center;}
+.cf-row > label:not(.cf-public){grid-column:1;grid-row:1;margin:0;min-width:0;overflow-wrap:anywhere;}
+.cf-row > .cf-public{grid-column:2;grid-row:1;margin:0;justify-self:end;white-space:nowrap;max-width:none;flex-shrink:0;}
+.cf-row > *:not(label):not(.cal-cf-action){grid-column:1 / -1;}
+.cf-public{display:flex;align-items:center;gap:7px;margin-top:0;font-size:11.5px;color:#666;text-transform:none;letter-spacing:0;font-weight:500;}
 .cf-public input{width:16px;height:16px;accent-color:var(--violet);}
 .cf-picker{border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-bottom:9px;background:#fff;}
 .cf-picker-title{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;}
@@ -1083,35 +1093,19 @@ tr.fields-drag-over td{background:var(--soft);}
 }
 
 /* ===== Мобильные доработки: доп. поля, дата/код, надбавки, заказчики ===== */
-.client-jump{display:none;}
-.client-jump-input{padding:8px 10px;font-size:13px;min-height:34px;border-radius:8px;}
+.client-jump{display:block;position:relative;min-width:0;flex:1;}
+.client-jump-input{width:100%;padding:8px 10px;font-size:13px;min-height:34px;border-radius:8px;}
 .client-jump-drop{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:22;max-height:210px;overflow-y:auto;background:#fff;border:1.5px solid var(--line);border-radius:10px;box-shadow:0 10px 26px rgba(80,40,120,.16);}
 .client-jump-item{display:block;width:100%;text-align:left;border:0;background:#fff;padding:9px 10px;font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer;}
 .client-jump-item + .client-jump-item{border-top:1px solid #F0F0F3;}
 .client-jump-item:hover{background:var(--soft);}
 .client-jump-empty{padding:9px 10px;font-size:12px;color:var(--muted);}
 .cf-sel-cal{position:fixed;z-index:120;display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1.5px solid #C4B5FD;border-radius:10px;background:#fff;color:var(--violet);font-family:inherit;font-size:12.5px;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 8px 22px rgba(80,40,120,.22);}
+.grid2.svc-date-code-row{grid-template-columns:118px minmax(0,1fr);gap:8px;}
+#cfEditors textarea.autogrow{min-height:38px;}
 @media (max-width:720px){
-  /* доп. поле: строка «название + показ», само поле под ней */
-  .cf-row{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:5px;align-items:center;}
-  .cf-row > label:not(.cf-public){grid-column:1;grid-row:1;margin:0;min-width:0;overflow-wrap:anywhere;}
-  .cf-row > .cf-public{grid-column:2;grid-row:1;margin:0;justify-self:end;white-space:nowrap;max-width:none;flex-shrink:0;}
-  .cf-row > *:not(label){grid-column:1 / -1;}
-  /* дата услуги + код в одной строке */
-  .grid2.svc-date-code-row{grid-template-columns:118px minmax(0,1fr);gap:8px;}
-  /* свёрнутые категории надбавок */
-  .sur-head{cursor:pointer;position:relative;padding-right:20px;}
-  .sur-head::after{content:"";position:absolute;right:4px;top:5px;width:7px;height:7px;border-right:2px solid #8B6FC7;border-bottom:2px solid #8B6FC7;transform:rotate(45deg);transition:transform .2s;}
-  .sur-box.sur-expanded .sur-head::after{transform:rotate(-135deg);}
-  .sur-list{position:relative;}
-  .sur-box:not(.sur-expanded) .sur-list{padding-bottom:12px;}
-  .sur-box:not(.sur-expanded) .sur-list > .sur-entry:nth-child(n+3){display:none;}
-  .sur-box:not(.sur-expanded) .sur-list::after{content:"";position:absolute;left:0;right:0;bottom:0;height:26px;background:linear-gradient(to bottom,rgba(251,249,255,0),#FBF9FF);pointer-events:none;}
-  /* высота сохранённых доп. полей — по содержимому каждого поля */
-  #cfEditors textarea.autogrow{min-height:38px;}
   /* строка быстрого перехода к заказчику */
   .clients-toolbar{position:sticky;top:0;z-index:12;display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:6px;margin:-22px -20px 10px;padding:8px 20px 8px;background:var(--card);border-radius:16px 16px 0 0;}
-  .clients-toolbar #globalTotals{display:none;}
   .client-jump{display:block;position:relative;min-width:0;}
   .client-jump-drop{display:none!important;}
 }
@@ -3200,15 +3194,16 @@ function renderClients(){
   const showHiddenBtn = document.getElementById('showHiddenBtn');
   const hiddenCount=DB.clients.filter(c=>c.hidden).length;
   updateHiddenToggleButton(showHiddenBtn, showHidden, hiddenCount, 'Показывать скрытых', 'Скрыть скрытых', 'скрытых заказчиков');
+  const mobile=window.matchMedia('(max-width:720px)').matches;
   const needle=String((document.getElementById('clientJumpInput')||{}).value||'').trim().toLowerCase();
   const list = sortedClients().filter(c=>{
     if(!showHidden && c.hidden) return false;
-    if(needle && !String(c.name||'').toLowerCase().includes(needle)) return false;
+    if(mobile && needle && !String(c.name||'').toLowerCase().includes(needle)) return false;
     return true;
   });
   const box = document.getElementById('clientsList');
   if(!list.length){
-    box.innerHTML = '<div class="muted">'+(needle?'Ничего не найдено.':'Заказчиков пока нет.')+'</div>';
+    box.innerHTML = '<div class="muted">'+(mobile&&needle?'Ничего не найдено.':'Заказчиков пока нет.')+'</div>';
   } else {
     box.innerHTML = list.map(c=>{
       const t = clientAllTotals(c);
@@ -3224,10 +3219,13 @@ function renderClients(){
       </div>`;
     }).join('');
   }
-  let debt=0;
-  DB.clients.forEach(c=>{ debt+=clientAllTotals(c).debt; });
-  document.getElementById('globalTotals').innerHTML =
-    `<span class="client-debt-chip" title="Предстоящие оплаты"><b style="color:${debt?'#dc2626':'#16a34a'}">${money(debt)}</b></span>`;
+  const totals=document.getElementById('globalTotals');
+  if(totals){
+    let debt=0;
+    DB.clients.forEach(c=>{ debt+=clientAllTotals(c).debt; });
+    totals.innerHTML =
+      `<span class="client-debt-chip" title="Предстоящие оплаты"><b style="color:${debt?'#dc2626':'#16a34a'}">${money(debt)}</b></span>`;
+  }
 }
 function clientJumpSuggestions(query){
   const needle = String(query||'').trim().toLowerCase();
@@ -3243,10 +3241,30 @@ function closeClientJump(){
   drop.classList.add('hidden');
 }
 function onClientJumpInput(){
-  closeClientJump();
-  renderClients();
+  const mobile=window.matchMedia('(max-width:720px)').matches;
+  if(mobile){
+    closeClientJump();
+    renderClients();
+    return;
+  }
+  const input=document.getElementById('clientJumpInput');
+  const drop=document.getElementById('clientJumpDrop');
+  const query=input?input.value:'';
+  if(!drop)return;
+  if(!String(query||'').trim()){
+    closeClientJump();
+    return;
+  }
+  const items=clientJumpSuggestions(query);
+  drop.innerHTML=items.length
+    ? items.map(c=>`<button type="button" class="client-jump-item" onclick="clientJumpGo('${c.id}')">${esc(c.name)||'Без наименования'}</button>`).join('')
+    : '<div class="client-jump-empty">Ничего не найдено.</div>';
+  drop.classList.remove('hidden');
 }
 function clientJumpGo(id){
+  closeClientJump();
+  const input=document.getElementById('clientJumpInput');
+  if(input) input.value='';
   const card = document.getElementById('clientCard-'+id);
   if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
 }
@@ -6543,6 +6561,7 @@ function renderCfEditor(f,raw,pub,calendarText){
   const fields=DB.customFields||[],idx=fields.findIndex(x=>x.id===f.id);let inserted=false;
   for(let i=idx+1;i<fields.length;i++){const next=box.querySelector(`[data-cf-editor="${fields[i].id}"]`);if(next){box.insertBefore(node,next);inserted=true;break;}}
   if(!inserted)box.appendChild(node);
+  node.querySelectorAll('textarea.autogrow').forEach(autoGrowTextarea);
 }
 function cfEditorFilled(id){
   const f=(DB.customFields||[]).find(x=>x.id===id);if(!f)return false;
@@ -7644,7 +7663,7 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
       menu.innerHTML='<button type="button" onclick="calendarMenuSelect()">'+calIcon('check')+'<span>Выделить</span></button><button type="button" onclick="calendarMenuCopy()">'+calIcon('copy')+'<span>Копировать</span></button>'+secondary+'<button type="button" class="danger" onclick="calendarMenuDelete()">'+calIcon('trash')+'<span>Удалить</span></button>';
     }else{
       menu.classList.remove('cal-menu-grid');
-      menu.innerHTML=(active?'<button type="button" onclick="calendarMenuEdit()">Редактировать</button><button type="button" onclick="calendarMenuMove()">Перенести</button><button type="button" onclick="calendarMenuAction(\'complete\')">Выполнено</button><button type="button" onclick="calendarMenuAction(\'cancel\')">Отменить</button>':'')+(r.sync&&r.sync.googleEventId?'<button type="button" onclick="calendarOpenGoogle()">Открыть в Google Calendar</button>':'')+(archived?'<button type="button" onclick="calendarMenuAction(\'restore\')">Восстановить</button>':'')+'<button type="button" onclick="calendarMenuSelect()">Выделить</button><button type="button" class="danger" onclick="calendarMenuDelete()">Удалить</button>';
+      menu.innerHTML=(active?'<button type="button" onclick="calendarMenuEdit()">Редактировать</button><button type="button" onclick="calendarMenuMove()">Перенести</button><button type="button" onclick="calendarMenuAction(\'complete\')">Выполнено</button><button type="button" onclick="calendarMenuAction(\'cancel\')">Отменить</button>':'')+(r.sync&&r.sync.googleEventId?'<button type="button" onclick="calendarOpenGoogle()">Открыть в Google Calendar</button>':'')+(archived?'<button type="button" onclick="calendarMenuAction(\'restore\')">Восстановить</button>':'')+'<button type="button" onclick="calendarMenuCopy()">Копировать</button><button type="button" onclick="calendarMenuSelect()">Выделить</button><button type="button" class="danger" onclick="calendarMenuDelete()">Удалить</button>';
     }
     calPlaceMenu(menu,event);
   };
@@ -7757,7 +7776,6 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
 
 /* Календарная запись из выделенного текста дополнительного поля услуги */
 (function(){
-  const isMobile=()=>window.matchMedia('(max-width:720px)').matches;
   let bubble=null,pending=null,timer=null;
 
   function hide(){
@@ -7848,7 +7866,6 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
     place(info.rect);
   }
   function refresh(){
-    if(!isMobile()){hide();return;}
     if(typeof window.calendarOpenEditor!=='function'){hide();return;}
     const info=fieldSelection()||cardSelection();
     if(!info){hide();return;}
