@@ -633,17 +633,15 @@ function appliedItems(s){
   return list.concat([{name:'Скидка исполнителя',amount:-exec,count:1}]);
 }
 function formatAppliedLabel(a){
-  if(typeof Calculator!=='undefined' && Calculator.formatAppliedLabel) return Calculator.formatAppliedLabel(a);
   const name=String(a.name||'').trim();
   const comment=String(a.comment||'').trim();
   const extra=Number(a.extraAmount)||0;
   const count=!a.actualExpenses && Number(a.count)>1 ? Number(a.count) : 0;
   const total=Math.round(Number(a.amount)||0);
   let amountText='';
-  if(/скидка исполнителя/i.test(name) && total) amountText=' ('+money(total)+')';
-  else if(count>1){
+  if(count>1){
     const unit=Math.round((total-extra)/count);
-    amountText=' (по '+money(unit)+' × '+count+')';
+    amountText=' ('+money(unit)+' × '+count+')';
   }else if(total){
     amountText=' ('+money(total)+')';
   }

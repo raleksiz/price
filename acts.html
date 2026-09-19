@@ -5417,7 +5417,7 @@ function appliedAmountText(a){
   const count=!a.actualExpenses && Number(a.count)>1 ? Number(a.count) : 0;
   const total=Number(a.amount)||0;
   if(!total && !count) return '';
-  if(count>1) return ' (по '+money(surchargeUnitAmount(a))+' × '+count+')';
+  if(count>1) return ' ('+money(surchargeUnitAmount(a))+' × '+count+')';
   return total ? ' ('+money(total)+')' : '';
 }
 function appliedHtml(s){
@@ -6671,11 +6671,10 @@ function appliedPdfHtml(s){
   if(!applied.length) return '';
   return `<div class="pa-appl"><div class="pa-appl-title">Примененные надбавки/скидки:</div><ul>${
     applied.map(a=>{
+      const comment=String(a.comment||'').trim();
       const extra=Number(a.extraAmount)||0;
-      const baseText = (typeof Calculator!=='undefined' && Calculator.formatAppliedLabel)
-        ? Calculator.formatAppliedLabel(a)
-        : String(a.name||'');
-      let text = esc(baseText);
+      let text = esc(a.name||'')+appliedAmountText(a);
+      if(comment) text += ' — '+esc(comment);
       if(extra>0) text += ` — фактические расходы: ${money(extra)}`;
       return `<li>${text}</li>`;
     }).join('')
