@@ -791,7 +791,15 @@ tr.fields-drag-over td{background:var(--soft);}
 .contract-toolbar-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 @media(max-width:720px){.contract-toolbar-actions{margin-left:0;width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.contract-toolbar-actions .btn{width:100%;min-width:0;height:34px;padding:5px 3px;font-size:11px;line-height:1;white-space:nowrap}}
 .invoice-result-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;gap:8px;margin-top:14px;align-items:stretch}.invoice-result-actions .invoice-action{width:100%;min-width:0;justify-content:center}.invoice-action svg{display:none}.invoice-action-label{display:inline;white-space:nowrap;font-size:12px}@media(max-width:720px){.invoice-result-actions{gap:7px}.invoice-action{height:38px;min-width:0!important;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;border-radius:9px!important}.invoice-action-label{display:none}.invoice-action svg{display:block;width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.invoice-action.pdf svg{width:22px;height:22px}.invoice-action.pdf svg text{fill:currentColor;stroke:none;font-size:7px;font-family:Arial,sans-serif;font-weight:800;letter-spacing:-.4px}}
-.invoice-create-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.invoice-payer-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(105px,.6fr);gap:10px;align-items:start}.invoice-payer-row .field{min-width:0}.invoice-payer-row .field>label{min-height:16px;white-space:nowrap}@media(max-width:720px){.invoice-create-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.invoice-payer-row{grid-template-columns:minmax(0,1fr) minmax(105px,.6fr)}}
+.modal .card.invoice-form{max-width:520px}.modal .card.invoice-form h1{margin-bottom:12px}
+.invoice-meta-row{display:grid;grid-template-columns:1.15fr .8fr 1fr;gap:8px;margin-bottom:8px}
+.invoice-payer-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(96px,.5fr);gap:8px;margin-bottom:8px;align-items:stretch}
+.invoice-float{position:relative;display:block;margin:0;min-width:0;text-transform:none}
+.invoice-float>span{position:absolute;left:10px;top:6px;z-index:1;color:#8a8494;font-size:10px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1;pointer-events:none}
+.invoice-float input,.invoice-float textarea{width:100%;padding:20px 10px 6px;min-height:44px;font-size:14px}
+.invoice-float textarea{min-height:72px;padding-top:22px;resize:none}
+.invoice-purpose{display:block;margin-bottom:10px}
+@media(max-width:720px){.invoice-meta-row{grid-template-columns:1.1fr .7fr .95fr;gap:6px}.invoice-float>span{left:8px;font-size:9px}.invoice-float input,.invoice-float textarea{font-size:13px;padding:18px 8px 5px;min-height:42px}}
 .invoice-issued-list{margin:10px 0 0;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:var(--soft);}
 .invoice-issued-list summary{color:var(--violet);}
 .invoice-issued-list ul{margin:0 0 10px 18px;padding:0;}
@@ -1281,9 +1289,13 @@ body.cal-row-pointer-dragging,body.cal-row-pointer-dragging *{cursor:grabbing!im
 .cal-editor-all-day{display:flex;align-items:center;justify-content:center;position:relative;grid-column:span 2;min-height:45px;border:1px solid #e5e3eb;border-radius:9px;padding:0 8px;font-size:12px;text-transform:none;letter-spacing:0;color:#555;cursor:pointer;margin:0}
 .cal-editor-all-day input{width:17px;height:17px;margin:0;accent-color:#6946e8;cursor:pointer}
 .cal-editor-sheet-row,.cal-editor-sheet-row.context,.cal-editor-info-grid,.cal-place-stack{display:contents;grid-column:1/-1;width:100%;min-width:0}
-.cal-editor-sync{display:flex;align-items:center;gap:6px;color:var(--cal-red);background:var(--cal-red-soft);border-radius:8px;padding:7px 8px;font-size:12px;grid-column:1/-1}
+.cal-editor-sync{display:flex;align-items:center;gap:6px;color:var(--cal-red);background:var(--cal-red-soft);border-radius:8px;padding:7px 8px;font-size:12px;grid-column:1/-1;flex-wrap:nowrap;min-width:0}
 .cal-editor-sync .cal-icon{width:16px;height:16px;flex:0 0 16px}
-.cal-editor-sync button{margin-left:auto;border:1px solid #e5e3eb;background:#fff;border-radius:8px;padding:4px 7px;font-size:12px;color:var(--ink)}
+.cal-editor-sync>span{min-width:0;flex:1 1 auto}
+.cal-editor-sync button{margin-left:auto;flex:0 0 auto;white-space:nowrap;border:1px solid #e5e3eb;background:#fff;border-radius:8px;padding:4px 7px;font-size:12px;color:var(--ink)}
+.cal-editor-sync button:disabled{opacity:.7;cursor:wait}
+.cal-editor-sync.retrying .cal-icon{animation:cal-spin .8s linear infinite}
+@keyframes cal-spin{to{transform:rotate(360deg)}}
 .cal-editor-body{min-height:0;overflow-y:auto;padding:15px 18px 18px;flex:1}.cal-editor-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:9px}.cal-editor-field{grid-column:span 6;min-width:0;margin:0;position:relative}.cal-editor-field.full{grid-column:1/-1}.cal-editor-field.third{grid-column:span 4}.cal-editor-field.quarter{grid-column:span 3}.cal-editor-field label{display:block;color:#777382;font-size:12px;margin:0 0 5px;text-transform:none;letter-spacing:0;font-weight:400}.cal-editor-field input,.cal-editor-field select,.cal-editor-field textarea{width:100%;border:1px solid #e5e3eb;border-radius:9px;padding:9px 10px;background:#fff;font-size:14px;font-weight:400;min-height:40px;color:var(--ink)}.cal-editor-field textarea{resize:none;min-height:78px;overflow:hidden}.cal-editor-field input:focus,.cal-editor-field select:focus,.cal-editor-field textarea:focus{border-color:#6946e8}.cal-editor-history{grid-column:1/-1;background:#fff5da;color:#76501b;border-radius:9px;padding:9px 10px;font-size:12px;line-height:1.4}.cal-editor-error{grid-column:1/-1;background:#fff0f2;color:#a52a23;border-radius:9px;padding:9px 10px;font-size:12px}.cal-reminder-hint{display:block;color:#777382;font-size:11px;margin-top:4px;line-height:1.35}
 .cal-editor-filter-field{z-index:4}.cal-editor-filter-results{position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:30;max-height:210px;overflow-y:auto;padding:5px;background:#fff;border:1px solid var(--cal-line-strong);border-radius:10px;box-shadow:0 14px 34px rgba(35,27,64,.18)}.cal-editor-filter-results button{display:block;width:100%;min-height:38px;padding:7px 9px;border:0;border-radius:7px;background:transparent;text-align:left;color:var(--cal-ink)}.cal-editor-filter-results button:hover,.cal-editor-filter-results button:focus{background:var(--cal-purple-2);color:var(--cal-purple)}.cal-editor-filter-results strong,.cal-editor-filter-results small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cal-editor-filter-results strong{font-size:13px;font-weight:600}.cal-editor-filter-results small{margin-top:2px;color:var(--cal-muted);font-size:11px}.cal-editor-filter-empty{padding:9px;color:var(--cal-muted);font-size:12px}
 .cal-filter-desktop-only{display:none!important}.cal-filter-mobile-only{display:grid}.cal-filter-combo-control{position:relative;display:block}.cal-filter-combo-control input{width:100%;min-width:0;height:34px;border:1px solid #e5e3eb;border-radius:8px;padding:0 7px;background:#fff;font-size:15px;color:var(--ink)}.cal-filter-drop{position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:40;max-height:212px;overflow-y:auto;padding:5px;background:#fff;border:1px solid var(--cal-line-strong);border-radius:10px;box-shadow:0 14px 34px rgba(35,27,64,.18)}.cal-filter-combo-control.drop-up .cal-filter-drop{top:auto;bottom:calc(100% + 5px)}.cal-filter-drop button{display:block;width:100%;min-height:38px;padding:7px 9px;border:0;border-radius:7px;background:transparent;text-align:left;color:var(--cal-ink)}.cal-filter-drop button:hover,.cal-filter-drop button:focus{background:var(--cal-purple-2);color:var(--cal-purple)}.cal-filter-drop button strong,.cal-filter-drop button small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cal-filter-drop button strong{font-size:13px;font-weight:600}.cal-filter-drop button small{margin-top:2px;color:var(--cal-muted);font-size:11px}.cal-filter-drop-empty{padding:9px;color:var(--cal-muted);font-size:12px}
@@ -1292,6 +1304,12 @@ body.cal-row-pointer-dragging,body.cal-row-pointer-dragging *{cursor:grabbing!im
 #calendarFilterOverlay{background:transparent}.cal-filter-panel{position:absolute;right:12px;top:58px;width:340px;max-width:calc(100vw - 24px);padding:13px;background:#fff;border:1px solid #e5e3eb;border-radius:12px;box-shadow:0 18px 45px rgba(35,27,64,.14);overflow:visible;z-index:401}.cal-filter-panel-head{display:flex;align-items:center;margin-bottom:10px}.cal-filter-panel-head h2{font-size:14px;margin:0 auto 0 0}.cal-filter-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px}.cal-filter-grid label{display:grid;gap:4px;font-size:12px;color:#777382;margin:0;text-transform:none;letter-spacing:0}.cal-filter-grid input,.cal-filter-grid select{width:100%;min-width:0;height:34px;border:1px solid #e5e3eb;border-radius:8px;padding:0 7px;background:#fff;font-size:15px;color:var(--ink)}.cal-filter-search,.cal-filter-jump{display:none!important}.cal-filter-jump-control{position:relative;display:block}.cal-filter-jump-control button{position:absolute;right:2px;top:2px;width:38px;height:38px;border:0;border-radius:9px;background:transparent;color:#6946e8;display:grid;place-items:center}.cal-filter-xl-head{display:flex;align-items:flex-end;gap:4px;min-height:18px;min-width:0}.cal-filter-xl-head .cal-filter-label{flex:1;min-width:0;margin:0}.cal-filter-clear{display:inline-flex;visibility:hidden;pointer-events:none;flex-shrink:0;align-items:center;justify-content:center;width:18px;height:18px;padding:0;border:none;border-radius:4px;background:transparent;color:#888;cursor:pointer;font-size:16px;line-height:1;font-family:inherit}.cal-filter-xl.has-value .cal-filter-clear{visibility:visible;pointer-events:auto}.cal-filter-clear:hover{color:var(--violet);background:var(--soft)}.cal-filter-period{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 30px 30px;gap:6px;align-items:end;flex-wrap:nowrap;min-width:0}.cal-filter-period .cal-filter-from,.cal-filter-period .cal-filter-to{min-width:0}.cal-filter-toggles{display:contents}.cal-filter-toggles button{width:30px;height:34px;min-width:30px;min-height:34px;padding:0;border:1px solid #e5e3eb;background:#fff;border-radius:8px;display:grid;place-items:center;flex:0 0 30px}.cal-filter-toggles button span{display:none}.cal-filter-toggles button .cal-icon{width:16px;height:16px}.cal-filter-toggles button.active{background:#f0ecff;border-color:#d8cdfd;color:#6946e8}.cal-filter-actions .cal-filter-reset{display:none}
 .cal-confirm-dialog{position:relative;left:auto;top:auto;transform:none;background:#fff;border-radius:12px;padding:14px;width:min(360px,100%);box-shadow:0 18px 45px rgba(35,27,64,.14);color:var(--ink)}.cal-confirm-dialog h3{font-size:15px;font-weight:600;margin:0 0 5px;color:var(--ink)}.cal-confirm-dialog p{font-size:13px;color:#777382;margin:0;line-height:1.45}.cal-dialog-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:6px;margin-top:12px}.cal-dialog-actions.two{display:flex}.cal-custom-picker .cal-dialog-actions.two{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:6px}.cal-custom-picker .cal-dialog-actions.two button{width:100%;min-height:36px}.cal-dialog-actions button{min-height:0;padding:6px 8px;border:1px solid #e5e3eb;background:#fff;border-radius:8px;font-weight:500;font-size:12px;color:var(--ink);width:auto}.cal-dialog-actions .primary{background:#6946e8;color:#fff;border-color:#6946e8}.cal-dialog-actions .danger{background:#c83d4c;color:#fff;border-color:#c83d4c}
 .cal-confirm-dialog.cal-dirty-dialog{width:min(390px,calc(100vw - 48px))}
+.cal-confirm-dialog.cal-sync-dialog{width:min(320px,calc(100% - 40px));padding:12px}
+.cal-sync-dialog .cal-dialog-actions.two{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:6px}
+.cal-sync-dialog .cal-dialog-actions.two button{width:100%;min-width:0}
+.cal-sync-dialog .cal-sync-code{margin:8px 0 0;font-size:11px;line-height:1.35;color:#9a96a3}
+.cal-sync-dialog .primary.retrying{opacity:.75;pointer-events:none}
+.cal-sync-dialog .primary.retrying:before{content:'';display:inline-block;width:12px;height:12px;margin-right:6px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:cal-spin .8s linear infinite;vertical-align:-2px}
 body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:isolate;min-width:215px;padding:6px;border:1px solid #e5e3eb;border-radius:11px;background:#fff;box-shadow:0 18px 45px rgba(35,27,64,.22)}.cal-menu button{width:100%;border:0;background:transparent;border-radius:7px;padding:8px 9px;display:flex;align-items:center;gap:9px;text-align:left;font-size:13px;color:var(--ink)}.cal-menu button:hover{background:#f0ecff;color:#6946e8}.cal-menu button.danger{color:#c83d4c}.cal-menu button .cal-icon{width:18px;height:18px;flex:0 0 18px}.cal-menu hr{border:0;border-top:1px solid #e5e3eb;margin:5px 0}.cal-menu-g{width:18px;flex:0 0 18px;text-align:center;color:#4285f4;font-weight:700}
 .cal-toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,16px);max-width:calc(100% - 24px);background:#312b43;color:#fff;border-radius:10px;padding:10px 13px;z-index:180;opacity:0;pointer-events:none;transition:.18s;font-size:13px;box-shadow:0 10px 28px rgba(43,26,107,.28)}.cal-toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}.cal-toast button{border:0;background:transparent;color:#e9d5ff;font-weight:700;margin-left:9px}
 .cal-date-rail{display:none}
@@ -1773,10 +1791,12 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
 }
 @media (max-width:720px){
   #calendarDialogOverlay.open{display:block;place-items:unset;padding:0;background:rgba(19,31,49,.35)}
-  .cal-custom-picker .cal-dialog-actions.two{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .cal-custom-picker .cal-dialog-actions.two,.cal-sync-dialog .cal-dialog-actions.two{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:6px}
   .cal-confirm-dialog{position:absolute;left:50%;top:50%;transform:translate(-50%,-48%);width:min(calc(100% - 28px),390px)}
+  .cal-confirm-dialog.cal-sync-dialog{width:min(320px,calc(100% - 28px));padding:12px}
   .cal-dialog-actions,.cal-dialog-actions:not(.two){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
   .cal-dialog-actions.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cal-sync-dialog .cal-dialog-actions.two{display:grid;grid-template-columns:1fr 1fr}
   .cal-dialog-actions button,.cal-dialog-actions:not(.two) button{width:100%;min-height:40px;padding:8px 6px;font-size:13px}
   .cal-confirm-dialog.cal-move-dialog{left:50%;top:auto;bottom:0;transform:translateX(-50%)}
   .cal-confirm-dialog.cal-crm-menu{
@@ -6570,17 +6590,19 @@ function openInvoiceDialog(){
   if(typeof RaleksizInvoice==='undefined'){ alert('Модуль счёта не загрузился. Обнови страницу.'); return; }
   const purposeBasis=invoiceBasis(ct,true);
   const amount=defaultInvoiceAmount(c,ct);
-  openModal(`<h1>Счёт на оплату · ${esc(c.name)}</h1>
-    <div class="invoice-create-row">
-      <div class="field"><label>Дата счёта</label><input id="invDate" type="text" class="crm-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" value="${crmDateDisplay(todayISO())}"></div>
-      <div class="field"><label>Номер счёта</label><input id="invNo" type="number" min="1" step="1" inputmode="numeric" value="${nextInvoiceNumber()}"></div>
+  openModal(`<h1>Счёт на оплату</h1>
+    <div class="invoice-meta-row">
+      <label class="invoice-float"><span>Дата счёта</span><input id="invDate" type="text" class="crm-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder=" " value="${crmDateDisplay(todayISO())}"></label>
+      <label class="invoice-float"><span>Номер счёта</span><input id="invNo" type="number" min="1" step="1" inputmode="numeric" placeholder=" " value="${nextInvoiceNumber()}"></label>
+      <label class="invoice-float"><span>Сумма, ₽</span><input id="invAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder=" " value="${amount}"></label>
     </div>
-    <div class="invoice-payer-row"><div class="field"><label>Плательщик</label><input id="invPayer" value="${esc(c.name)}"></div>
-      <div class="field"><label>ИНН</label><input id="invPayerInn" inputmode="numeric" value="${esc(rememberedPayerInn(c))}"></div></div>
-    <div class="field"><label>Сумма, ₽</label><input id="invAmount" type="number" min="0" step="0.01" inputmode="decimal" value="${amount}"></div>
-    <div class="field"><label>Назначение платежа</label><textarea id="invPurpose" class="autogrow">Оплата юридических услуг по ${esc(purposeBasis)}</textarea></div>
+    <div class="invoice-payer-row">
+      <label class="invoice-float"><span>Плательщик</span><input id="invPayer" placeholder=" " value="${esc(c.name)}"></label>
+      <label class="invoice-float"><span>ИНН</span><input id="invPayerInn" inputmode="numeric" placeholder=" " value="${esc(rememberedPayerInn(c))}"></label>
+    </div>
+    <label class="invoice-float invoice-purpose"><span>Назначение платежа</span><textarea id="invPurpose" class="autogrow" placeholder=" ">Оплата юридических услуг по ${esc(purposeBasis)}</textarea></label>
     <div id="issuedInvoicesContainer">${issuedInvoicesHtml(ct)}</div>
-    <div class="err" id="invErr"></div><div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button><button type="button" class="btn" onclick="saveInvoice()">Создать счёт</button></div>`);
+    <div class="err" id="invErr"></div><div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button><button type="button" class="btn" onclick="saveInvoice()">Создать счёт</button></div>`, false, 'invoice-form');
   autoGrowTextarea(document.getElementById('invPurpose'));
 }
 async function saveInvoice(){
@@ -6958,7 +6980,7 @@ function customFieldHtmlForPdf(s){
     editing:null, editorKey:null, editorBaseline:'', editorSource:null, dialogAction:null,
     focusId:null, toastTimer:null, pendingSync:false, dateDrag:null, suppressClickUntil:0, expandedMobile:new Set(),
     linkApproval:{client:false,contract:false}, linkCandidate:null, customAnchor:null,
-    editorChoices:{client:[],contract:[]}, quickChoices:{client:[],contract:[]}, filterChoices:{client:[],contract:[]}, quickFilterKind:null, quickActiveIndex:0, quickSaving:false
+    editorChoices:{client:[],contract:[]}, quickChoices:{client:[],contract:[]}, filterChoices:{client:[],contract:[]}, quickFilterKind:null, quickActiveIndex:0, quickSaving:false, syncRetrying:false, syncDialogId:null
   };
 
   function calUuid(){
@@ -6981,7 +7003,13 @@ function customFieldHtmlForPdf(s){
       end_time_must_be_later:'Время окончания должно быть позже начала.',
       too_many_reminders:'Можно указать не более пяти напоминаний.',
       invalid_reminder:'Проверьте формат напоминаний.', version_conflict:'Запись уже изменилась в другой вкладке или Google Calendar.',
-      google_not_connected:'Google Calendar не подключён.', google_calendar_not_selected:'Календарь Work не выбран.'
+      google_not_connected:'Google Calendar не подключён.', google_calendar_not_selected:'Календарь Work не выбран.',
+      google_upsert_400:'Google Calendar отклонил событие: не приняты дата, время или параметры записи. Повтор сам по себе ошибку 400 обычно не устраняет.',
+      google_upsert_401:'Нет доступа к Google Calendar. Подключите календарь заново.',
+      google_upsert_403:'Google Calendar запретил запись в календарь Work.',
+      google_upsert_404:'Событие в Google Calendar не найдено. Повтор создаст его заново.',
+      google_upsert_409:'Событие в Google Calendar уже существует. Нажмите «Повторить».',
+      google_upsert_429:'Google Calendar временно ограничил запросы. Подождите минуту и повторите.'
     };
     return map[code]||('Ошибка: '+code.replace(/_/g,' '));
   }
@@ -7065,7 +7093,7 @@ function customFieldHtmlForPdf(s){
               <div class="cal-editor-link hidden" id="calendarEditorLinkSuggestion"></div>
               <div class="cal-editor-info-grid">
               <div class="cal-editor-field"><label for="calendarEditorReminders">Напоминания — до 5</label><textarea id="calendarEditorReminders" rows="2" placeholder="2 нед., 1 нед., 3 д., 3 ч., 1 ч."></textarea></div>
-              <div class="cal-place-stack"><div class="cal-editor-field"><label for="calendarEditorLocation">Место или ссылка</label><textarea id="calendarEditorLocation" rows="2"></textarea></div><div class="cal-editor-sync hidden" id="calendarEditorSync">${calIcon('sync')}<span id="calendarEditorSyncText">Сохранено в CRM. Синхронизация не выполнена.</span><button type="button" onclick="calendarEditorRetrySync()">Повторить</button></div></div>
+              <div class="cal-place-stack"><div class="cal-editor-field"><label for="calendarEditorLocation">Место или ссылка</label><textarea id="calendarEditorLocation" rows="2"></textarea></div><div class="cal-editor-sync hidden" id="calendarEditorSync">${calIcon('sync')}<span id="calendarEditorSyncText">Сохранено в CRM. Синхронизация не выполнена.</span><button type="button" id="calendarEditorRetrySync" onclick="calendarEditorRetrySync()">Повторить</button></div></div>
               </div>
               <input id="calendarEditorUrgent" type="checkbox" hidden>
               <div class="cal-editor-history hidden" id="calendarEditorHistory"></div>
@@ -7427,11 +7455,24 @@ function customFieldHtmlForPdf(s){
     return list.sort(calRecordSort);
   }
   function calRecordSort(a,b){
-    if(a.status==='overdue'&&b.status!=='overdue')return -1;if(b.status==='overdue'&&a.status!=='overdue')return 1;
-    if(!a.date&&b.date)return -1;if(a.date&&!b.date)return 1;
-    const byDate=String(a.date||'').localeCompare(String(b.date||''));if(byDate)return byDate;
-    if(Boolean(a.allDay)!==Boolean(b.allDay))return a.allDay?-1:1;
-    return String(a.startTime||'').localeCompare(String(b.startTime||''))||String(a.title||'').localeCompare(String(b.title||''),'ru');
+    const aDated=!!a.date, bDated=!!b.date;
+    if(aDated!==bDated) return aDated?1:-1;
+    if(aDated){
+      const byDate=String(a.date||'').localeCompare(String(b.date||''));
+      if(byDate) return byDate;
+      const aAll=!!a.allDay, bAll=!!b.allDay;
+      if(aAll!==bAll) return aAll?-1:1;
+      if(!aAll){
+        const byTime=String(a.startTime||'').localeCompare(String(b.startTime||''));
+        if(byTime) return byTime;
+      }
+    }
+    if(Boolean(a.urgent)!==Boolean(b.urgent)) return a.urgent?-1:1;
+    const byMoves=(Number(b.moveCount)||0)-(Number(a.moveCount)||0);
+    if(byMoves) return byMoves;
+    const byCreated=String(a.createdAt||a.id||'').localeCompare(String(b.createdAt||b.id||''));
+    if(byCreated) return byCreated;
+    return String(a.title||'').localeCompare(String(b.title||''),'ru');
   }
   function calFilterCount(){const f=cal.filters;return [f.q,f.client,f.contract,f.urgent,f.moved].filter(Boolean).length+(calRuToIso(f.from,true)?1:0)+(calRuToIso(f.to,true)?1:0)+(cal.archive&&f.completed!==f.cancelled?1:0);}
 
@@ -7757,13 +7798,7 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
       history.innerHTML='<details><summary>История переносов · '+record.moveCount+'</summary><ul><li>Первый невыполненный срок: '+calEscape(calIsoToRu(record.firstMissedDate)||'—')+'</li><li>Текущая дата: '+calEscape(calIsoToRu(record.date)||'Без даты')+'</li><li>Прошло с первого срока: '+since+' д.</li>'+moves.map(move=>'<li>'+calEscape(calIsoToRu(move.from)||'Без даты')+' → '+calEscape(calIsoToRu(move.to)||'Без даты')+'</li>').join('')+'</ul></details>';history.classList.remove('hidden');
     }else{history.classList.add('hidden');history.textContent='';}
     const error=document.getElementById('calendarEditorError');error.classList.add('hidden');error.textContent='';
-    const syncBox=document.getElementById('calendarEditorSync'),syncText=document.getElementById('calendarEditorSyncText');
-    if(syncBox){
-      if(record&&record.sync&&['pending','error','disconnected'].includes(record.sync.state)){
-        if(syncText)syncText.textContent=record.sync.state==='pending'?'Сохранено в CRM и ожидает передачи в Google Calendar.':'Сохранено в CRM. Синхронизация не выполнена.';
-        syncBox.classList.remove('hidden');
-      }else{syncBox.classList.add('hidden');}
-    }
+    calPaintEditorSync(record);
     window.calendarEditorAllDayChanged();
     document.querySelectorAll('#calendarEditorForm textarea').forEach(calAutoGrow);calAutoGrow(document.getElementById('calendarEditorDesktopName'));calSyncTextareaGroup(['calendarEditorReminders','calendarEditorLocation']);cal.editorBaseline=calEditorFormSnapshot();
   }
@@ -7780,6 +7815,29 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
   function calSnapshot(record){
     const date=record.date?calIsoToRu(record.date):'',time=record.allDay?'':(record.startTime||'');
     const first=[date,time].filter(Boolean).join(' '),desc=String(record.description||'').trim();return [first,record.title+(desc?' ('+desc+')':'')].filter(Boolean).join(' - ');
+  }
+
+  function calTechCode(code){
+    const raw=String(code||'');
+    const upsert=raw.match(/^google_upsert_(\d+)$/i);
+    if(upsert) return 'Google upsert '+upsert[1];
+    return raw.replace(/_/g,' ');
+  }
+  function calPaintEditorSync(record, retrying){
+    const syncBox=document.getElementById('calendarEditorSync'),syncText=document.getElementById('calendarEditorSyncText');
+    const retryBtn=document.getElementById('calendarEditorRetrySync');
+    if(!syncBox) return;
+    const failed=record&&record.sync&&['pending','error','disconnected'].includes(record.sync.state);
+    if(retryBtn) retryBtn.disabled=!!retrying;
+    syncBox.classList.toggle('retrying', !!retrying);
+    if(!failed && !retrying){syncBox.classList.add('hidden');return;}
+    if(syncText && !retrying) syncText.textContent=record&&record.sync&&record.sync.state==='pending'?'Сохранено в CRM и ожидает передачи в Google Calendar.':'Сохранено в CRM. Синхронизация не выполнена.';
+    syncBox.classList.remove('hidden');
+  }
+  async function calReloadNow(){
+    let n=0;
+    while(cal.loading && n++<40) await new Promise(r=>setTimeout(r,50));
+    await calLoadRecords(true);
   }
 
   function calDialog(html,extraClass){const content=document.getElementById('calendarDialogContent'),overlay=document.getElementById('calendarDialogOverlay');content.className='cal-confirm-dialog'+(extraClass?' '+extraClass:'');content.innerHTML=html;if(overlay)overlay.classList.toggle('cal-floating-dialog',extraClass==='cal-columns-panel');calOpenOverlay('calendarDialogOverlay');}
@@ -8187,12 +8245,45 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
   window.calendarMenuDelete=function(){const id=cal.menuId;calHideMenu();calConfirm('Удалить запись?','Запись будет удалена из CRM и Google Calendar. Техническое восстановление доступно в течение одной недели.','Удалить',()=>calAction(id,'delete'),true);};
   window.calendarOpenGoogle=function(){const r=cal.records.find(x=>x.id===cal.menuId);calHideMenu();if(r&&r.sync&&r.sync.googleEventId&&r.sync.googleCalendarId){const raw=r.sync.googleEventId+' '+r.sync.googleCalendarId,eid=btoa(raw).replace(/=+$/,'');window.open('https://calendar.google.com/calendar/event?eid='+encodeURIComponent(eid),'_blank','noopener');}};
   window.calendarShowSyncError=function(id){
-    const r=cal.records.find(x=>x.id===id);if(!r)return;const pending=r.sync&&r.sync.state==='pending',code=r.sync&&r.sync.errorCode,description=code?calErrorMessage({code}):'Worker ещё не завершил передачу записи в Google Calendar.';
-    cal.dialogAction=()=>{window.calendarDialogClose();if(pending)calKickSync();else window.calendarRetrySync(id);};
-    calDialog('<h3>'+(pending?'Ожидает синхронизации':'Запись не синхронизирована')+'</h3><p>'+calEscape(description)+'</p><div class="cal-dialog-actions two"><button type="button" onclick="calendarDialogClose()">Закрыть</button><button type="button" class="primary" onclick="calendarDialogConfirm()">'+(pending?'Запустить сейчас':'Повторить')+'</button></div>');
+    const r=cal.records.find(x=>x.id===id);if(!r)return;
+    const pending=r.sync&&r.sync.state==='pending',code=r.sync&&r.sync.errorCode;
+    const description=pending?'Worker ещё не завершил передачу записи в Google Calendar.':(code?calErrorMessage({code}):'Google Calendar не принял событие.');
+    const tech=(!pending && code)?'<p class="cal-sync-code">'+calEscape(calTechCode(code))+'</p>':'';
+    cal.dialogAction=null;cal.syncDialogId=id;
+    calDialog('<h3>'+(pending?'Ожидает синхронизации':'Не синхронизировано')+'</h3><p>'+calEscape(description)+'</p>'+tech+'<div class="cal-dialog-actions two"><button type="button" onclick="calendarDialogClose()">Закрыть</button><button type="button" class="primary" id="calendarSyncDialogRetry" onclick="'+(pending?'calendarKickSyncNow()':'calendarRetrySyncFromDialog(\''+calEscape(id)+'\')')+'">'+(pending?'Запустить сейчас':'Повторить')+'</button></div>','cal-sync-dialog');
   };
-  window.calendarRetrySync=async function(id){try{await calApi('/api/records/'+encodeURIComponent(id)+'/retry',{method:'POST'});calSetError('');calKickSync();}catch(error){calSetError(calErrorMessage(error),false);}};
-  window.calendarEditorRetrySync=function(){if(cal.editing)window.calendarRetrySync(cal.editing.id);};
+  window.calendarKickSyncNow=function(){window.calendarDialogClose();calKickSync();};
+  window.calendarRetrySyncFromDialog=function(id){window.calendarRetrySync(id, document.getElementById('calendarSyncDialogRetry'));};
+  window.calendarRetrySync=async function(id, trigger){
+    if(cal.syncRetrying) return;
+    cal.syncRetrying=true;
+    const dialogBtn=trigger&&trigger.id==='calendarSyncDialogRetry'?trigger:null;
+    const record=cal.records.find(r=>r.id===id)||cal.editing;
+    calPaintEditorSync(record, true);
+    if(dialogBtn){dialogBtn.disabled=true;dialogBtn.classList.add('retrying');}
+    try{
+      await calApi('/api/records/'+encodeURIComponent(id)+'/retry',{method:'POST'});
+      calSetError('');
+      try{await calApi('/api/sync',{method:'POST'});}catch(_sync){}
+      await calReloadNow();
+      const fresh=cal.records.find(r=>r.id===id);
+      if(cal.editing && cal.editing.id===id && fresh) cal.editing=fresh;
+      const ok=!fresh || !fresh.sync || !['pending','error','disconnected'].includes(fresh.sync.state);
+      calPaintEditorSync(fresh, false);
+      if(ok){
+        if(cal.syncDialogId===id) window.calendarDialogClose();
+      }else if(dialogBtn){
+        dialogBtn.disabled=false;dialogBtn.classList.remove('retrying');
+      }
+    }catch(error){
+      calPaintEditorSync(record, false);
+      if(dialogBtn){dialogBtn.disabled=false;dialogBtn.classList.remove('retrying');}
+      calSetError(calErrorMessage(error),false);
+    }finally{
+      cal.syncRetrying=false;
+    }
+  };
+  window.calendarEditorRetrySync=function(){if(cal.editing)window.calendarRetrySync(cal.editing.id, document.getElementById('calendarEditorRetrySync'));};
   window.calendarBulk=function(action,urgentValue){
     const ids=[...cal.selected];if(!ids.length)return;
     const urgent=action==='urgent'?(typeof urgentValue==='boolean'?urgentValue:ids.some(id=>{const r=cal.records.find(item=>item.id===id);return r&&!r.urgent;})):undefined;
@@ -8203,7 +8294,7 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
     try{const activeIds=ids.filter(id=>cal.records.some(record=>record.id===id&&record.status==='completed'));if(!activeIds.length)return;const result=await calApi('/api/records/bulk',{method:'POST',body:JSON.stringify({ids:activeIds,action:'restore'})});(result.results||[]).forEach(item=>{if(item.body&&item.body.record)calReplaceRecord(item.body.record);});window.calendarRender();calKickSync();}catch(error){calSetError(calErrorMessage(error),false);}
   }
 
-  window.calendarDialogClose=function(){cal.dialogAction=null;const overlay=document.getElementById('calendarDialogOverlay');if(overlay)overlay.classList.remove('cal-floating-dialog');calCloseOverlay('calendarDialogOverlay');};
+  window.calendarDialogClose=function(){cal.dialogAction=null;cal.syncDialogId=null;const overlay=document.getElementById('calendarDialogOverlay');if(overlay)overlay.classList.remove('cal-floating-dialog');calCloseOverlay('calendarDialogOverlay');};
   window.calendarDialogConfirm=function(){const action=cal.dialogAction;cal.dialogAction=null;const overlay=document.getElementById('calendarDialogOverlay');if(overlay)overlay.classList.remove('cal-floating-dialog');calCloseOverlay('calendarDialogOverlay');if(action)action();};
   window.calendarCustomClose=function(){
     const overlay=document.getElementById('calendarCustomOverlay'),content=document.getElementById('calendarCustomContent');

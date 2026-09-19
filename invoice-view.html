@@ -15,8 +15,9 @@
     body{margin:0;background:#eee8f5;color:var(--ink);font:14px/1.45 Arial,sans-serif}
     .page{max-width:940px;margin:24px auto}
     .actions{position:fixed;right:16px;bottom:16px;z-index:2;margin:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-    .actions button{border:1px solid var(--line);border-radius:9px;padding:9px 13px;background:#fff;color:var(--ink);font-weight:700;cursor:pointer;box-shadow:0 2px 10px #2b1a6b24}
+    .actions button,.actions .pdf-save-link{border:1px solid var(--line);border-radius:9px;padding:9px 13px;background:#fff;color:var(--ink);font-weight:700;cursor:pointer;box-shadow:0 2px 10px #2b1a6b24;text-decoration:none;display:inline-block}
     .actions button:disabled{opacity:.65;cursor:wait}
+    .actions button[hidden],.actions .pdf-save-link[hidden]{display:none}
     .download-err{max-width:220px;color:#8f1d1d;font-size:11px;line-height:1.35;text-align:right}
     .download-err:empty{display:none}
     #invoicePdfArea{position:fixed;left:-12000px;top:0;width:794px;background:#fff;pointer-events:none;z-index:-1}
@@ -106,7 +107,7 @@
 </head>
 <body>
   <main class="page">
-    <div class="actions"><button type="button" id="downloadPdf" hidden>Скачать PDF</button><div id="downloadPdfErr" class="download-err"></div></div>
+    <div class="actions"><button type="button" id="downloadPdf" hidden>Скачать PDF</button><a class="pdf-save-link" id="savePdfLink" hidden>Сохранить PDF</a><div id="downloadPdfErr" class="download-err"></div></div>
     <div id="root"></div>
   </main>
   <div id="invoicePdfArea" aria-hidden="true"></div>
@@ -124,12 +125,52 @@
         img.addEventListener('error',resolve,{once:true});
       })));
     }
+    function invoiceIsMobile(){
+      const ua=navigator.userAgent||'';
+      if(/iPhone|iPad|iPod|Android/i.test(ua)) return true;
+      return navigator.maxTouchPoints>1 && window.matchMedia('(pointer:coarse)').matches;
+    }
+    async function deliverInvoicePdf(pdf, fileName, err){
+      if(!invoiceIsMobile()){
+        pdf.save(fileName);
+        return;
+      }
+      const blob=pdf.output('blob');
+      let file=null;
+      try{file=new File([blob], fileName, {type:'application/pdf'});}catch(_e){}
+      if(file && navigator.canShare){
+        try{
+          if(navigator.canShare({files:[file]})){
+            await navigator.share({files:[file], title:fileName});
+            return;
+          }
+        }catch(e){
+          if(e && e.name==='AbortError') return;
+        }
+      }
+      const url=URL.createObjectURL(blob);
+      const link=document.getElementById('savePdfLink');
+      if(link){
+        link.href=url;
+        link.download=fileName;
+        link.hidden=false;
+      }
+      const opened=window.open(url,'_blank','noopener');
+      if(!opened){
+        const a=document.createElement('a');
+        a.href=url; a.download=fileName; a.rel='noopener';
+        document.body.appendChild(a); a.click(); a.remove();
+      }
+      if(err && link && !link.hidden) err.textContent='Если файл не открылся, нажми «Сохранить PDF».';
+    }
     async function downloadInvoicePdf(d){
       const btn=document.getElementById('downloadPdf');
       const err=document.getElementById('downloadPdfErr');
       const sheet=document.querySelector('.invoice-sheet');
       const area=document.getElementById('invoicePdfArea');
+      const saveLink=document.getElementById('savePdfLink');
       err.textContent='';
+      if(saveLink) saveLink.hidden=true;
       if(!sheet||!area) return;
       if(typeof html2canvas==='undefined'||!window.jspdf){
         err.textContent='Не загрузились библиотеки PDF. Проверь интернет и обнови страницу.';
@@ -137,7 +178,15 @@
       }
       btn.disabled=true;
       btn.textContent='Формирую…';
+      const mobile=invoiceIsMobile();
+      const prevLeft=area.style.left, prevTop=area.style.top, prevOpacity=area.style.opacity, prevTransform=area.style.transform;
       try{
+        if(mobile){
+          area.style.left='0';
+          area.style.top='0';
+          area.style.opacity='0.02';
+          area.style.transform='none';
+        }
         area.innerHTML='';
         const clone=sheet.cloneNode(true);
         clone.querySelectorAll('[data-qr]').forEach(el=>{el.innerHTML='';});
@@ -146,7 +195,7 @@
         RaleksizInvoice.fitAmounts(clone);
         await waitImages(clone);
         await new Promise(r=>setTimeout(r,80));
-        const canvas=await html2canvas(clone,{scale:2,backgroundColor:'#ffffff',useCORS:true,allowTaint:false,windowWidth:900});
+        const canvas=await html2canvas(clone,{scale:2,backgroundColor:'#ffffff',useCORS:true,allowTaint:false,windowWidth:900,scrollX:0,scrollY:0});
         const {jsPDF}=window.jspdf;
         const pdf=new jsPDF('p','mm','a4');
         const pw=210, ph=297;
@@ -161,11 +210,15 @@
           pdf.addImage(img,'JPEG',0,pos,iw,ih);
           left-=ph;
         }
-        pdf.save(invoiceFileName(d,false));
+        await deliverInvoicePdf(pdf, invoiceFileName(d,false), err);
       }catch(e){
         err.textContent='Не удалось сохранить PDF. Повтори попытку.';
       }finally{
         area.innerHTML='';
+        area.style.left=prevLeft;
+        area.style.top=prevTop;
+        area.style.opacity=prevOpacity;
+        area.style.transform=prevTransform;
         btn.disabled=false;
         btn.textContent='Скачать PDF';
       }
