@@ -256,7 +256,7 @@
     var amountText = '';
     if (count > 1) {
       var unit = Math.round((amount - extra) / count);
-      amountText = ' (по ' + unit.toLocaleString('ru-RU') + ' ₽ × ' + count + ')';
+      amountText = ' (' + unit.toLocaleString('ru-RU') + ' ₽ × ' + count + ')';
     } else if (amount) {
       var displayAmount = (/зач[её]т/i.test(name)) ? Math.abs(Math.round(amount)) : Math.round(amount);
       amountText = ' (' + displayAmount.toLocaleString('ru-RU') + ' ₽)';
