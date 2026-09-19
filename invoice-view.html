@@ -135,129 +135,54 @@
       const ua=navigator.userAgent||'';
       return /Android|iPhone|iPad|iPod/i.test(ua) || (navigator.maxTouchPoints>1 && window.matchMedia('(pointer:coarse)').matches);
     }
-    function withTimeout(promise, ms){
-      return Promise.race([
-        promise,
-        new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')), ms))
-      ]);
+    function savePhonePdf(){
+      window.print();
     }
-    function triggerFileDownload(url, fileName){
-      const a=document.createElement('a');
-      a.href=url;
-      a.download=fileName;
-      a.rel='noopener';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-    async function buildInvoicePdf(phone){
+    async function buildInvoicePdf(d){
       const sheet=document.querySelector('.invoice-sheet');
       const area=document.getElementById('invoicePdfArea');
       if(!sheet||!area) throw new Error('no-sheet');
       if(typeof html2canvas==='undefined'||!window.jspdf) throw new Error('no-libs');
-      const prev={left:area.style.left,top:area.style.top,opacity:area.style.opacity,zIndex:area.style.zIndex};
       area.innerHTML='';
-      if(phone){
-        area.style.left='0';
-        area.style.top='0';
-        area.style.opacity='1';
-        area.style.zIndex='-1';
-      }
       const clone=sheet.cloneNode(true);
       clone.querySelectorAll('[data-qr]').forEach(el=>{el.innerHTML='';});
       area.appendChild(clone);
       RaleksizInvoice.drawQrs(clone);
       RaleksizInvoice.fitAmounts(clone);
-      try{
-        await waitImages(clone);
-        await new Promise(r=>setTimeout(r,80));
-        const canvas=await withTimeout(html2canvas(clone,{
-          scale:phone?1:2,
-          backgroundColor:'#ffffff',
-          useCORS:true,
-          allowTaint:true,
-          logging:false,
-          windowWidth:900,
-          scrollX:0,
-          scrollY:0
-        }), phone?12000:30000);
-        const {jsPDF}=window.jspdf;
-        const pdf=new jsPDF('p','mm','a4');
-        const pw=210, ph=297;
-        const iw=pw, ih=canvas.height*pw/canvas.width;
-        const img=canvas.toDataURL('image/jpeg',0.92);
-        let left=ih, pos=0;
-        pdf.addImage(img,'JPEG',0,0,iw,ih);
+      await waitImages(clone);
+      await new Promise(r=>setTimeout(r,80));
+      const canvas=await html2canvas(clone,{scale:2,backgroundColor:'#ffffff',useCORS:true,allowTaint:false,windowWidth:900,scrollX:0,scrollY:0});
+      const {jsPDF}=window.jspdf;
+      const pdf=new jsPDF('p','mm','a4');
+      const pw=210, ph=297;
+      const iw=pw, ih=canvas.height*pw/canvas.width;
+      const img=canvas.toDataURL('image/jpeg',0.95);
+      let left=ih, pos=0;
+      pdf.addImage(img,'JPEG',0,0,iw,ih);
+      left-=ph;
+      while(left>0){
+        pos-=ph;
+        pdf.addPage();
+        pdf.addImage(img,'JPEG',0,pos,iw,ih);
         left-=ph;
-        while(left>0){
-          pos-=ph;
-          pdf.addPage();
-          pdf.addImage(img,'JPEG',0,pos,iw,ih);
-          left-=ph;
-        }
-        return {pdf};
-      }finally{
-        area.innerHTML='';
-        area.style.left=prev.left;
-        area.style.top=prev.top;
-        area.style.opacity=prev.opacity;
-        area.style.zIndex=prev.zIndex;
       }
-    }
-    function armPdfLink(url, fileName){
-      const btn=document.getElementById('downloadPdf');
-      const link=document.getElementById('savePdfLink');
-      if(btn) btn.hidden=true;
-      if(!link) return;
-      link.href=url;
-      link.download=fileName;
-      link.removeAttribute('target');
-      link.rel='noopener';
-      link.textContent='Скачать PDF';
-      link.hidden=false;
+      area.innerHTML='';
+      return {pdf, fileName:invoiceFileName(d,false)};
     }
     async function downloadInvoicePdf(d){
       const btn=document.getElementById('downloadPdf');
       const err=document.getElementById('downloadPdfErr');
+      const saveLink=document.getElementById('savePdfLink');
       err.textContent='';
+      if(saveLink) saveLink.hidden=true;
       btn.disabled=true;
       btn.textContent='Формирую…';
       try{
-        const built=await buildInvoicePdf(false);
-        built.pdf.save(invoiceFileName(d,false));
+        const built=await buildInvoicePdf(d);
+        built.pdf.save(built.fileName);
       }catch(e){
         err.textContent='Не удалось сохранить PDF. Повтори попытку.';
       }finally{
-        btn.disabled=false;
-        btn.textContent='Скачать PDF';
-      }
-    }
-    let phonePdfJob=null;
-    function ensurePhonePdf(d){
-      if(phonePdfJob) return phonePdfJob;
-      phonePdfJob=(async()=>{
-        const built=await buildInvoicePdf(true);
-        const fileName=invoiceFileName(d,false);
-        const blob=new Blob([built.pdf.output('arraybuffer')],{type:'application/octet-stream'});
-        const url=URL.createObjectURL(blob);
-        armPdfLink(url, fileName);
-        return {fileName, url};
-      })();
-      return phonePdfJob.catch(err=>{phonePdfJob=null;throw err;});
-    }
-    async function savePhonePdf(d){
-      const btn=document.getElementById('downloadPdf');
-      const err=document.getElementById('downloadPdfErr');
-      err.textContent='';
-      btn.disabled=true;
-      btn.textContent='Формирую…';
-      try{
-        const ready=await ensurePhonePdf(d);
-        triggerFileDownload(ready.url, ready.fileName);
-        const link=document.getElementById('savePdfLink');
-        if(link && !link.hidden) link.click();
-      }catch(e){
-        err.textContent='Не удалось сохранить PDF. Повтори попытку.';
         btn.disabled=false;
         btn.textContent='Скачать PDF';
       }
@@ -288,12 +213,7 @@
         btn.hidden=false;
         btn.disabled=false;
         btn.textContent='Скачать PDF';
-        if(invoiceIsPhone()){
-          btn.onclick=function(){savePhonePdf(d);};
-          ensurePhonePdf(d).catch(function(){});
-        }else{
-          btn.onclick=function(){downloadInvoicePdf(d);};
-        }
+        btn.onclick=invoiceIsPhone()?savePhonePdf:function(){downloadInvoicePdf(d);};
       }catch(e){root.innerHTML='<p>Не удалось сформировать обязательный QR-код. Счёт не показан.</p>'}
     })();
   </script>
