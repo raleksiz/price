@@ -636,14 +636,26 @@ function formatAppliedLabel(a){
   if(typeof Calculator!=='undefined' && Calculator.formatAppliedLabel) return Calculator.formatAppliedLabel(a);
   const name=String(a.name||'').trim();
   const comment=String(a.comment||'').trim();
-  const amount=Math.round(Number(a.amount)||0);
-  if(/скидка исполнителя/i.test(name) && amount) return name+' ('+amount.toLocaleString('ru-RU')+')';
-  return comment ? name+' ('+comment+')' : name;
+  const extra=Number(a.extraAmount)||0;
+  const count=!a.actualExpenses && Number(a.count)>1 ? Number(a.count) : 0;
+  const total=Math.round(Number(a.amount)||0);
+  let amountText='';
+  if(/скидка исполнителя/i.test(name) && total) amountText=' ('+money(total)+')';
+  else if(count>1){
+    const unit=Math.round((total-extra)/count);
+    amountText=' (по '+money(unit)+' × '+count+')';
+  }else if(total){
+    amountText=' ('+money(total)+')';
+  }
+  return name+amountText+(comment?' — '+comment:'');
 }
 function appliedHtml(s,expanded=false){
   const arr=appliedItems(s);
   if(!arr.length) return '';
-  const items=arr.map(a=>`<li>${esc(formatAppliedLabel(a))}</li>`).join('');
+  const items=arr.map(a=>{
+    const extra=Number(a.extraAmount)||0;
+    return `<li>${esc(formatAppliedLabel(a))}${extra?' — фактические расходы: '+money(extra):''}</li>`;
+  }).join('');
   return `<details class="applied-box" data-field-key="applied" ${expanded?'open':''}><summary>Применённые надбавки/скидки</summary><ul class="applied-list">${items}</ul></details>`;
 }
 function customFieldValue(raw){

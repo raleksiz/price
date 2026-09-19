@@ -247,20 +247,23 @@
     // Для "Скидка по тарифу" тоже показываем целую сумму корректировки.
     if (/скидка по тарифу/i.test(name) || /скидка исполнителя/i.test(name)) {
       var tariffAmount = Math.round(n(item && item.amount));
-      return tariffAmount ? name + ' (' + tariffAmount.toLocaleString('ru-RU') + ')' : name;
+      return tariffAmount ? name + ' (' + tariffAmount.toLocaleString('ru-RU') + ' ₽)' : name;
+    }
+
+    var amount = n(item && item.amount);
+    var extra = n(item && item.extraAmount);
+    var count = !item.actualExpenses && n(item && item.count) > 1 ? n(item.count) : 0;
+    var amountText = '';
+    if (count > 1) {
+      var unit = Math.round((amount - extra) / count);
+      amountText = ' (по ' + unit.toLocaleString('ru-RU') + ' ₽ × ' + count + ')';
+    } else if (amount) {
+      var displayAmount = (/зач[её]т/i.test(name)) ? Math.abs(Math.round(amount)) : Math.round(amount);
+      amountText = ' (' + displayAmount.toLocaleString('ru-RU') + ' ₽)';
     }
 
     var comment = formatAppliedComment(item);
-    if (comment) return name + ' (' + comment + ')';
-
-    // Если комментарий не сформирован (например, для "Доверитель — ЮЛ/ИП"),
-    // в скобках показываем рассчитанную сумму (как в PDF/таблице).
-    var amount = n(item && item.amount);
-    if (amount) {
-      var displayAmount = (/зач[её]т/i.test(name)) ? Math.abs(Math.round(amount)) : Math.round(amount);
-      return name + ' (' + displayAmount.toLocaleString('ru-RU') + ')';
-    }
-    return name;
+    return name + amountText + (comment ? ' — ' + comment : '');
   }
 
   function formatAppliedList(applied) {
