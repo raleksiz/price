@@ -120,26 +120,23 @@
       return head+n+(dt?' от '+dt:'')+'.pdf';
     }
     function waitImages(node){
-      return Promise.all([...node.querySelectorAll('img')].map(img=>img.complete&&img.naturalWidth?Promise.resolve():new Promise(resolve=>{
-        img.addEventListener('load',resolve,{once:true});
-        img.addEventListener('error',resolve,{once:true});
-      })));
+      return Promise.all([...node.querySelectorAll('img')].map(img=>{
+        if(img.complete) return Promise.resolve();
+        return Promise.race([
+          new Promise(resolve=>{
+            img.addEventListener('load',resolve,{once:true});
+            img.addEventListener('error',resolve,{once:true});
+          }),
+          new Promise(resolve=>setTimeout(resolve,2500))
+        ]);
+      }));
     }
     function invoiceIsPhone(){
       const ua=navigator.userAgent||'';
       return /Android|iPhone|iPad|iPod/i.test(ua) || (navigator.maxTouchPoints>1 && window.matchMedia('(pointer:coarse)').matches);
     }
-    function armPdfLink(url, fileName){
-      const btn=document.getElementById('downloadPdf');
-      const link=document.getElementById('savePdfLink');
-      const err=document.getElementById('downloadPdfErr');
-      if(btn) btn.hidden=true;
-      if(!link) return;
-      link.href=url;
-      link.download=fileName;
-      link.textContent='Скачать PDF';
-      link.hidden=false;
-      if(err) err.textContent='';
+    function savePhonePdf(){
+      window.print();
     }
     async function buildInvoicePdf(d){
       const sheet=document.querySelector('.invoice-sheet');
@@ -190,23 +187,6 @@
         btn.textContent='Скачать PDF';
       }
     }
-    async function preparePhonePdf(d){
-      const btn=document.getElementById('downloadPdf');
-      const err=document.getElementById('downloadPdfErr');
-      btn.hidden=false;
-      btn.disabled=true;
-      btn.textContent='Готовлю PDF…';
-      try{
-        const built=await buildInvoicePdf(d);
-        const url=URL.createObjectURL(built.pdf.output('blob'));
-        armPdfLink(url, built.fileName);
-      }catch(e){
-        btn.disabled=false;
-        btn.textContent='Скачать PDF';
-        btn.onclick=function(){downloadInvoicePdf(d);};
-        err.textContent='Не удалось подготовить PDF. Нажми «Скачать PDF» ещё раз.';
-      }
-    }
     (async()=>{
       if(!/^[A-Za-z0-9]{10,15}$/.test(id)){root.innerHTML='<p>Ссылка на счёт недействительна.</p>';return}
       let d;
@@ -230,11 +210,10 @@
         window.addEventListener('resize',()=>RaleksizInvoice.fitAmounts(root),{passive:true});
         document.title=invoiceFileName(d,false).replace(/\.pdf$/,'');
         const btn=document.getElementById('downloadPdf');
-        if(invoiceIsPhone()) preparePhonePdf(d);
-        else {
-          btn.hidden=false;
-          btn.onclick=function(){downloadInvoicePdf(d);};
-        }
+        btn.hidden=false;
+        btn.disabled=false;
+        btn.textContent='Скачать PDF';
+        btn.onclick=invoiceIsPhone()?savePhonePdf:function(){downloadInvoicePdf(d);};
       }catch(e){root.innerHTML='<p>Не удалось сформировать обязательный QR-код. Счёт не показан.</p>'}
     })();
   </script>
