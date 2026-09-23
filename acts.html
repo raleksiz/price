@@ -1573,7 +1573,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
 #calendarCustomOverlay.cal-custom-popover{background:transparent;z-index:135}
 .cal-confirm-dialog.cal-custom-menu,.cal-confirm-dialog.cal-custom-picker{position:fixed;left:12px;top:70px;transform:none;width:420px;max-width:calc(100vw - 24px);padding:13px;border:1px solid var(--cal-line);border-radius:12px;box-shadow:var(--cal-shadow)}
 .cal-custom-actions{display:grid;gap:4px}.cal-custom-actions button{width:100%;min-height:38px;border:0;border-radius:8px;background:transparent;padding:8px 9px;text-align:left}.cal-custom-actions button:hover{background:var(--cal-purple-2);color:var(--cal-purple)}
-.cal-crm-menu-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px}.cal-crm-menu-actions .btn{width:100%;min-width:0;min-height:48px;margin:0;padding:7px 5px;white-space:normal;line-height:1.2}
+.cal-crm-menu-actions{display:flex;gap:4px;margin:0}.cal-crm-menu-actions .btn{width:40px;min-width:40px;min-height:40px;margin:0;padding:0;border-radius:8px;font-size:16px;line-height:1;display:grid;place-items:center;box-shadow:none}
 .cal-picker-groups{max-height:60vh;margin:8px 0 11px;gap:12px}.cal-picker-group h4{font-size:12px;margin:0 0 5px;color:#6b5b79}.cal-picker-item{display:grid;grid-template-columns:19px 104px minmax(0,1fr);gap:7px;align-items:center;padding:7px 8px}.cal-picker-item input{grid-row:1/span 2}.cal-picker-item:has(input:checked){border-color:var(--cal-purple-3);background:var(--cal-purple-2)}.cal-picker-when{font-size:11.5px;color:var(--cal-muted);font-variant-numeric:tabular-nums}.cal-picker-title{font-size:12.5px;font-weight:600;line-height:1.3;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.cal-picker-contract{grid-column:2/-1;font-size:11px;color:var(--cal-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cal-custom-picker .cal-dialog-actions{margin-top:0}.cal-custom-picker button:disabled{opacity:.5;cursor:default}
 .cal-cf-calendar-text{width:100%;min-height:38px;margin:0 0 7px;padding:8px 9px;border:1px solid #d8cdfd;border-radius:8px;background:#fbf9ff;resize:none;overflow:hidden;line-height:1.35}.cal-cf-calendar-copy{margin:3px 0;color:inherit;white-space:normal}.c-cf .cal-cf-calendar-copy+div,.c-cf .cal-cf-calendar-copy+ul{margin-top:3px}
 
@@ -1607,11 +1607,11 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
     width:100%!important;min-width:0!important;max-width:none!important;flex:none!important;
     height:43px!important;min-height:43px!important;
   }
-  .cal-crm-menu-actions{display:grid;grid-template-columns:1fr;gap:2px;margin:0}
-  .cal-crm-menu-actions .btn{width:100%;min-height:40px;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;text-align:left;box-shadow:none}
+  .cal-crm-menu-actions{display:flex;gap:4px;margin:0}
+  .cal-crm-menu-actions .btn{width:40px;min-width:40px;min-height:40px;padding:0;border-radius:8px;font-size:16px;line-height:1;display:grid;place-items:center;text-align:center;box-shadow:none}
   .cal-confirm-dialog.cal-crm-menu{
     position:fixed!important;left:auto;right:auto;top:auto;bottom:auto;
-    transform:none!important;width:auto!important;min-width:148px;max-width:min(220px,calc(100vw - 16px));
+    transform:none!important;width:auto!important;min-width:0;max-width:none;
     padding:4px;border-radius:10px;box-shadow:0 8px 24px rgba(80,40,120,.16);
   }
   .cal-crm-menu h3{display:none}
@@ -1822,10 +1822,10 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   .cal-confirm-dialog.cal-move-dialog{left:50%;top:auto;bottom:0;transform:translateX(-50%)}
   .cal-confirm-dialog.cal-crm-menu{
     position:fixed!important;left:auto;top:auto;bottom:auto;right:auto;
-    transform:none!important;width:auto!important;min-width:148px;max-width:min(220px,calc(100vw - 16px));
+    transform:none!important;width:auto!important;min-width:0;max-width:none;
     padding:4px;border-radius:10px;
   }
-  .cal-crm-menu-actions{grid-template-columns:1fr;gap:2px;margin:0}
+  .cal-crm-menu-actions{display:flex;gap:4px;margin:0}
   .cal-filter-toggles button{width:100%!important;min-width:0!important;max-width:none!important;flex:none!important}
 }
 
@@ -8444,15 +8444,16 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
     const menuBtn=document.getElementById('mobileCrmMenuBtn');
     if(menuBtn){menuBtn.classList.add('active');menuBtn.setAttribute('aria-expanded','true');}
     content.className='cal-confirm-dialog cal-crm-menu';
-    content.innerHTML='<div class="cal-crm-menu-actions"><button type="button" class="btn ghost" onclick="calendarCustomClose();openTokenPrompt()">Токен</button><button type="button" class="btn danger" onclick="calendarCustomClose();logout()">Выйти</button></div>';
+    content.innerHTML='<div class="cal-crm-menu-actions"><button type="button" class="btn ghost" onclick="calendarCustomClose();openTokenPrompt()" title="Токен" aria-label="Токен">🔑</button><button type="button" class="btn danger" onclick="calendarCustomClose();logout()" title="Выйти" aria-label="Выйти">🚪</button></div>';
     calOpenOverlay('calendarCustomOverlay');
     requestAnimationFrame(()=>{calPositionCrmMenu();requestAnimationFrame(calPositionCrmMenu);});
   };
   function calPositionCrmMenu(){
     const content=document.getElementById('calendarCustomContent'),btn=document.getElementById('mobileCrmMenuBtn');
     if(!content||!btn||!content.classList.contains('cal-crm-menu'))return;
-    const rect=btn.getBoundingClientRect(),width=Math.min(Math.max(content.offsetWidth||148,148),window.innerWidth-16);
-    content.style.width=width+'px';
+    const rect=btn.getBoundingClientRect();
+    content.style.width='auto';
+    const width=Math.min(content.offsetWidth||88,window.innerWidth-16);
     content.style.left=Math.max(8,Math.min(window.innerWidth-width-8,rect.right-width))+'px';
     content.style.right='auto';
     content.style.top=Math.max(8,rect.top-8-content.offsetHeight)+'px';
