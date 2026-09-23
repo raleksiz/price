@@ -730,16 +730,25 @@ details[open] summary::before{content:"▾ ";}
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
-    max-width:calc(100% - 20px);
+    max-width:calc(100% - 36px);
   }
-  .all-filters .xl-filter-clear{display:none!important;}
+  .all-filters .xl-filter-clear{
+    position:absolute;
+    right:6px;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:3;
+    width:22px;
+    height:22px;
+    font-size:18px;
+  }
   .all-filters label{font-size:11px;}
   .all-filters input,
   .all-filters .xl-filter-input{
     font-size:14px;
     height:43px;
     min-height:43px;
-    padding:16px 9px 6px;
+    padding:16px 28px 6px 9px;
     border:1px solid #ccd6e2;
     border-radius:10px;
     background:#fff;
