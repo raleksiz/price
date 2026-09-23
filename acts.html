@@ -2669,12 +2669,7 @@ function flushPendingSave(){
   }
 }
 window.addEventListener('pagehide', flushPendingSave);
-window.addEventListener('beforeunload', e=>{
-  if(LOCAL_DIRTY && localStorage.getItem(TOKEN_KEY)){
-    e.preventDefault();
-    e.returnValue = '';
-  }
-});
+window.addEventListener('beforeunload', flushPendingSave);
 function withWriteLock(task){
   if(navigator.locks && typeof navigator.locks.request==='function'){
     return navigator.locks.request(WRITE_LOCK_KEY, {mode:'exclusive'}, task);
