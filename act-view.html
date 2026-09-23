@@ -96,7 +96,8 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .svc-scroll{overflow-x:auto;}
 .svc-head-scroll,.svc-body-scroll{overflow-x:hidden;}
 .svc-head-scroll.has-x-overflow,.svc-body-scroll.has-x-overflow{overflow-x:auto;}
-.svc-head-scroll{background:#fff;}
+.svc-scroll-pair{position:relative;z-index:1;overflow:hidden;}
+.svc-head-scroll{position:relative;top:auto;z-index:1;background:#fff;}
 .svc-head-scroll::-webkit-scrollbar,
 .svc-body-scroll::-webkit-scrollbar,
 .svc-scroll::-webkit-scrollbar{height:8px;}
@@ -229,7 +230,7 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .mtot{font-size:12px;color:#666;margin:4px 0 4px;padding-left:2px;}
 .mtot + .svc-month-title{margin-top:22px;}
 
-.totals{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.totals{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;position:relative;z-index:2;background:var(--card);}
 .tot{background:var(--soft);border-radius:10px;padding:7px 9px;min-width:0;flex:1 1 0;text-align:center;}
 .tot .l{font-size:9px;text-transform:uppercase;color:#6E3B8C;font-weight:700;letter-spacing:.3px;white-space:nowrap;}
 .tot .v{font-size:13px;font-weight:800;margin-top:1px;font-variant-numeric:tabular-nums;}
@@ -807,11 +808,10 @@ function filtersTemplate(id, f){
   const idAttr=esc(String(id));
   return `<div class="filter-box ${openClass}">
     <div class="filter-form ${openClass}" id="filters-${idAttr}">
-      <div class="act-filter${f.from?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-from-${idAttr}">Дата с</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.from?'false':'true'}" tabindex="${f.from?'0':'-1'}">×</button><input id="filter-from-${idAttr}" type="text" inputmode="numeric" maxlength="10" autocomplete="off" data-filter="from" value="${esc(f.from||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
-      <div class="act-filter${f.to?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-to-${idAttr}">Дата по</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.to?'false':'true'}" tabindex="${f.to?'0':'-1'}">×</button><input id="filter-to-${idAttr}" type="text" inputmode="numeric" maxlength="10" autocomplete="off" data-filter="to" value="${esc(f.to||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
+      <div class="act-filter${f.from?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-from-${idAttr}">Дата с</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.from?'false':'true'}" tabindex="${f.from?'0':'-1'}">×</button><input id="filter-from-${idAttr}" type="text" class="act-date-input" inputmode="text" maxlength="10" autocomplete="off" data-filter="from" value="${esc(f.from||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
+      <div class="act-filter${f.to?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-to-${idAttr}">Дата по</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.to?'false':'true'}" tabindex="${f.to?'0':'-1'}">×</button><input id="filter-to-${idAttr}" type="text" class="act-date-input" inputmode="text" maxlength="10" autocomplete="off" data-filter="to" value="${esc(f.to||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
       <div class="act-filter${f.code?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-code-${idAttr}">Код услуги</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.code?'false':'true'}" tabindex="${f.code?'0':'-1'}">×</button><input id="filter-code-${idAttr}" type="text" autocomplete="off" data-filter="code" value="${esc(f.code||'')}" placeholder="Все / начните вводить"><div class="act-filter-drop hidden"></div></div>
       <div class="act-filter${f.pay?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-pay-${idAttr}">Статус оплаты</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.pay?'false':'true'}" tabindex="${f.pay?'0':'-1'}">×</button><input id="filter-pay-${idAttr}" type="text" autocomplete="off" data-filter="pay" value="${esc(f.pay||'')}" placeholder="Любой / начните вводить"><div class="act-filter-drop hidden"></div></div>
-    </div>
     </div>
   </div>`;
 }
@@ -921,26 +921,88 @@ function openActFilterDrop(input,opts){
   closeActFilterDrops(box);
   box.classList.remove('hidden');
 }
+function syncActFilterChrome(wrap){
+  const input=wrap&&wrap.querySelector('input[data-filter]');
+  const has=!!(input&&input.value.trim());
+  if(wrap) wrap.classList.toggle('has-value',has);
+  const btn=wrap&&wrap.querySelector('.act-filter-clear');
+  if(btn){
+    btn.setAttribute('aria-hidden',has?'false':'true');
+    btn.tabIndex=has?0:-1;
+  }
+}
+function refreshContractResults(id){
+  if(!CURRENT_CLIENT) return;
+  const ct=getContract(CURRENT_CLIENT,id);
+  const el=document.getElementById('contract-results-'+id);
+  if(!ct||!el) return;
+  el.innerHTML=contractResultsHtml(CURRENT_CLIENT,ct,getFilters(id));
+  bindActScrollPairs(el);
+  applyActChangeHighlights(el);
+}
 function rerenderFromActFilter(input){
   const wrap=input.closest('.act-filter'); if(!wrap) return;
-  const caret=input.selectionStart;
-  renderContractById(wrap.dataset.contractId,{focusFilter:input.dataset.filter,typing:true,caret});
+  syncActFilterChrome(wrap);
+  refreshContractResults(wrap.dataset.contractId);
+  openActFilterDrop(input,{typed:true});
 }
 function pickActFilterValue(input,value){
   const wrap=input.closest('.act-filter'); if(!wrap) return;
   input.value=value;
   input.dataset.filterTyping='';
+  syncActFilterChrome(wrap);
   closeActFilterDrops();
-  renderContractById(wrap.dataset.contractId);
+  refreshContractResults(wrap.dataset.contractId);
 }
 function clearActFilter(wrap){
   const input=wrap&&wrap.querySelector('input[data-filter]');
   if(!input) return;
   input.value='';
   input.dataset.filterTyping='';
-  wrap.classList.remove('has-value');
+  syncActFilterChrome(wrap);
   closeActFilterDrops();
-  renderContractById(wrap.dataset.contractId);
+  refreshContractResults(wrap.dataset.contractId);
+}
+function isActDateFilter(input){
+  const key=input&&input.dataset&&input.dataset.filter;
+  return key==='from'||key==='to';
+}
+function actDateMask(input){
+  if(!isActDateFilter(input)) return;
+  const raw=input.value;
+  const selection=typeof input.selectionStart==='number'?input.selectionStart:raw.length;
+  const digitOffset=raw.slice(0,selection).replace(/\D/g,'').length;
+  const digits=raw.replace(/\D/g,'').slice(0,8);
+  const parts=[];
+  if(digits) parts.push(digits.slice(0,2));
+  if(digits.length>2) parts.push(digits.slice(2,4));
+  if(digits.length>4) parts.push(digits.slice(4));
+  const formatted=parts.join('.');
+  input.value=formatted;
+  let caret=formatted.length;
+  if(digitOffset<=0) caret=0;
+  else{
+    let seen=0;
+    for(let i=0;i<formatted.length;i++){
+      if(/\d/.test(formatted[i])) seen++;
+      if(seen>=digitOffset){ caret=i+1; break; }
+    }
+  }
+  try{ input.setSelectionRange(caret,caret); }catch(_error){}
+}
+function actDateMaskDeleteSeparator(event,input){
+  if(!isActDateFilter(input)) return false;
+  if((event.key!=='Backspace'&&event.key!=='Delete')||input.selectionStart!==input.selectionEnd) return false;
+  const position=input.selectionStart;
+  const separatorIndex=event.key==='Backspace'?position-1:position;
+  if(separatorIndex<0||input.value[separatorIndex]!=='.') return false;
+  const removeAt=event.key==='Backspace'?separatorIndex-1:separatorIndex+1;
+  if(removeAt<0||removeAt>=input.value.length) return false;
+  event.preventDefault();
+  input.value=input.value.slice(0,removeAt)+input.value.slice(removeAt+1);
+  input.setSelectionRange(removeAt,removeAt);
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  return true;
 }
 function bindActFilters(){
   if(window.__actFiltersBound) return;
@@ -958,12 +1020,14 @@ function bindActFilters(){
   document.addEventListener('input',event=>{
     const input=event.target.closest&&event.target.closest('.act-filter input[data-filter]');
     if(!input) return;
+    actDateMask(input);
     input.dataset.filterTyping='1';
     rerenderFromActFilter(input);
   });
   document.addEventListener('keydown',event=>{
     const input=event.target.closest&&event.target.closest('.act-filter input[data-filter]');
     if(!input) return;
+    if(actDateMaskDeleteSeparator(event,input)) return;
     const box=input.closest('.act-filter').querySelector('.act-filter-drop');
     const open=box&&!box.classList.contains('hidden');
     if(event.key==='Escape'){ closeActFilterDrops(); input.blur(); return; }
@@ -1011,26 +1075,16 @@ let CURRENT_ACT_VIEW_STATE=null, CURRENT_ACT_CHANGE_DIFF=null;
 let CURRENT_ACT_MODE='client';
 function renderContractById(id,opts){
   if(!CURRENT_CLIENT||!CURRENT_DB) return;
-  const ct=getContract(CURRENT_CLIENT,id);
-  if(!ct) return;
-  const saved = getFilters(id);
-  const open = !!FILTER_OPEN[id];
-  document.getElementById('contract-'+id).outerHTML=renderContract(CURRENT_CLIENT, ct, saved);
-  const box = document.getElementById('filters-'+id);
-  if(box && open) box.classList.add('open');
-  bindActScrollPairs(document.getElementById('contract-'+id));
-  applyActChangeHighlights(document.getElementById('contract-'+id));
   if(opts&&opts.focusFilter){
-    requestAnimationFrame(()=>{
-      const form=document.getElementById('filters-'+id);
-      const input=form&&form.querySelector(`[data-filter="${opts.focusFilter}"]`);
-      if(!input) return;
+    const form=document.getElementById('filters-'+id);
+    const input=form&&form.querySelector(`[data-filter="${opts.focusFilter}"]`);
+    if(input){
       input.dataset.filterTyping=opts.typing?'1':'';
-      input.focus({preventScroll:true});
-      if(typeof opts.caret==='number'&&input.setSelectionRange) input.setSelectionRange(opts.caret,opts.caret);
-      openActFilterDrop(input,{typed:!!opts.typing});
-    });
+      rerenderFromActFilter(input);
+      return;
+    }
   }
+  refreshContractResults(id);
 }
 function actChangeDiff(){
   return CURRENT_ACT_CHANGE_DIFF&&CURRENT_ACT_CHANGE_DIFF.compatible!==false
@@ -1157,9 +1211,9 @@ function renderTable(list,special,deleted,specialResolver){
     ? `<div class="svc-head abon-special"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Статус оплаты</div></div>`
     : `<div class="svc-head"><div>№</div><div>Дата</div><div>Код</div><div>Расшифровка услуги</div><div>Стоимость</div><div>Оплачено</div><div>Статус оплаты</div></div>`;
   const rows=renderServiceRows(current,removed,resolveSpecial);
-  return wrapSvcTable(head, `<div class="svc-list">${rows||'<div class="empty-filter">По заданным фильтрам услуг нет.</div>'}</div>`);
+  return wrapSvcTable(head, `<div class="svc-list">${rows||'<div class="empty-filter">Нет услуг, соответствующих выбранным фильтрам.</div>'}</div>`);
 }
-function renderContract(c,ct,presetFilters){
+function contractResultsHtml(c,ct,presetFilters){
   const id=ct.id;
   const snapshotContract=ct._actSnapshotContract||null;
   const today=todayISO();
@@ -1201,6 +1255,16 @@ function renderContract(c,ct,presetFilters){
     const allSpecial=list.length+deleted.length>0&&list.every(currentIsSpecial)&&deleted.every(deletedIsSpecial);
     body=renderTable(list,allSpecial,deleted,currentIsSpecial);
   }
+  return `${body}
+    <div class="totals">${tot('Общая цена услуг',money(filteredTotals.sum))}${tot('Оплачено',money(filteredTotals.paid))}${tot('К оплате',money(filteredTotals.debt))}</div>
+    ${list.length!==all.length?`<div class="muted" style="margin-top:7px">Показано ${filteredTotals.count} из ${t.count} услуг.</div>`:''}
+    ${!snapshotContract&&(ct.sentDates||[]).length?`<div class="muted" style="margin-top:8px">Даты направления актов: ${ct.sentDates.map(fmtDate).join(', ')}</div>`:''}
+    ${snapshotContract?'':compensationActHtml(ct)}`;
+}
+function renderContract(c,ct,presetFilters){
+  const id=ct.id;
+  const snapshotContract=ct._actSnapshotContract||null;
+  const f=presetFilters || getFilters(id);
   const title=snapshotContract?snapshotContract.label:contractLabel(ct);
   const meta=snapshotContract?'':contractMeta(ct);
   const basis=snapshotContract
@@ -1216,11 +1280,7 @@ function renderContract(c,ct,presetFilters){
       <div class="contract-filter-control">${filterControl}</div>
     </div>
     ${filters}
-    ${body}
-    <div class="totals">${tot('Общая цена услуг',money(filteredTotals.sum))}${tot('Оплачено',money(filteredTotals.paid))}${tot('К оплате',money(filteredTotals.debt))}</div>
-    ${list.length!==all.length?`<div class="muted" style="margin-top:7px">Показано ${filteredTotals.count} из ${t.count} услуг.</div>`:''}
-    ${!snapshotContract&&(ct.sentDates||[]).length?`<div class="muted" style="margin-top:8px">Даты направления актов: ${ct.sentDates.map(fmtDate).join(', ')}</div>`:''}
-    ${snapshotContract?'':compensationActHtml(ct)}
+    <div class="contract-results" id="contract-results-${esc(String(id))}">${contractResultsHtml(c,ct,f)}</div>
   </div>`;
 }
 function wrapCompSvcTable(rows){
@@ -1235,6 +1295,7 @@ function bindSyncedHScroll(top, bot){
   if(!top || !bot) return;
   const topInner = top.firstElementChild;
   const syncWidth = () => {
+    if(!top.isConnected || !bot.isConnected) return;
     if(topInner){
       topInner.style.removeProperty('width');
       topInner.style.removeProperty('min-width');
