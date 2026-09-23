@@ -1073,19 +1073,6 @@ let FILTER_OPEN = {};
 let CURRENT_CLIENT=null, CURRENT_DB=null, CURRENT_ACT_SNAPSHOT=null;
 let CURRENT_ACT_VIEW_STATE=null, CURRENT_ACT_CHANGE_DIFF=null;
 let CURRENT_ACT_MODE='client';
-function renderContractById(id,opts){
-  if(!CURRENT_CLIENT||!CURRENT_DB) return;
-  if(opts&&opts.focusFilter){
-    const form=document.getElementById('filters-'+id);
-    const input=form&&form.querySelector(`[data-filter="${opts.focusFilter}"]`);
-    if(input){
-      input.dataset.filterTyping=opts.typing?'1':'';
-      rerenderFromActFilter(input);
-      return;
-    }
-  }
-  refreshContractResults(id);
-}
 function actChangeDiff(){
   return CURRENT_ACT_CHANGE_DIFF&&CURRENT_ACT_CHANGE_DIFF.compatible!==false
     ? CURRENT_ACT_CHANGE_DIFF:null;
