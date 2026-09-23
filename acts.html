@@ -309,16 +309,23 @@ tr.locked td{background:#FAFAFC;}
 .modal .card.wide{max-width:900px;}
 .modal .card.service-form input,
 .modal .card.service-form select,
-.modal .card.service-form textarea{font-size:13px;}
-.modal .card.service-form .invoice-float{--svc-inset:12px;}
-.modal .card.service-form .invoice-float>span{
+.modal .card.service-form textarea,
+.modal .card.pdf-form input,
+.modal .card.pdf-form select{font-size:13px;}
+.modal .card.service-form .invoice-float,
+.modal .card.pdf-form .invoice-float{--svc-inset:12px;}
+.modal .card.service-form .invoice-float>span,
+.modal .card.pdf-form .invoice-float>span{
   left:calc(1.5px + var(--svc-inset));
   font-size:10px;
 }
 .modal .card.service-form .invoice-float input,
 .modal .card.service-form .invoice-float textarea,
-.modal .card.service-form .invoice-float select{padding-left:var(--svc-inset);}
-.modal .card.service-form .invoice-float select{
+.modal .card.service-form .invoice-float select,
+.modal .card.pdf-form .invoice-float input,
+.modal .card.pdf-form .invoice-float select{padding-left:var(--svc-inset);}
+.modal .card.service-form .invoice-float select,
+.modal .card.pdf-form .invoice-float select{
   -webkit-appearance:none;
   appearance:none;
   background-color:#fff;
@@ -328,13 +335,15 @@ tr.locked td{background:#FAFAFC;}
   background-size:12px;
   padding-right:28px;
 }
-.modal .card.service-form .invoice-float select:disabled{
+.modal .card.service-form .invoice-float select:disabled,
+.modal .card.pdf-form .invoice-float select:disabled{
   background-color:#F6F6F8;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8494' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat:no-repeat;
   background-position:right 10px center;
   background-size:12px;
 }
+.modal .card.pdf-form .grid-keep-2{margin-bottom:14px;}
 .modal .card.service-form .cf-picker-title{
   font-size:10px;
   font-weight:600;
@@ -6775,18 +6784,35 @@ function openPdfDialog(){
   openModal(`<h1>Выгрузка акта · ${esc(c.name)}</h1>
     <div class="muted" style="margin-bottom:8px">${esc(contractLabel(ct))}</div>
     <div class="grid-keep-2">
-      <div class="field"><label>Период</label>
-        <select id="pdfMode" onchange="document.getElementById('pdfRange').classList.toggle('hidden', this.value!=='range')">
-          <option value="all">За весь период</option><option value="range">Указать период</option></select></div>
-      <div class="field"><label>Номер акта</label><input id="pdfNo" value="${ct.sentDates.length+1}"></div>
+      <label class="invoice-float"><span>Период</span>
+        <select id="pdfMode" onchange="onPdfModeChange()">
+          <option value="all">За весь период</option><option value="range">Указать период</option></select></label>
+      <label class="invoice-float"><span>Номер акта</span><input id="pdfNo" value="${ct.sentDates.length+1}"></label>
     </div>
     <div id="pdfRange" class="grid-keep-2 hidden">
-      <div class="field"><label>С</label><input type="text" id="pdfFrom" class="crm-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ"></div>
-      <div class="field"><label>По</label><input type="text" id="pdfTo" class="crm-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ"></div>
+      <label class="invoice-float"><span>С</span><input type="text" id="pdfFrom" class="crm-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ"></label>
+      <label class="invoice-float"><span>По</span><input type="text" id="pdfTo" class="crm-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ"></label>
     </div>
     <div class="err" id="pdfErr"></div>
     <div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button>
-    <button type="button" class="btn" id="pdfBtn" onclick="makePdf()">Сформировать PDF</button></div>`);
+    <button type="button" class="btn" id="pdfBtn" onclick="makePdf()">Сформировать PDF</button></div>`, false, 'pdf-form');
+}
+function fillPdfRangeDefaults(){
+  const fromEl = document.getElementById('pdfFrom');
+  const toEl = document.getElementById('pdfTo');
+  if(!fromEl || !toEl) return;
+  const today = todayISO();
+  const p = reportingPeriod(today.slice(0,7), today);
+  fromEl.value = crmDateDisplay(p.start);
+  toEl.value = crmDateDisplay(p.end);
+}
+function onPdfModeChange(){
+  const mode = document.getElementById('pdfMode');
+  const range = document.getElementById('pdfRange');
+  if(!mode || !range) return;
+  const isRange = mode.value==='range';
+  range.classList.toggle('hidden', !isRange);
+  if(isRange) fillPdfRangeDefaults();
 }
 function getCustomValue(s, fid){
   const raw = (s.custom||{})[fid];
