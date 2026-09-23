@@ -1878,7 +1878,52 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   .cal-dialog-actions:not(.two){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%}
   .cal-dialog-actions:not(.two) button{width:100%;min-width:0;min-height:28px;padding:3px 5px;border-radius:7px;font-size:11.5px}
   .cal-day-group.drop-active,.cal-day-separator.drop-active,.cal-section.drop-active{box-shadow:inset 0 0 0 2px var(--cal-purple);background:#fbfaff}
-  .cal-filter-combo .cal-filter-xl-head{display:flex}
+  .cal-filter-grid label.cal-filter-xl{
+    position:relative;
+    display:block;
+    gap:0;
+  }
+  .cal-filter-xl-head,
+  .cal-filter-combo .cal-filter-xl-head{display:contents;}
+  .cal-filter-grid .cal-filter-xl .cal-filter-label{
+    position:absolute;
+    top:5px;
+    left:10px;
+    z-index:2;
+    margin:0;
+    color:#708096;
+    font-size:11px;
+    line-height:1;
+    font-weight:400;
+    text-transform:none;
+    letter-spacing:0;
+    pointer-events:none;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:calc(100% - 36px);
+  }
+  .cal-filter-clear{
+    position:absolute;
+    right:6px;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:3;
+  }
+  .cal-filter-grid .cal-filter-xl input,
+  .cal-filter-grid .cal-filter-combo-control input{
+    height:43px;
+    min-height:43px;
+    padding:16px 28px 6px 9px;
+    border:1px solid #ccd6e2;
+    border-radius:10px;
+    font-size:14px;
+  }
+  .cal-filter-period{align-items:stretch;}
+  .cal-filter-toggles button{
+    height:43px;
+    min-height:43px;
+  }
   .cal-filter-drop{z-index:50}
 }
 @media (max-width:720px){
@@ -7286,11 +7331,11 @@ function customFieldHtmlForPdf(s){
           <div class="cal-filter-grid">
             <label class="cal-filter-search"><span class="cal-filter-label">Поиск</span><input id="calendarFilterQ" type="search" oninput="calendarSetFilter('q',this.value)"></label>
 <label class="cal-filter-jump"><span class="cal-filter-label">Перейти к дате</span><span class="cal-filter-jump-control"><input id="calendarFilterJump" class="calendar-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ"><button type="button" onclick="calendarFilterJumpToDate()" aria-label="Перейти">${calIcon('arrow')}</button></span></label>
-<label class="cal-filter-client cal-filter-combo cal-filter-xl" data-filter="client"><span class="cal-filter-xl-head"><span class="cal-filter-label">Заказчик</span><button type="button" class="cal-filter-clear" onclick="event.preventDefault();event.stopPropagation();calendarClearFilterField('client')" aria-label="Очистить заказчика">×</button></span><span class="cal-filter-combo-control"><input id="calendarFilterClientInput" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="calendarFilterClientResults" autocomplete="off" placeholder="Все / начните вводить" onfocus="calendarFilterComboOpen('client')" oninput="calendarFilterComboInput('client')"><div class="cal-filter-drop hidden" id="calendarFilterClientResults" role="listbox"></div></span></label>
-<label class="cal-filter-contract cal-filter-combo cal-filter-xl" data-filter="contract"><span class="cal-filter-xl-head"><span class="cal-filter-label">Договор</span><button type="button" class="cal-filter-clear" onclick="event.preventDefault();event.stopPropagation();calendarClearFilterField('contract')" aria-label="Очистить договор">×</button></span><span class="cal-filter-combo-control"><input id="calendarFilterContractInput" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="calendarFilterContractResults" autocomplete="off" placeholder="Все / начните вводить" onfocus="calendarFilterComboOpen('contract')" oninput="calendarFilterComboInput('contract')"><div class="cal-filter-drop hidden" id="calendarFilterContractResults" role="listbox"></div></span></label>
+<label class="cal-filter-client cal-filter-combo cal-filter-xl" data-filter="client"><span class="cal-filter-xl-head"><span class="cal-filter-label">Заказчик</span><button type="button" class="cal-filter-clear" onclick="event.preventDefault();event.stopPropagation();calendarClearFilterField('client')" aria-label="Очистить заказчика" aria-hidden="true" tabindex="-1">×</button></span><span class="cal-filter-combo-control"><input id="calendarFilterClientInput" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="calendarFilterClientResults" autocomplete="off" placeholder="Все / начните вводить" onfocus="calendarFilterComboOpen('client')" oninput="calendarFilterComboInput('client')"><div class="cal-filter-drop hidden" id="calendarFilterClientResults" role="listbox"></div></span></label>
+<label class="cal-filter-contract cal-filter-combo cal-filter-xl" data-filter="contract"><span class="cal-filter-xl-head"><span class="cal-filter-label">Договор</span><button type="button" class="cal-filter-clear" onclick="event.preventDefault();event.stopPropagation();calendarClearFilterField('contract')" aria-label="Очистить договор" aria-hidden="true" tabindex="-1">×</button></span><span class="cal-filter-combo-control"><input id="calendarFilterContractInput" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="calendarFilterContractResults" autocomplete="off" placeholder="Все / начните вводить" onfocus="calendarFilterComboOpen('contract')" oninput="calendarFilterComboInput('contract')"><div class="cal-filter-drop hidden" id="calendarFilterContractResults" role="listbox"></div></span></label>
 <div class="cal-filter-period">
-<label class="cal-filter-from cal-filter-xl" data-filter="from"><span class="cal-filter-xl-head"><span class="cal-filter-label">Период с</span><button type="button" class="cal-filter-clear" onclick="event.preventDefault();event.stopPropagation();calendarClearFilterField('from')" aria-label="Очистить дату начала">×</button></span><input id="calendarFilterFrom" class="calendar-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" oninput="calendarSetFilter('from',this.value)"></label>
-<label class="cal-filter-to cal-filter-xl" data-filter="to"><span class="cal-filter-xl-head"><span class="cal-filter-label">по</span><button type="button" class="cal-filter-clear" onclick="event.preventDefault();event.stopPropagation();calendarClearFilterField('to')" aria-label="Очистить дату окончания">×</button></span><input id="calendarFilterTo" class="calendar-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" oninput="calendarSetFilter('to',this.value)"></label>
+<label class="cal-filter-from cal-filter-xl" data-filter="from"><span class="cal-filter-xl-head"><span class="cal-filter-label">Период с</span><button type="button" class="cal-filter-clear" onclick="event.preventDefault();event.stopPropagation();calendarClearFilterField('from')" aria-label="Очистить дату начала" aria-hidden="true" tabindex="-1">×</button></span><input id="calendarFilterFrom" class="calendar-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" oninput="calendarSetFilter('from',this.value)"></label>
+<label class="cal-filter-to cal-filter-xl" data-filter="to"><span class="cal-filter-xl-head"><span class="cal-filter-label">по</span><button type="button" class="cal-filter-clear" onclick="event.preventDefault();event.stopPropagation();calendarClearFilterField('to')" aria-label="Очистить дату окончания" aria-hidden="true" tabindex="-1">×</button></span><input id="calendarFilterTo" class="calendar-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" oninput="calendarSetFilter('to',this.value)"></label>
             <div class="cal-filter-toggles">
               <button type="button" id="calendarFilterUrgent" onclick="calendarToggleFilter('urgent')" aria-label="Только срочные">${calIcon('flag')}<span>Срочные</span></button>
               <button type="button" id="calendarFilterMoved" onclick="calendarToggleFilter('moved')" aria-label="Только перенесённые">${calIcon('repeat')}<span>Перенесённые</span></button>
@@ -8132,7 +8177,13 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
   function calSyncFilterClears(){
     document.querySelectorAll('.cal-filter-xl[data-filter]').forEach(el=>{
       const key=el.dataset.filter;
-      el.classList.toggle('has-value',!!(cal.filters[key]));
+      const has=!!(cal.filters[key]);
+      el.classList.toggle('has-value',has);
+      const btn=el.querySelector('.cal-filter-clear');
+      if(btn){
+        btn.setAttribute('aria-hidden',has?'false':'true');
+        btn.tabIndex=has?0:-1;
+      }
     });
   }
   window.calendarClearFilterField=function(key){
