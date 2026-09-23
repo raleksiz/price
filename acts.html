@@ -1389,6 +1389,8 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   .crm-wrap{padding:0!important}.wrap.crm-wrap{max-width:none!important}.app-shell{display:block!important}.side-nav{display:none!important}.app-main{width:100%!important}
   .mobile-crm-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,460px);min-height:62px;padding:5px 6px calc(5px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid #E4E5EA;display:grid;grid-template-columns:repeat(5,1fr);z-index:90;backdrop-filter:blur(12px)}
   .mobile-crm-nav-btn{border:0;background:transparent;color:#7a8798;min-height:50px;display:grid;place-items:center;border-radius:10px;padding:0;min-width:0}.mobile-crm-nav-btn.active{color:#6E3B8C;background:#F3ECFA}.mobile-crm-nav-btn .cal-icon{width:21px;height:21px}.mobile-crm-nav-btn span{font-size:9px;line-height:1;margin-top:-5px;white-space:nowrap}
+  .mobile-crm-nav-clients{position:relative;min-width:0;display:grid;-webkit-touch-callout:none;user-select:none}
+  .mobile-crm-nav-add{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:36px;min-width:36px;height:36px;padding:0;border:1px solid #E4E5EA;border-radius:12px;background:#fff;color:#6E3B8C;font-size:22px;font-weight:700;line-height:1;display:grid;place-items:center;box-shadow:0 8px 20px rgba(31,25,50,.16);z-index:92}
   .calendar-page{--cal-bg:#F4F0FA;--cal-surface:#fff;--cal-ink:#2B1A6B;--cal-muted:#666B73;--cal-line:#E4E5EA;--cal-purple:#6E3B8C;--cal-purple-2:#F3ECFA;--cal-red:#c2413a;--cal-red-soft:#fff0ef;--cal-amber:#a56410;--cal-amber-soft:#fff6df;--cal-green:#23735a;min-height:calc(100vh - 62px);padding-bottom:20px;background:var(--cal-bg);font-size:15px;line-height:1.4;overflow-x:clip}
   .cal-app-header,.cal-page-title-row,.cal-quick-add,.cal-desktop-view{display:none!important}
   .cal-workspace{padding:0;max-width:460px;margin:0 auto}
@@ -1885,7 +1887,10 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   </svg>
   <div class="cal-bulk-bar" id="calendarBulkBar" hidden></div>
   <nav class="mobile-crm-nav" aria-label="Разделы CRM">
-    <button type="button" class="mobile-crm-nav-btn active" data-view="clients" onclick="calendarNavigate('clients')" aria-label="Заказчики"><svg class="cal-icon"><use href="#cal-i-user"/></svg><span>Заказчики</span></button>
+    <div class="mobile-crm-nav-clients" id="mobileCrmClientsWrap">
+      <button type="button" class="mobile-crm-nav-btn active" data-view="clients" onclick="calendarNavigate('clients')" aria-label="Заказчики" aria-expanded="false"><svg class="cal-icon"><use href="#cal-i-user"/></svg><span>Заказчики</span></button>
+      <button type="button" class="mobile-crm-nav-add hidden" id="mobileCrmAddClient" onclick="mobileCrmAddClient()" aria-label="Новый заказчик" tabindex="-1">+</button>
+    </div>
     <button type="button" class="mobile-crm-nav-btn" data-view="all" onclick="calendarNavigate('all')" aria-label="Услуги"><svg class="cal-icon"><use href="#cal-i-brief"/></svg><span>Услуги</span></button>
     <button type="button" class="mobile-crm-nav-btn" data-view="fields" onclick="calendarNavigate('fields')" aria-label="Дополнительные поля"><svg class="cal-icon"><use href="#cal-i-grid"/></svg><span>Доп. поля</span></button>
     <button type="button" class="mobile-crm-nav-btn" data-view="calendar" onclick="calendarNavigate('calendar')" aria-label="Календарь"><svg class="cal-icon"><use href="#cal-i-calendar"/></svg><span>Календарь</span></button>
@@ -3435,6 +3440,59 @@ function paintNavActive(view){
     t.classList.toggle('active', item===view || (item==='clients' && view==='client'));
   });
 }
+function hideMobileCrmAddClient(){
+  const wrap=document.getElementById('mobileCrmClientsWrap');
+  const add=document.getElementById('mobileCrmAddClient');
+  const btn=wrap&&wrap.querySelector('.mobile-crm-nav-btn');
+  if(wrap)wrap.classList.remove('is-add-open');
+  if(add)add.classList.add('hidden');
+  if(btn)btn.setAttribute('aria-expanded','false');
+}
+function showMobileCrmAddClient(){
+  const wrap=document.getElementById('mobileCrmClientsWrap');
+  const add=document.getElementById('mobileCrmAddClient');
+  const btn=wrap&&wrap.querySelector('.mobile-crm-nav-btn');
+  if(wrap)wrap.classList.add('is-add-open');
+  if(add)add.classList.remove('hidden');
+  if(btn)btn.setAttribute('aria-expanded','true');
+}
+function mobileCrmAddClient(){
+  hideMobileCrmAddClient();
+  openClientForm(null);
+}
+function bindMobileCrmAddClient(){
+  const wrap=document.getElementById('mobileCrmClientsWrap');
+  const btn=wrap&&wrap.querySelector('.mobile-crm-nav-btn');
+  if(!btn||btn.dataset.addBound)return;
+  btn.dataset.addBound='1';
+  const holdMs=550,moveLimit=10;
+  let timer=null,pointerId=null,x0=0,y0=0,opened=false;
+  const cancel=()=>{if(timer){clearTimeout(timer);timer=null;}pointerId=null;};
+  btn.addEventListener('pointerdown',event=>{
+    if(!event.isPrimary||event.button)return;
+    cancel();
+    pointerId=event.pointerId;
+    x0=event.clientX;y0=event.clientY;opened=false;
+    timer=setTimeout(()=>{timer=null;opened=true;showMobileCrmAddClient();},holdMs);
+  },{passive:true});
+  btn.addEventListener('pointermove',event=>{
+    if(event.pointerId!==pointerId)return;
+    if(Math.hypot(event.clientX-x0,event.clientY-y0)>moveLimit)cancel();
+  },{passive:true});
+  ['pointerup','pointercancel','lostpointercapture'].forEach(type=>btn.addEventListener(type,event=>{
+    if(event.pointerId===pointerId)cancel();
+  },{passive:true}));
+  btn.addEventListener('click',event=>{
+    if(opened){event.preventDefault();event.stopPropagation();opened=false;}
+    else hideMobileCrmAddClient();
+  },true);
+  btn.addEventListener('contextmenu',event=>{if(pointerId!==null||opened)event.preventDefault();});
+  document.addEventListener('pointerdown',event=>{
+    if(!wrap.classList.contains('is-add-open'))return;
+    if(wrap.contains(event.target))return;
+    hideMobileCrmAddClient();
+  },true);
+}
 function onHashChange(){
   const parsed = parseNavHash();
   if(!parsed) return;
@@ -3522,6 +3580,7 @@ function renderAllViews(){
   if(currentView==='calendar' && typeof window.calendarRender==='function') window.calendarRender();
 }
 function setView(v, id, keepContract){
+  hideMobileCrmAddClient();
   const prevClientId = currentClientId;
   currentView = v;
   if(id!==undefined) currentClientId = id;
@@ -3543,6 +3602,7 @@ function setView(v, id, keepContract){
 (function(){
   const parsed = parseNavHash();
   if(parsed) paintNavActive(parsed.view);
+  bindMobileCrmAddClient();
 })();
 
 /* ====================== ЗАКАЗЧИКИ (СПИСОК) ====================== */
