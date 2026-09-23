@@ -390,10 +390,12 @@ tr.locked td{background:#FAFAFC;}
 .cf-pick input{width:16px;height:16px;margin:0;accent-color:var(--violet);}
 .cf-pick span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cf-link-rows{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;}
-.cf-link-row{display:grid;grid-template-columns:20ch minmax(0,1fr) 16px;gap:8px;align-items:stretch;min-width:0;}
-.cf-link-row .field,.cf-link-row .invoice-float{margin-bottom:0;min-width:0;}
-.cf-link-name,.cf-link-url{width:100%;font-size:13px;line-height:1.35;}
-.cf-link-url{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cf-link-row{display:grid;grid-template-columns:20ch minmax(0,1fr) 16px;gap:8px;align-items:stretch;min-width:0;font-size:13px;}
+.cf-link-row .field,.cf-link-row .invoice-float{margin-bottom:0;min-width:0;max-width:100%;}
+.cf-link-row > .invoice-float:first-child{width:20ch;max-width:100%;}
+.cf-link-row .invoice-float input{min-width:0;width:100%;max-width:100%;}
+.cf-link-name,.cf-link-url{width:100%;min-width:0;max-width:100%;font-size:13px;line-height:1.35;}
+.cf-link-url{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cf-link-slot{width:16px;min-height:44px;height:auto;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:stretch;}
 .cf-link-action{width:16px;height:16px;padding:0;border:0;background:transparent;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .cf-link-action svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
