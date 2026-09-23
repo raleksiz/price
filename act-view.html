@@ -1317,7 +1317,7 @@ function renderClient(c,db){
   const grandBlock = contracts.length>1
     ? `<div style="margin-top:4px"><h2 style="border-top:none;padding-top:0">Итого по всем договорам</h2><div class="grand-totals">${grandTot('Общая цена услуг',money(grand.sum))}${grandTot('Оплачено',money(grand.paid))}${grandTot('К оплате',money(grand.debt))}</div></div>`
     : '';
-  root.innerHTML=`<h1 class="client-name">${esc(c.name)}</h1><div class="muted" style="margin-bottom:16px">Акты оказанных услуг по всем договорам и основаниям</div>${sorted.map(ct=>renderContract(c,ct)).join('')}${grandBlock}${actFooterHtml()}`;
+  root.innerHTML=`<h1 class="client-name">${esc(c.name)}</h1><div class="muted" style="margin-bottom:16px">Акты оказанных услуг</div>${sorted.map(ct=>renderContract(c,ct)).join('')}${grandBlock}${actFooterHtml()}`;
   bindActScrollPairs(root);
   applyActChangeHighlights(root);
 }
