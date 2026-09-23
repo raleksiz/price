@@ -887,6 +887,19 @@ tr.fields-drag-over td{background:var(--soft);}
 .svc-head-scroll,
 .contract-table-scroll,
 .all-table-scroll{scrollbar-width:thin;}
+@media (max-width:720px){
+  .contract-table-scroll,
+  .all-table-scroll,
+  .svc-head-scroll,
+  .comp-svc-scroll,
+  .comp-svc-head-scroll,
+  .comp-svc-body-scroll,
+  .cal-table-top-scroll,
+  .cal-table-scroll{
+    -webkit-overflow-scrolling:auto;
+    overscroll-behavior-x:contain;
+  }
+}
 .contract-table-inner,
 .all-table-inner{width:100%;}
 @media (min-width:721px){
@@ -5378,18 +5391,28 @@ function bindSyncedHScroll(top, bot){
   };
   if(!bot.dataset.scrollBound){
     bot.dataset.scrollBound = '1';
-    let lock = false;
+    let master = null;
+    let release = 0;
+    const hold = el => {
+      master = el;
+      clearTimeout(release);
+      release = setTimeout(() => { master = null; }, 160);
+    };
+    const arm = el => {
+      el.addEventListener('pointerdown', () => { hold(el); }, {passive:true});
+      el.addEventListener('wheel', () => { hold(el); }, {passive:true});
+    };
+    arm(top);
+    arm(bot);
     top.addEventListener('scroll', () => {
-      if(lock) return;
-      lock = true;
+      if(master === bot) return;
+      hold(top);
       bot.scrollLeft = top.scrollLeft;
-      lock = false;
     }, {passive:true});
     bot.addEventListener('scroll', () => {
-      if(lock) return;
-      lock = true;
+      if(master === top) return;
+      hold(bot);
       top.scrollLeft = bot.scrollLeft;
-      lock = false;
     }, {passive:true});
     window.addEventListener('resize', syncWidth);
   }
@@ -7602,7 +7625,7 @@ function customFieldHtmlForPdf(s){
     Object.keys(byMonth).sort().forEach(key=>sections.push(calDesktopSection('month:'+key,calMonthTitle(key),byMonth[key],key!==current&&key!==next,'',true,key===current?'текущий месяц':key===next?'следующий месяц':'')));
     const header=`<div class="cal-table-head"><div><input type="checkbox" class="cal-check" id="calSelectVisible" onclick="calendarSelectVisible(this.checked)" aria-label="Выбрать все показанные записи"></div><div></div><div></div><div>Дата</div><div>Время</div><div>Название</div><div>Заказчик / договор</div><div>Состояние</div><div aria-label="Напоминания">${calIcon('bell')}</div><div></div></div>`;
     box.innerHTML=`${calBulkHtml()}<div class="cal-list-shell"><div class="cal-table-top-scroll" id="calTopScroll"><div></div></div><div class="cal-table-scroll" id="calBodyScroll"><div class="cal-table-inner">${header}${sections.join('')||'<div class="cal-empty">Записей нет</div>'}</div></div></div>`;
-    const top=document.getElementById('calTopScroll'),body=document.getElementById('calBodyScroll');if(top&&body){top.onscroll=()=>{body.scrollLeft=top.scrollLeft;};body.onscroll=()=>{top.scrollLeft=body.scrollLeft;};requestAnimationFrame(calRefreshTableScroll);}
+    const top=document.getElementById('calTopScroll'),body=document.getElementById('calBodyScroll');if(top&&body){bindSyncedHScroll(top,body);requestAnimationFrame(calRefreshTableScroll);}
     const selectAll=document.getElementById('calSelectVisible'),shown=[...box.querySelectorAll('.cal-row')].filter(row=>row.offsetParent!==null);if(selectAll){selectAll.checked=shown.length>0&&shown.every(row=>cal.selected.has(row.dataset.recordId));selectAll.indeterminate=shown.some(row=>cal.selected.has(row.dataset.recordId))&&!selectAll.checked;}
   }
 

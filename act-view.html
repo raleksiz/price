@@ -193,6 +193,17 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .comp-svc-head-scroll,
 .comp-svc-body-scroll,
 .comp-svc-scroll{scrollbar-width:thin;}
+@media (max-width:720px){
+  .svc-scroll,
+  .svc-head-scroll,
+  .svc-body-scroll,
+  .comp-svc-scroll,
+  .comp-svc-head-scroll,
+  .comp-svc-body-scroll{
+    -webkit-overflow-scrolling:auto;
+    overscroll-behavior-x:contain;
+  }
+}
 .comp-svc{width:max-content;min-width:740px;border-collapse:collapse;font-size:12px;margin:0;table-layout:fixed;}
 .comp-svc th,.comp-svc td{padding:5px 8px;border-bottom:1px solid #e8e4f4;text-align:left;vertical-align:top;}
 .comp-svc th{font-size:10.5px;font-weight:700;text-transform:none;color:#6E3B8C;white-space:normal;line-height:1.25;letter-spacing:0;}
@@ -1211,18 +1222,28 @@ function bindSyncedHScroll(top, bot){
   };
   if(!bot.dataset.scrollBound){
     bot.dataset.scrollBound = '1';
-    let lock = false;
+    let master = null;
+    let release = 0;
+    const hold = el => {
+      master = el;
+      clearTimeout(release);
+      release = setTimeout(() => { master = null; }, 160);
+    };
+    const arm = el => {
+      el.addEventListener('pointerdown', () => { hold(el); }, {passive:true});
+      el.addEventListener('wheel', () => { hold(el); }, {passive:true});
+    };
+    arm(top);
+    arm(bot);
     top.addEventListener('scroll', () => {
-      if(lock) return;
-      lock = true;
+      if(master === bot) return;
+      hold(top);
       bot.scrollLeft = top.scrollLeft;
-      lock = false;
     }, {passive:true});
     bot.addEventListener('scroll', () => {
-      if(lock) return;
-      lock = true;
+      if(master === top) return;
+      hold(bot);
       top.scrollLeft = bot.scrollLeft;
-      lock = false;
     }, {passive:true});
     window.addEventListener('resize', syncWidth);
   }
