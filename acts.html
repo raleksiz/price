@@ -627,6 +627,9 @@ details[open] summary::before{content:"▾ ";}
   column-gap:8px;row-gap:5px;flex:1 1 auto;min-width:0;overflow:visible;
 }
 .all-filters.filters-collapsed{display:none;}
+@media (min-width:721px){
+  .all-filters.filters-collapsed{display:grid;}
+}
 .all-filters label{font-size:10.5px;}
 .all-filters input{height:36px;padding:7px 9px;font-size:12px;}
 .xl-filter{position:relative;min-width:0;}
@@ -676,6 +679,7 @@ details[open] summary::before{content:"▾ ";}
   .filters-toolbar{display:block;margin-bottom:12px;}
   .filters-toggle{display:block !important;width:100%;margin-bottom:8px;}
   .all-filters{display:grid;grid-template-columns:1fr 1fr;overflow:visible;}
+  .all-filters.filters-collapsed{display:none;}
 }
 .client-head{min-width:0;width:100%;}
 .client-meta-row{display:flex;gap:8px;flex-wrap:nowrap;align-items:center;margin-left:auto;min-width:0;flex:0 0 auto;}
@@ -1950,8 +1954,8 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
     <div class="card">
       <h2>Все услуги</h2>
       <div class="filters-toolbar">
-        <button type="button" class="btn sm ghost filters-toggle" onclick="toggleAllFilters()" id="filtersToggle">Свернуть фильтры</button>
-        <div id="allFilters" class="all-filters">
+        <button type="button" class="btn sm ghost filters-toggle" onclick="toggleAllFilters()" id="filtersToggle">Показать фильтры</button>
+        <div id="allFilters" class="all-filters filters-collapsed">
           <div class="xl-filter">
             <div class="xl-filter-head">
               <label for="fClient">Заказчик</label>
