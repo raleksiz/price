@@ -1122,6 +1122,12 @@ tr.fields-drag-over td{background:var(--soft);}
 <style id="calendar-ui-styles">
 html.boot-route-calendar #view-clients{display:none!important}
 html.boot-route-calendar #view-calendar{display:block!important}
+html.boot-route-all .mobile-crm-nav-btn.active,
+html.boot-route-fields .mobile-crm-nav-btn.active,
+html.boot-route-calendar .mobile-crm-nav-btn.active{color:#7a8798;background:transparent}
+html.boot-route-all .mobile-crm-nav-btn[data-view="all"],
+html.boot-route-fields .mobile-crm-nav-btn[data-view="fields"],
+html.boot-route-calendar .mobile-crm-nav-btn[data-view="calendar"]{color:#6E3B8C;background:#F3ECFA}
 
 .calendar-symbols{position:absolute;width:0;height:0;overflow:hidden}
 .cal-icon{width:18px;height:18px;display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
@@ -3414,6 +3420,13 @@ function restoreNav(){
   currentClientId = parsed.clientId;
   currentContractId = parsed.contractId;
 }
+function paintNavActive(view){
+  view = view || currentView;
+  document.querySelectorAll('.tab[data-view], .side-nav-btn[data-view], .mobile-crm-nav-btn[data-view]').forEach(t=>{
+    const item = t.dataset.view;
+    t.classList.toggle('active', item===view || (item==='clients' && view==='client'));
+  });
+}
 function onHashChange(){
   const parsed = parseNavHash();
   if(!parsed) return;
@@ -3510,10 +3523,7 @@ function setView(v, id, keepContract){
     const el = document.getElementById('view-'+k);
     if(el) el.classList.toggle('hidden', k!==v);
   });
-  document.querySelectorAll('.tab[data-view], .side-nav-btn[data-view], .mobile-crm-nav-btn[data-view]').forEach(t=>{
-    const v = t.dataset.view;
-    t.classList.toggle('active', v===currentView || (v==='clients' && currentView==='client'));
-  });
+  paintNavActive();
   if(v==='clients') renderClients();
   if(v==='all') renderAll();
   if(v==='client') renderClientCard();
@@ -3522,6 +3532,10 @@ function setView(v, id, keepContract){
   document.documentElement.classList.remove('boot-route-client','boot-route-all','boot-route-fields','boot-route-calendar');
   window.scrollTo(0,0);
 }
+(function(){
+  const parsed = parseNavHash();
+  if(parsed) paintNavActive(parsed.view);
+})();
 
 /* ====================== ЗАКАЗЧИКИ (СПИСОК) ====================== */
 function updateHiddenToggleButton(button, showHidden, count, showLabel, hideLabel, countLabel){
@@ -7366,7 +7380,7 @@ function customFieldHtmlForPdf(s){
   function calDesktopDate(iso){if(!iso)return 'Без даты';return calIsoToRu(iso).slice(0,5);}
   function calDaySeparator(iso){const d=calDateObject(iso),today=cal.serverDate||todayISO();return d.getUTCDate()+' '+MONTHS_GENITIVE[d.getUTCMonth()]+' · '+(iso===today?'сегодня':WEEKDAYS[d.getUTCDay()]);}
   function calMonthKey(iso){return String(iso||'').slice(0,7);}
-  function calMonthTitle(key){const p=String(key).split('-'),name=MONTHS[Number(p[1])-1]||'';return name.charAt(0).toUpperCase()+name.slice(1)+' '+p[0];}
+  function calMonthTitle(key){const p=String(key).split('-'),name=MONTHS[Number(p[1])-1]||'';return name.charAt(0).toUpperCase()+name.slice(1)+' '+p[0]+' года';}
   function calTime(record){if(record.allDay)return 'Весь день';return [record.startTime,record.endTime].filter(Boolean).join('–')||'Без времени';}
   function calFocusTime(record){return calEscape(calTime(record)).replace(/[–—-]/g,'$&\u200B');}
   function calDesktopTimeHtml(record){
