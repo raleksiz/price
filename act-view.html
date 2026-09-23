@@ -335,9 +335,6 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
   .filter-toggle{height:40px;font-size:11px;padding:6px 9px;}
   .act-filter-clear{width:22px;height:22px;font-size:18px;}
 }
-.filter-actions{display:flex;gap:6px;align-items:stretch;}
-.filter-actions button{border:0;border-radius:10px;padding:7px 10px;min-height:43px;font:600 12px inherit;cursor:pointer;}
-.filter-apply{background:var(--ink);color:#fff;}.filter-reset{background:#eee;color:#555;}
 .applied-box{margin-top:6px;padding:7px 9px;background:#F8F6FF;border-radius:8px;color:#666;font-size:11px;line-height:1.55;}
 .applied-box summary{cursor:pointer;color:#6E3B8C;font-weight:700;list-style:none;}
 .applied-box summary::-webkit-details-marker{display:none;}
@@ -446,10 +443,9 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .empty-filter{padding:10px 4px;color:#888;font-size:12px;}
 @media(max-width:720px){
   .filter-form.open{display:grid;grid-template-columns:1fr 1fr;}
-  .filter-actions{grid-column:1/-1;}
   .contract-block{padding:13px 12px 8px;}
 }
-@media(max-width:430px){.filter-form.open{grid-template-columns:1fr;}.filter-actions{grid-column:auto;}}
+@media(max-width:430px){.filter-form.open{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -809,14 +805,13 @@ function filtersTemplate(id, f){
   f = f || {};
   const openClass = FILTER_OPEN[id] ? 'open' : '';
   const idAttr=esc(String(id));
-  const idArg=esc(JSON.stringify(String(id)));
   return `<div class="filter-box ${openClass}">
     <div class="filter-form ${openClass}" id="filters-${idAttr}">
       <div class="act-filter${f.from?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-from-${idAttr}">Дата с</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.from?'false':'true'}" tabindex="${f.from?'0':'-1'}">×</button><input id="filter-from-${idAttr}" type="text" inputmode="numeric" maxlength="10" autocomplete="off" data-filter="from" value="${esc(f.from||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
       <div class="act-filter${f.to?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-to-${idAttr}">Дата по</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.to?'false':'true'}" tabindex="${f.to?'0':'-1'}">×</button><input id="filter-to-${idAttr}" type="text" inputmode="numeric" maxlength="10" autocomplete="off" data-filter="to" value="${esc(f.to||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
       <div class="act-filter${f.code?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-code-${idAttr}">Код услуги</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.code?'false':'true'}" tabindex="${f.code?'0':'-1'}">×</button><input id="filter-code-${idAttr}" type="text" autocomplete="off" data-filter="code" value="${esc(f.code||'')}" placeholder="Все / начните вводить"><div class="act-filter-drop hidden"></div></div>
       <div class="act-filter${f.pay?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-pay-${idAttr}">Статус оплаты</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.pay?'false':'true'}" tabindex="${f.pay?'0':'-1'}">×</button><input id="filter-pay-${idAttr}" type="text" autocomplete="off" data-filter="pay" value="${esc(f.pay||'')}" placeholder="Любой / начните вводить"><div class="act-filter-drop hidden"></div></div>
-      <div class="filter-actions"><button class="filter-reset" type="button" onclick="resetFilters(${idArg})">Сбросить</button></div>
+    </div>
     </div>
   </div>`;
 }
@@ -1009,12 +1004,6 @@ function toggleFilters(id){
     toggle.setAttribute('aria-expanded',open?'true':'false');
   }
   FILTER_OPEN[id] = open;
-}
-function resetFilters(id){
-  const box=document.getElementById('filters-'+id); if(!box) return;
-  box.querySelectorAll('input').forEach(x=>x.value='');
-  closeActFilterDrops();
-  renderContractById(id);
 }
 let FILTER_OPEN = {};
 let CURRENT_CLIENT=null, CURRENT_DB=null, CURRENT_ACT_SNAPSHOT=null;
