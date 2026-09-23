@@ -64,24 +64,17 @@ textarea.autogrow{resize:none;overflow:hidden;}
   display:grid;
   grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 36px;
   gap:6px;
-  align-items:end;
+  align-items:stretch;
   margin-bottom:10px;
 }
-.pay-row .field{margin-bottom:0;min-width:0;}
-.pay-row label{
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  margin-bottom:4px;
-  letter-spacing:0;
-}
+.pay-row .field,.pay-row .invoice-float{margin-bottom:0;min-width:0;}
 .pay-row input,.pay-row select{
   min-width:0;
   width:100%;
-  padding:10px 8px;
 }
+.pay-row .invoice-float input,.pay-row .invoice-float select{padding-left:8px;padding-right:8px;}
 .pay-prepay-btn{
-  width:36px;height:42px;padding:0;flex-shrink:0;align-self:end;
+  width:36px;height:auto;min-height:44px;padding:0;flex-shrink:0;align-self:stretch;
   border:1.5px solid var(--line);border-radius:10px;background:#fff;
   color:var(--ink);cursor:pointer;
   display:inline-flex;align-items:center;justify-content:center;
@@ -91,9 +84,9 @@ textarea.autogrow{resize:none;overflow:hidden;}
 .payment-hint{margin-top:6px;}
 @media (max-width:720px){
   .pay-row{gap:4px;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 32px;}
-  .pay-row label{font-size:10px;}
-  .pay-row input,.pay-row select{padding:9px 5px;font-size:14px;}
-  .pay-prepay-btn{width:32px;height:40px;}
+  .pay-row .invoice-float>span{left:5px;}
+  .pay-row .invoice-float input,.pay-row .invoice-float select{padding-left:5px;padding-right:5px;}
+  .pay-prepay-btn{width:32px;min-height:42px;}
 }
 .tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:stretch;margin-bottom:16px;}
 .tab{padding:9px 14px;border-radius:10px;background:#fff;border:1.5px solid var(--line);cursor:pointer;font-size:13px;font-weight:700;color:#6b6b7b;}
@@ -798,12 +791,13 @@ tr.fields-drag-over td{background:var(--soft);}
 .modal .card.invoice-form{max-width:520px}.modal .card.invoice-form h1{margin-bottom:12px}
 .invoice-meta-row{display:grid;grid-template-columns:1.15fr .8fr 1fr;gap:8px;margin-bottom:8px}
 .invoice-payer-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(96px,.5fr);gap:8px;margin-bottom:8px;align-items:stretch}
-.invoice-float{position:relative;display:block;margin:0;min-width:0;text-transform:none}
-.invoice-float>span{position:absolute;left:10px;top:6px;z-index:1;color:#8a8494;font-size:10px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1;pointer-events:none}
-.invoice-float input,.invoice-float textarea{width:100%;padding:20px 10px 6px;min-height:44px;font-size:14px}
+.invoice-float{position:relative;display:block;margin:0;min-width:0;text-transform:none;letter-spacing:0;font-weight:400}
+.invoice-float>span{position:absolute;left:10px;top:6px;z-index:1;color:#8a8494;font-size:10px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 22px)}
+.invoice-float input,.invoice-float textarea,.invoice-float select{width:100%;padding:20px 10px 6px;min-height:44px;font-size:14px}
+.invoice-float select{padding-right:28px}
 .invoice-float textarea{min-height:72px;padding-top:22px;resize:none}
 .invoice-purpose{display:block;margin-bottom:10px}
-@media(max-width:720px){.invoice-meta-row{grid-template-columns:1.1fr .7fr .95fr;gap:6px}.invoice-float>span{left:8px;font-size:9px}.invoice-float input,.invoice-float textarea{font-size:13px;padding:18px 8px 5px;min-height:42px}}
+@media(max-width:720px){.invoice-meta-row{grid-template-columns:1.1fr .7fr .95fr;gap:6px}.invoice-float>span{left:8px;font-size:9px}.invoice-float input,.invoice-float textarea,.invoice-float select{font-size:13px;padding:18px 8px 5px;min-height:42px}.invoice-float select{padding-right:24px}}
 .invoice-issued-list{margin:10px 0 0;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:var(--soft);}
 .invoice-issued-list summary{color:var(--violet);}
 .invoice-issued-list ul{margin:0 0 10px 18px;padding:0;}
@@ -1127,7 +1121,8 @@ tr.fields-drag-over td{background:var(--soft);}
 .client-jump-item:hover{background:var(--soft);}
 .client-jump-empty{padding:9px 10px;font-size:12px;color:var(--muted);}
 .cf-sel-cal{position:fixed;z-index:120;display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1.5px solid #C4B5FD;border-radius:10px;background:#fff;color:var(--violet);font-family:inherit;font-size:12.5px;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 8px 22px rgba(80,40,120,.22);}
-.grid2.svc-date-code-row{grid-template-columns:118px minmax(0,1fr);gap:8px;}
+.grid2.svc-date-code-row{grid-template-columns:118px minmax(0,1fr);gap:8px;margin-bottom:14px;}
+.grid2.svc-date-code-row .invoice-float{margin-bottom:0;}
 #cfEditors textarea.autogrow{min-height:38px;}
 @media (max-width:720px){
   /* строка быстрого перехода к заказчику */
@@ -4355,31 +4350,28 @@ function openServiceForm(clientId, contractId, svcId){
   openModal(`
     <h1>${s?'Услуга':'Новая услуга'} · ${esc(c.name)}</h1>
     <div class="grid2 svc-date-code-row">
-      <div class="field"><label>Дата услуги</label><input type="text" id="svcDate" class="crm-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" value="${esc(crmDateDisplay(cur.date||''))}" onchange="onSvcDateChange()"></div>
-      <div class="field"><label>Код услуги</label><select id="svcCode" onchange="onCodeChange()">${codeOpts}</select></div>
+      <label class="invoice-float"><span>Дата услуги</span><input type="text" id="svcDate" class="crm-date-input" inputmode="text" maxlength="10" autocomplete="off" placeholder="ДД.ММ.ГГГГ" value="${esc(crmDateDisplay(cur.date||''))}" onchange="onSvcDateChange()"></label>
+      <label class="invoice-float"><span>Код услуги</span><select id="svcCode" onchange="onCodeChange()">${codeOpts}</select></label>
     </div>
     ${s && s.legacyCatalogCode ? `<div class="muted" style="margin:-2px 0 10px">Архивная позиция сохранена с прежней стоимостью; для нового расчёта выберите актуальный код услуги.</div>` : ''}
-    <div class="field hidden" id="sideField"><label>Сторона</label>
-      <select id="svcSide" onchange="onSideChange()"><option value="1">—</option><option value="2">—</option></select></div>
-    <div class="field"><label>Расшифровка услуги</label><textarea class="autogrow" id="svcDesc" placeholder="Заполнится автоматически по коду, текст можно менять" oninput="autoGrowTextarea(this)">${esc(cur.desc||'')}</textarea></div>
+    <div class="field hidden" id="sideField"><label class="invoice-float"><span>Сторона</span>
+      <select id="svcSide" onchange="onSideChange()"><option value="1">—</option><option value="2">—</option></select></label></div>
+    <div class="field"><label class="invoice-float"><span>Расшифровка услуги</span><textarea class="autogrow" id="svcDesc" placeholder="Заполнится автоматически по коду, текст можно менять" oninput="autoGrowTextarea(this)">${esc(cur.desc||'')}</textarea></label></div>
     <div id="baseContractFields" class="hidden"></div>
     <div id="surBox"></div>
     <div class="pay-row" id="payRow">
-      <div class="field">
-        <label for="svcPrice">Цена</label>
+      <label class="invoice-float"><span>Цена</span>
         <input type="number" id="svcPrice" step="1" value="${Number(cur.price)||0}" oninput="onManualPrice()">
-      </div>
-      <div class="field">
-        <label for="svcPayStatus">Статус</label>
+      </label>
+      <label class="invoice-float"><span>Статус</span>
         <select id="svcPayStatus" onchange="onPayChange()">
           <option value="none" ${(!cur.pay || cur.pay==='none')?'selected':''}>Не оплачено</option>
           <option value="paid" ${(cur.pay && cur.pay!=='none')?'selected':''}>Оплачено</option>
         </select>
-      </div>
-      <div class="field">
-        <label for="svcPayAmt">Сумма</label>
+      </label>
+      <label class="invoice-float"><span>Сумма</span>
         <input type="number" id="svcPayAmt" step="1" min="0" ${(!cur.pay || cur.pay==='none')?'disabled placeholder="—"':''} value="${(cur.pay && cur.pay!=='none')?(Number(cur.payAmount)||0):''}" oninput="onPayChange(true)">
-      </div>
+      </label>
       <button type="button" class="pay-prepay-btn${(cur.pay==='full_prepay'||cur.pay==='part_prepay')?' active':''}" id="svcPrepayBtn" onclick="togglePrepayBtn()" title="Аванс" aria-label="Аванс" aria-pressed="${(cur.pay==='full_prepay'||cur.pay==='part_prepay')?'true':'false'}" ${(!cur.pay || cur.pay==='none')?'disabled':''}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 12h4v2h-4a1 1 0 0 1 0-2z"/><path d="M2 10h20"/></svg>
       </button>
@@ -4524,13 +4516,13 @@ function renderBaseContractFieldsIfNeeded(){
   box.classList.remove('hidden');
   box.innerHTML = `
     <div class="field">
-      <label>Базовый договор для расчёта стоимости</label>
-      <select id="baseContractSel" onchange="onBaseContractSelChange()">${options || '<option value="">Нет позиций категории «Договоры»</option>'}</select>
+      <label class="invoice-float"><span>Базовый договор для расчёта стоимости</span>
+      <select id="baseContractSel" onchange="onBaseContractSelChange()">${options || '<option value="">Нет позиций категории «Договоры»</option>'}</select></label>
       <div class="muted">Выберите услугу из категории «Сопровожение клиентских и входящих договоров». Стоимость берётся по правилам расчёта прайса. ${remainderHint}</div>
     </div>
     <div class="field">
-      <label>Рассчитанная стоимость базовой услуги, ₽</label>
-      <input type="number" min="0" step="100" id="baseContractPriceInput" value="${Number(computed)||0}" readonly>
+      <label class="invoice-float"><span>Рассчитанная стоимость базовой услуги, ₽</span>
+      <input type="number" min="0" step="100" id="baseContractPriceInput" value="${Number(computed)||0}" readonly></label>
       <div class="muted">Для 4.3 используется 50% от этой суммы. Цифра совпадает с расчётом, который попадёт в акт заказчика.</div>
     </div>
   `;
