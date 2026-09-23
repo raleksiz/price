@@ -1442,15 +1442,15 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   .cal-editor-sheet-row.context{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .cal-editor-sheet-row > .cal-editor-field,
   .cal-editor-sheet-row > .cal-editor-all-day{grid-column:auto;width:100%;margin:0}
-  .cal-editor-sheet-row .cal-editor-field input{min-height:38px;height:38px;padding:0 10px}
-  .cal-editor-all-day{width:36px;min-width:36px;height:38px;min-height:38px;padding:0;grid-column:auto}
+  .cal-editor-sheet-row .cal-editor-field input{min-height:45px;height:45px;padding:17px 9px 6px}
+  .cal-editor-all-day{width:36px;min-width:36px;height:36px;min-height:36px;padding:0;grid-column:auto}
   .cal-editor-all-day input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
   .cal-editor-all-day:has(input:checked){background:var(--cal-purple-2);color:var(--cal-purple);border-color:var(--cal-purple-3)}
   .cal-editor-info-grid{
     display:grid;grid-column:1/-1;grid-template-columns:1fr 1fr;gap:9px;align-items:start
   }
   .cal-editor-info-grid > .cal-editor-field{grid-column:auto;width:100%}
-  .cal-editor-info-grid textarea{height:38px;min-height:38px}
+  .cal-editor-info-grid textarea{height:auto;min-height:45px}
 }
 
 @media (max-width:720px){
@@ -1797,7 +1797,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   #calendarEditorOverlay .cal-editor-mobile-actions{display:none!important}
   #calendarEditorOverlay .cal-editor-body{padding:15px 18px 18px}
   #calendarEditorOverlay .cal-editor-grid{display:block}
-  #calendarEditorOverlay .cal-editor-field.full{display:grid;gap:6px;margin:0 0 14px}
+  #calendarEditorOverlay .cal-editor-field.full{display:block;position:relative;margin:0 0 14px}
   #calendarEditorOverlay .cal-editor-sheet-row{
     display:grid;grid-template-columns:minmax(138px,1.4fr) 36px minmax(84px,.8fr) minmax(84px,.8fr);gap:7px;align-items:end;margin:0 0 14px;width:100%;
   }
@@ -1806,24 +1806,39 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   }
   #calendarEditorOverlay .cal-editor-sheet-row > .cal-editor-field,
   #calendarEditorOverlay .cal-editor-sheet-row > .cal-editor-all-day{grid-column:auto!important;width:100%!important;max-width:none;margin:0}
+  #calendarEditorOverlay .cal-editor-field{position:relative}
   #calendarEditorOverlay .cal-editor-field label{
-    position:static;display:block;margin:0 0 5px;font-size:12px;font-weight:400;color:#777382;top:auto;left:auto;
-    text-transform:none;letter-spacing:0;
+    position:absolute;
+    top:5px;
+    left:10px;
+    z-index:2;
+    margin:0;
+    color:#708096;
+    font-size:11px;
+    line-height:1;
+    font-weight:400;
+    text-transform:none;
+    letter-spacing:0;
+    pointer-events:none;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:calc(100% - 20px);
   }
   #calendarEditorOverlay .cal-editor-field input,
   #calendarEditorOverlay .cal-editor-sheet-row .cal-editor-field input,
   #calendarEditorOverlay .cal-editor-field select,
   #calendarEditorOverlay .cal-editor-field textarea{
-    min-height:38px;height:38px;padding:0 10px;font-size:14px!important;font-weight:400!important;color:var(--ink);
-    border:1px solid #e5e3eb;border-radius:9px;background:#fff;
+    min-height:45px;height:45px;padding:17px 9px 6px;font-size:14px!important;font-weight:400!important;color:var(--ink);
+    border:1px solid #ccd6e2;border-radius:10px;background:#fff;
   }
   #calendarEditorOverlay .cal-editor-field.full textarea,
   #calendarEditorOverlay #calendarEditorDescription{
-    min-height:80px;height:auto;padding:9px 10px;font-size:14px!important;font-weight:400!important;
+    min-height:80px;height:auto;padding:17px 9px 8px;font-size:14px!important;font-weight:400!important;line-height:1.35;
   }
   #calendarEditorOverlay .cal-editor-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start;margin:0 0 14px}
   #calendarEditorOverlay .cal-editor-info-grid > .cal-editor-field{grid-column:auto;width:100%}
-  #calendarEditorOverlay .cal-editor-info-grid textarea{height:38px;min-height:38px;padding:8px 10px}
+  #calendarEditorOverlay .cal-editor-info-grid textarea{height:auto;min-height:45px;padding:17px 9px 6px;line-height:1.35}
   #calendarEditorOverlay .cal-editor-all-day{
     width:36px;min-width:36px;height:36px;min-height:36px;padding:0;grid-column:auto;border:1px solid #e5e3eb;border-radius:9px;
   }
