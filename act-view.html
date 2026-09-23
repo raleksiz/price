@@ -281,11 +281,42 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .filter-box{display:none;margin:0 0 12px;padding:10px 12px;background:#F8F6FF;border:1px solid #E7DFF7;border-radius:10px;}
 .filter-box.open{display:block;}
 .filter-toggle{width:auto;height:36px;white-space:nowrap;border:1px solid #C4B5FD;background:#fff;color:#6E3B8C;border-radius:8px;padding:7px 10px;font:600 12px inherit;cursor:pointer;}
-.filter-form{display:none;margin-top:0;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:end;}
+.filter-form{display:none;margin-top:0;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:stretch;}
 .filter-form.open{display:grid;}
-.filter-form label{display:block;font-size:9px;text-transform:uppercase;color:#888;font-weight:700;margin-bottom:4px;}
-.filter-form input{width:100%;border:1px solid #DDD;border-radius:7px;padding:7px 8px;font:12px inherit;color:var(--ink);background:#fff;min-width:0;}
 .act-filter{position:relative;min-width:0;}
+.act-filter > label{
+  position:absolute;
+  top:5px;
+  left:10px;
+  z-index:2;
+  margin:0;
+  color:#708096;
+  font-size:11px;
+  line-height:1;
+  font-weight:400;
+  text-transform:none;
+  letter-spacing:0;
+  pointer-events:none;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:calc(100% - 36px);
+}
+.act-filter-clear{
+  display:inline-flex;visibility:hidden;pointer-events:none;
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:3;
+  align-items:center;justify-content:center;
+  width:18px;height:18px;padding:0;border:none;border-radius:4px;
+  background:transparent;color:#888;cursor:pointer;
+  font-size:16px;line-height:1;font-family:inherit;
+}
+.act-filter.has-value .act-filter-clear{visibility:visible;pointer-events:auto;}
+.act-filter-clear:hover{color:var(--violet);background:#F3ECFA;}
+.filter-form input{
+  width:100%;min-width:0;height:43px;min-height:43px;
+  padding:16px 28px 6px 9px;border:1px solid #ccd6e2;border-radius:10px;
+  background:#fff;font:14px inherit;color:var(--ink);
+}
 .act-filter-drop{
   position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:30;
   max-height:220px;overflow-y:auto;
@@ -301,12 +332,11 @@ h3{font-size:13px;font-weight:700;color:#6E3B8C;margin:14px 0 6px;}
 .act-filter-drop button:hover,.act-filter-drop button.active{background:#F8F6FF;color:var(--violet);}
 .act-filter-drop .filter-empty-option{padding:8px 9px;color:#888;font-size:12px;}
 @media(max-width:720px){
-  .filter-form label{font-size:10px;}
-  .filter-form input{font-size:11px;padding:6px 7px;}
   .filter-toggle{height:40px;font-size:11px;padding:6px 9px;}
+  .act-filter-clear{width:22px;height:22px;font-size:18px;}
 }
-.filter-actions{display:flex;gap:6px;}
-.filter-actions button{border:0;border-radius:7px;padding:7px 10px;font:600 12px inherit;cursor:pointer;}
+.filter-actions{display:flex;gap:6px;align-items:stretch;}
+.filter-actions button{border:0;border-radius:10px;padding:7px 10px;min-height:43px;font:600 12px inherit;cursor:pointer;}
 .filter-apply{background:var(--ink);color:#fff;}.filter-reset{background:#eee;color:#555;}
 .applied-box{margin-top:6px;padding:7px 9px;background:#F8F6FF;border-radius:8px;color:#666;font-size:11px;line-height:1.55;}
 .applied-box summary{cursor:pointer;color:#6E3B8C;font-weight:700;list-style:none;}
@@ -782,10 +812,10 @@ function filtersTemplate(id, f){
   const idArg=esc(JSON.stringify(String(id)));
   return `<div class="filter-box ${openClass}">
     <div class="filter-form ${openClass}" id="filters-${idAttr}">
-      <div class="act-filter" data-contract-id="${idAttr}"><label for="filter-from-${idAttr}">Дата с</label><input id="filter-from-${idAttr}" type="text" inputmode="numeric" maxlength="10" autocomplete="off" data-filter="from" value="${esc(f.from||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
-      <div class="act-filter" data-contract-id="${idAttr}"><label for="filter-to-${idAttr}">Дата по</label><input id="filter-to-${idAttr}" type="text" inputmode="numeric" maxlength="10" autocomplete="off" data-filter="to" value="${esc(f.to||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
-      <div class="act-filter" data-contract-id="${idAttr}"><label for="filter-code-${idAttr}">Код услуги</label><input id="filter-code-${idAttr}" type="text" autocomplete="off" data-filter="code" value="${esc(f.code||'')}" placeholder="Все / начните вводить"><div class="act-filter-drop hidden"></div></div>
-      <div class="act-filter" data-contract-id="${idAttr}"><label for="filter-pay-${idAttr}">Статус оплаты</label><input id="filter-pay-${idAttr}" type="text" autocomplete="off" data-filter="pay" value="${esc(f.pay||'')}" placeholder="Любой / начните вводить"><div class="act-filter-drop hidden"></div></div>
+      <div class="act-filter${f.from?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-from-${idAttr}">Дата с</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.from?'false':'true'}" tabindex="${f.from?'0':'-1'}">×</button><input id="filter-from-${idAttr}" type="text" inputmode="numeric" maxlength="10" autocomplete="off" data-filter="from" value="${esc(f.from||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
+      <div class="act-filter${f.to?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-to-${idAttr}">Дата по</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.to?'false':'true'}" tabindex="${f.to?'0':'-1'}">×</button><input id="filter-to-${idAttr}" type="text" inputmode="numeric" maxlength="10" autocomplete="off" data-filter="to" value="${esc(f.to||'')}" placeholder="ДД.ММ.ГГГГ"><div class="act-filter-drop hidden"></div></div>
+      <div class="act-filter${f.code?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-code-${idAttr}">Код услуги</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.code?'false':'true'}" tabindex="${f.code?'0':'-1'}">×</button><input id="filter-code-${idAttr}" type="text" autocomplete="off" data-filter="code" value="${esc(f.code||'')}" placeholder="Все / начните вводить"><div class="act-filter-drop hidden"></div></div>
+      <div class="act-filter${f.pay?' has-value':''}" data-contract-id="${idAttr}"><label for="filter-pay-${idAttr}">Статус оплаты</label><button type="button" class="act-filter-clear" aria-label="Сбросить фильтр" aria-hidden="${f.pay?'false':'true'}" tabindex="${f.pay?'0':'-1'}">×</button><input id="filter-pay-${idAttr}" type="text" autocomplete="off" data-filter="pay" value="${esc(f.pay||'')}" placeholder="Любой / начните вводить"><div class="act-filter-drop hidden"></div></div>
       <div class="filter-actions"><button class="filter-reset" type="button" onclick="resetFilters(${idArg})">Сбросить</button></div>
     </div>
   </div>`;
@@ -908,6 +938,15 @@ function pickActFilterValue(input,value){
   closeActFilterDrops();
   renderContractById(wrap.dataset.contractId);
 }
+function clearActFilter(wrap){
+  const input=wrap&&wrap.querySelector('input[data-filter]');
+  if(!input) return;
+  input.value='';
+  input.dataset.filterTyping='';
+  wrap.classList.remove('has-value');
+  closeActFilterDrops();
+  renderContractById(wrap.dataset.contractId);
+}
 function bindActFilters(){
   if(window.__actFiltersBound) return;
   window.__actFiltersBound=true;
@@ -942,6 +981,12 @@ function bindActFilters(){
     }
   });
   document.addEventListener('mousedown',event=>{
+    const clearBtn=event.target.closest&&event.target.closest('.act-filter-clear');
+    if(clearBtn){
+      event.preventDefault();
+      clearActFilter(clearBtn.closest('.act-filter'));
+      return;
+    }
     const pick=event.target.closest&&event.target.closest('.act-filter-drop button[data-val]');
     if(pick){
       const input=pick.closest('.act-filter').querySelector('input[data-filter]');
