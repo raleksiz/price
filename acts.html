@@ -335,7 +335,8 @@ tr.locked td{background:#FAFAFC;}
   background-position:right 10px center;
   background-size:12px;
 }
-.modal .card.service-form .cf-picker-title{
+.modal .card.service-form .cf-picker-title,
+.modal .card.service-form .cf-row > label:not(.cf-public){
   font-size:10px;
   font-weight:600;
   color:#8a8494;
@@ -383,12 +384,12 @@ tr.locked td{background:#FAFAFC;}
 .cf-pick input{width:16px;height:16px;margin:0;accent-color:var(--violet);}
 .cf-pick span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cf-link-rows{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;}
-.cf-link-row{display:grid;grid-template-columns:auto minmax(0,1fr) 16px;gap:8px;align-items:end;min-width:0;}
-.cf-link-row .field{margin-bottom:0;min-width:0;}
-.cf-link-name,.cf-link-url{width:100%;font-size:13px;padding:8px 10px;line-height:1.35;}
+.cf-link-row{display:grid;grid-template-columns:auto minmax(0,1fr) 16px;gap:8px;align-items:stretch;min-width:0;}
+.cf-link-row .field,.cf-link-row .invoice-float{margin-bottom:0;min-width:0;}
+.cf-link-name,.cf-link-url{width:100%;font-size:13px;line-height:1.35;}
 .cf-link-name{width:20ch;max-width:100%;}
 .cf-link-url{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cf-link-slot{width:16px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cf-link-slot{width:16px;min-height:44px;height:auto;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:stretch;}
 .cf-link-action{width:16px;height:16px;padding:0;border:0;background:transparent;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .cf-link-action svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
 @media (max-width:720px){
@@ -5966,8 +5967,8 @@ function cfLinkActionHtml(add){
 }
 function cfLinkRowHtml(item, isLast){
   return `<div class="cf-link-row">
-    <div class="field"><label>Имя</label><input class="cf-link-name" maxlength="20" value="${esc((item && item.name) || '')}"></div>
-    <div class="field"><label>Адрес</label><input class="cf-link-url" value="${esc((item && item.url) || '')}" placeholder="https://"></div>
+    <label class="invoice-float"><span>Имя</span><input class="cf-link-name" maxlength="20" value="${esc((item && item.name) || '')}" placeholder=" "></label>
+    <label class="invoice-float"><span>Адрес</span><input class="cf-link-url" value="${esc((item && item.url) || '')}" placeholder="https://"></label>
     <div class="cf-link-slot">${cfLinkActionHtml(!!isLast)}</div>
   </div>`;
 }
