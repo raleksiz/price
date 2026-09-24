@@ -213,7 +213,6 @@ tr.locked td{background:#FAFAFC;}
 .icon-btn-toggle.active{border-color:var(--violet);background:var(--soft);color:var(--violet);}
 .icon-btn-toggle:has(.hidden-toggle-count){width:auto;padding:0 8px;}
 .hidden-toggle-count{font-size:10px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;}
-.hidden-count-badge{display:none;}
 .clients-add-fab{
   margin-left:auto;flex-shrink:0;
   width:40px;height:40px;min-width:40px;padding:0;border:0;border-radius:14px;
@@ -264,9 +263,11 @@ tr.locked td{background:#FAFAFC;}
 .cl-acc-header:hover{background:#1F2A44;}
 .cl-acc.pinned .cl-acc-header{background:#5B3D7A;}
 .cl-acc.pinned .cl-acc-header:hover{background:#4A3166;}
-.cl-acc-title{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;line-height:1.35;display:flex;align-items:center;gap:8px;padding:0 10px 0 12px;}
-.cl-acc-title > span:first-child,
-.cl-acc-contract-name > span:first-child{min-width:0;overflow-wrap:anywhere;}
+.cl-acc.hiddenc .cl-acc-header{background:#6B7280;}
+.cl-acc.hiddenc .cl-acc-header:hover{background:#5B6370;}
+.cl-acc.hiddenc.pinned .cl-acc-header{background:#7A6B86;}
+.cl-acc.hiddenc.pinned .cl-acc-header:hover{background:#6A5C76;}
+.cl-acc-title{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;line-height:1.35;display:flex;align-items:center;padding:0 10px 0 12px;}
 .cl-acc.pinned .cl-acc-title{font-weight:800;}
 .cl-acc-tools{display:flex;align-items:center;gap:4px;flex-shrink:0;padding-right:2px;}
 .cl-acc-icon{
@@ -289,18 +290,10 @@ tr.locked td{background:#FAFAFC;}
   background:rgba(255,255,255,.14);color:#fff;
   display:inline-flex;align-items:center;gap:4px;flex-shrink:0;align-self:center;
   font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;font-family:inherit;
-  pointer-events:none;cursor:default;
+  pointer-events:auto;cursor:pointer;
 }
 .cl-acc-hidden-chip .cal-icon{width:13px;height:13px;}
-.cl-acc-hidden-chip:hover{background:rgba(255,255,255,.22);}
-.cl-acc-hidden-tag{
-  display:inline-flex;align-items:center;flex-shrink:0;
-  height:18px;padding:0 7px;border-radius:999px;
-  background:rgba(255,255,255,.16);color:rgba(255,255,255,.92);
-  font-size:10px;font-weight:700;letter-spacing:.25px;text-transform:uppercase;
-}
-.cl-acc-chevron{flex-shrink:0;transition:transform .25s ease;}
-.cl-acc.open .cl-acc-chevron{transform:rotate(180deg);}
+.cl-acc-hidden-chip:hover,.cl-acc-hidden-chip.is-on{background:rgba(255,255,255,.22);}
 .cl-acc-body{max-height:0;overflow:hidden;transition:max-height .35s ease;}
 .cl-acc.open .cl-acc-body{max-height:20000px;overflow:visible;}
 .cl-acc-empty{padding:12px 16px;color:var(--muted);font-size:12.5px;}
@@ -314,23 +307,28 @@ tr.locked td{background:#FAFAFC;}
 .cl-acc-contract:hover{background:#FBFBFD;}
 .cl-acc-contract.pinned{background:#E9DFF6;}
 .cl-acc-contract.pinned:hover{background:#DFD2F0;}
-.cl-acc-contract-name{flex:1 1 auto;min-width:0;font-size:13.5px;line-height:1.35;overflow-wrap:anywhere;display:flex;align-items:center;gap:8px;padding:2px 4px 2px 10px;}
+.cl-acc-contract.hiddenc{background:#DDE3EA;}
+.cl-acc-contract.hiddenc:hover{background:#D4DBE4;}
+.cl-acc-contract.hiddenc.pinned{background:#DDD6E6;}
+.cl-acc-contract.hiddenc.pinned:hover{background:#D4CCDE;}
+.cl-acc-contract-name{flex:1 1 auto;min-width:0;font-size:13.5px;line-height:1.35;overflow-wrap:anywhere;display:flex;align-items:center;padding:2px 4px 2px 10px;}
 .cl-acc-contract.pinned .cl-acc-contract-name{font-weight:700;}
 .cl-acc-contract-amt{
-  flex-shrink:0;align-self:center;font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;
-  white-space:nowrap;min-width:4.4em;text-align:right;
-  padding:5px 8px;border-radius:8px;background:#F6F4FA;
+  box-sizing:border-box;flex:0 0 6.15em;width:6.15em;min-width:6.15em;max-width:6.15em;
+  align-self:center;font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;
+  white-space:nowrap;text-align:right;overflow:hidden;
+  padding:5px 6px;border-radius:8px;background:#F6F4FA;
 }
 .cl-acc-contract-amt.bad{color:var(--bad);background:#FDF2F2;}
 .cl-acc-contract-amt.ok{color:var(--ok);background:#F1F8F4;}
 .cl-acc-contract .cl-acc-menu-btn{color:#8A7A9E;border-right-color:#E6E1EE;}
 .cl-acc-contract .cl-acc-menu-btn:hover{background:#F4F0FA;color:var(--violet);}
-.cl-acc-contract .cl-acc-hidden-tag{background:#EEEAF6;color:#6D5B86;}
 .cl-acc-contract .cl-acc-icon{color:var(--ink);width:30px;height:30px;min-width:30px;flex-basis:30px;font-weight:700;align-self:center;}
 .cl-acc-contract .cl-acc-icon:hover{background:var(--soft);color:var(--violet);}
 .cl-acc-contract .cl-acc-icon .cal-icon{width:17px;height:17px;}
 .cl-acc-contract .cl-acc-icon.act-on{background:var(--violet);color:#fff;border-radius:9px;}
 .cl-acc-contract .cl-acc-icon.act-on:hover{background:var(--violet-d);color:#fff;}
+.cl-acc-cal-empty{visibility:hidden;pointer-events:none;}
 .cl-acc-add{
   width:30px;height:30px;min-width:30px;flex:0 0 30px;border:0;border-radius:50%;
   background:linear-gradient(135deg,var(--violet),var(--violet-d));color:#fff;
@@ -384,11 +382,9 @@ tr.locked td{background:#FAFAFC;}
   .cl-acc-icon{width:30px;height:30px;min-width:30px;flex-basis:30px;}
   .cl-acc-contract{padding:8px 10px 8px 12px;gap:6px;}
   .cl-acc-contract-name{padding:2px 4px 2px 0;}
-  .cl-acc-contract-amt{font-size:12px;min-width:4em;}
   .cl-acc-menu button{min-height:42px;}
   .cl-acc-pin{display:none!important;}
   .cl-acc-menu-btn{display:none!important;}
-  .cl-acc-hidden-chip{pointer-events:auto;cursor:pointer;}
   .cl-acc-header,.cl-acc-contract{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
   .ct-party-inn input{width:13ch;padding-left:8px;padding-right:8px;}
 }
@@ -1376,8 +1372,8 @@ tr.fields-drag-over td{background:var(--soft);}
 #cfEditors textarea.autogrow{min-height:38px;}
 @media (max-width:720px){
   /* строка быстрого перехода к заказчику */
-  .clients-toolbar{position:sticky;top:0;z-index:12;display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:6px;margin:-22px -20px 10px;padding:8px 20px 8px;background:var(--card);border-radius:16px 16px 0 0;}
-  .client-jump{display:block;position:relative;min-width:0;}
+  .clients-toolbar{position:sticky;top:0;z-index:12;display:flex;flex-wrap:nowrap;align-items:center;gap:6px;margin:-22px -20px 10px;padding:8px 20px;background:var(--card);border-radius:16px 16px 0 0;min-height:50px;box-sizing:border-box;}
+  .client-jump{display:block;position:relative;min-width:0;flex:1 1 auto;}
   .client-jump-drop{display:none!important;}
   #view-clients > .card{padding-bottom:76px;}
   .clients-add-fab{
@@ -4026,7 +4022,7 @@ function updateHiddenToggleButton(button, showHidden, count, showLabel, hideLabe
   button.setAttribute('aria-pressed', showHidden ? 'true' : 'false');
   button.title=safeCount ? actionLabel+' · '+countLabel+': '+safeCount : actionLabel;
   button.setAttribute('aria-label', button.title);
-  button.innerHTML=`<span class="hidden-toggle-ico" aria-hidden="true">${showHidden?'🙈':'👁'}</span>${safeCount?`<span class="hidden-toggle-count" aria-hidden="true">${safeCount>99?'99+':safeCount}</span>`:''}`;
+  button.innerHTML=`<span class="hidden-toggle-ico" aria-hidden="true">👁</span>${safeCount?`<span class="hidden-toggle-count" aria-hidden="true">${safeCount>99?'99+':safeCount}</span>`:''}`;
 }
 function sortedClients(){
   return DB.clients.slice().sort((a,b)=>{
@@ -4181,15 +4177,10 @@ function openClAccMenu(event, kind, clientId, contractId){
   }
   const c = getClient(clientId);
   if(!c) return;
-  const hiddenContracts = (c.contracts || []).filter(ct => ct.hidden).length;
-  const showHiddenCt = showHiddenContractsByClient.has(clientId);
   let html = '';
   if(kind === 'client'){
     html =
       `<button type="button" role="menuitem" onclick="closeClAccMenu();togglePin('${clientId}')">${c.pinned ? 'Открепить' : 'Закрепить'}</button>` +
-      (hiddenContracts || showHiddenCt
-        ? `<button type="button" role="menuitem" onclick="toggleShowHiddenContractsFor('${clientId}')">${showHiddenCt ? 'Скрыть скрытые договоры' : 'Показать скрытые договоры'}</button>`
-        : '') +
       `<button type="button" role="menuitem" onclick="closeClAccMenu();toggleHide('${clientId}')">${c.hidden ? 'Показать заказчика' : 'Скрыть заказчика'}</button>` +
       `<button type="button" role="menuitem" onclick="closeClAccMenu();openClientForm('${clientId}')">Переименовать</button>` +
       `<hr>` +
@@ -4214,11 +4205,9 @@ function accordionMenuBtn(kind, clientId, contractId){
   const args = kind === 'contract' ? `'contract','${clientId}','${contractId}'` : `'client','${clientId}'`;
   return `<button type="button" class="cl-acc-menu-btn" onclick="openClAccMenu(event,${args})" title="Ещё" aria-label="Ещё" aria-haspopup="menu">${CL_ACC_MENU_SVG}</button>`;
 }
-function accordionHiddenTag(on){
-  return on ? '<span class="cl-acc-hidden-tag">скрыт</span>' : '';
-}
-function accordionCalIcon(clientId, contractId){
-  if(typeof window.calendarHasSoonTasks!=='function' || !window.calendarHasSoonTasks(clientId, contractId||null)) return '';
+function accordionCalIcon(clientId, contractId, keepSlot){
+  const has = typeof window.calendarHasSoonTasks==='function' && window.calendarHasSoonTasks(clientId, contractId||null);
+  if(!has) return keepSlot ? '<span class="cl-acc-icon cl-acc-cal cl-acc-cal-empty" aria-hidden="true"></span>' : '';
   const title = contractId ? 'Календарь по этому договору' : 'Календарь по этому заказчику';
   const args = contractId ? `'${clientId}','${contractId}'` : `'${clientId}'`;
   return `<button type="button" class="cl-acc-icon cl-acc-cal" onclick="event.stopPropagation();openAccordionCalendar(${args})" title="${esc(title)}" aria-label="${esc(title)}"><svg class="cal-icon" aria-hidden="true"><use href="#cal-i-calendar"/></svg></button>`;
@@ -4231,9 +4220,9 @@ function clientAccordionContractRow(c, ct){
   const t = contractTotals(c, ct.id);
   return `<div class="cl-acc-contract ${ct.pinned?'pinned':''} ${ct.hidden?'hiddenc':''}" data-contract-id="${ct.id}" onclick="openContract('${ct.id}','${c.id}')">
     ${accordionMenuBtn('contract', c.id, ct.id)}
-    <div class="cl-acc-contract-name"><span>${esc(contractLabel(ct))}</span>${accordionHiddenTag(ct.hidden)}</div>
+    <div class="cl-acc-contract-name">${esc(contractLabel(ct))}</div>
+    ${accordionCalIcon(c.id, ct.id, true)}
     <span class="cl-acc-contract-amt ${t.debt?'bad':'ok'}">${money(t.debt)}</span>
-    ${accordionCalIcon(c.id, ct.id)}
     <button type="button" class="cl-acc-icon cl-acc-add" onclick="event.stopPropagation();openServiceForm('${c.id}','${ct.id}',null)" title="Добавить услугу" aria-label="Добавить услугу">${CL_ACC_PLUS_SVG}</button>
     <button type="button" class="cl-acc-icon ${ct.showInAct!==false?'act-on':''}" onclick="event.stopPropagation();toggleContractShowInAct('${c.id}','${ct.id}')" title="Показывать в акте" aria-label="Показывать в акте">А</button>
   </div>`;
@@ -4260,8 +4249,9 @@ function renderClients(){
       const showHiddenCt = showHiddenContractsByClient.has(c.id);
       const contracts = sortedContracts(c).filter(ct => showHiddenCt || !ct.hidden);
       const isOpen = expandedClientIds.has(c.id);
+      const cal = accordionCalIcon(c.id);
       const hiddenHint = hiddenContracts
-        ? `<button type="button" class="cl-acc-hidden-chip" onclick="onAccHiddenHint(event,'${c.id}')" title="Скрытых договоров: ${hiddenContracts}" aria-label="Скрытых договоров: ${hiddenContracts}">${CL_ACC_EYE_SVG}<span>${hiddenContracts>99?'99+':hiddenContracts}</span></button>`
+        ? `<button type="button" class="cl-acc-hidden-chip${showHiddenCt?' is-on':''}" onclick="onAccHiddenHint(event,'${c.id}')" title="Скрытых договоров: ${hiddenContracts}" aria-label="Скрытых договоров: ${hiddenContracts}">${CL_ACC_EYE_SVG}<span>${hiddenContracts>99?'99+':hiddenContracts}</span></button>`
         : '';
       const body = contracts.length
         ? `<div class="cl-acc-contracts">${contracts.map(ct => clientAccordionContractRow(c, ct)).join('')}</div>`
@@ -4269,11 +4259,8 @@ function renderClients(){
       return `<section class="cl-acc ${isOpen?'open':''} ${c.pinned?'pinned':''} ${c.hidden?'hiddenc':''}" id="clientCard-${c.id}" data-client-id="${c.id}">
         <div class="cl-acc-header" onclick="toggleClientAccordion('${c.id}', event)">
           ${accordionMenuBtn('client', c.id)}
-          <span class="cl-acc-title"><span>${esc(c.name)||'Без наименования'}</span>${accordionHiddenTag(c.hidden)}</span>
-          <div class="cl-acc-tools" onclick="event.stopPropagation()">
-            ${hiddenHint}
-            ${accordionCalIcon(c.id)}
-          </div>
+          <span class="cl-acc-title">${esc(c.name)||'Без наименования'}</span>
+          <div class="cl-acc-tools" onclick="event.stopPropagation()">${hiddenHint}${cal}</div>
         </div>
         <div class="cl-acc-body">
           ${body}
@@ -4331,7 +4318,6 @@ function touchClient(c){ if(c) c.updatedAt = new Date().toISOString(); }
 function touchContract(ct){ if(ct) ct.updatedAt = new Date().toISOString(); }
 function onAccHiddenHint(event, clientId){
   if(event) event.stopPropagation();
-  if(!isMobileAccPin()) return;
   toggleShowHiddenContractsFor(clientId);
 }
 function isMobileAccPin(){
@@ -4380,7 +4366,7 @@ function showAccPinPop(clientId, contractId, x, y){
     pinBtn.title = pinned ? 'Открепить' : 'Закрепить';
   }
   if(hideBtn){
-    hideBtn.textContent = hidden ? '🙈' : '👁';
+    hideBtn.textContent = '👁';
     const hideLabel = contractId
       ? (hidden ? 'Показать договор' : 'Скрыть договор')
       : (hidden ? 'Показать заказчика' : 'Скрыть заказчика');
