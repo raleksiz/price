@@ -229,13 +229,16 @@ tr.locked td{background:#FAFAFC;}
 .clients-add-fab:hover{opacity:.92;}
 .clients-add-fab .cal-icon{width:22px;height:22px;}
 .ct-party-row{
-  display:grid;grid-template-columns:minmax(0,1fr) calc(15ch + 26px);
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
   gap:10px;margin-bottom:14px;align-items:end;
 }
 .ct-party-row .field{margin-bottom:0;min-width:0;}
 .ct-party-client{position:relative;}
 .ct-party-client input[readonly]{background:#F6F6F8;color:#555;cursor:default;}
-.ct-party-inn input{font-variant-numeric:tabular-nums;letter-spacing:.02em;}
+.ct-party-inn input{
+  width:15ch;max-width:100%;box-sizing:content-box;
+  font-variant-numeric:tabular-nums;letter-spacing:.02em;
+}
 .ct-client-drop{
   position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:30;
   max-height:220px;overflow-y:auto;
@@ -264,6 +267,8 @@ tr.locked td{background:#FAFAFC;}
   cursor:pointer;display:flex;align-items:center;gap:10px;user-select:none;
 }
 .cl-acc-header:hover{background:#1F2A44;}
+.cl-acc.pinned .cl-acc-header{background:#5B3D7A;}
+.cl-acc.pinned .cl-acc-header:hover{background:#4A3166;}
 .cl-acc-title{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;line-height:1.35;}
 .cl-acc.pinned .cl-acc-title{font-weight:800;}
 .cl-acc.hiddenc{opacity:.55;}
@@ -293,7 +298,8 @@ tr.locked td{background:#FAFAFC;}
 }
 .cl-acc-contract:last-child{border-bottom:none;}
 .cl-acc-contract:hover{background:#FBFBFD;}
-.cl-acc-contract.pinned{background:#FBF9FF;}
+.cl-acc-contract.pinned{background:#E9DFF6;}
+.cl-acc-contract.pinned:hover{background:#DFD2F0;}
 .cl-acc-contract.hiddenc{opacity:.55;}
 .cl-acc-contract-name{flex:1 1 auto;min-width:0;font-size:13.5px;line-height:1.35;overflow-wrap:anywhere;}
 .cl-acc-contract.pinned .cl-acc-contract-name{font-weight:700;}
@@ -322,6 +328,19 @@ tr.locked td{background:#FAFAFC;}
 .cl-acc-menu button.danger{color:var(--bad);}
 .cl-acc-menu button.danger:hover{background:#FEE2E2;color:var(--bad);}
 .cl-acc-menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px;}
+.cl-acc-pin-pop{
+  position:fixed;z-index:420;width:48px;height:48px;padding:0;
+  transform:scale(.86);opacity:0;pointer-events:none;
+  transition:transform .14s ease,opacity .14s ease;
+}
+.cl-acc-pin-pop.is-open{transform:scale(1);opacity:1;pointer-events:auto;}
+.cl-acc-pin-pop-btn{
+  width:48px;height:48px;padding:0;border:0;border-radius:16px;
+  background:#fff;color:var(--ink);font-size:22px;line-height:1;
+  display:grid;place-items:center;cursor:pointer;
+  box-shadow:0 10px 28px rgba(80,40,120,.28);
+}
+.cl-acc-pin-pop-btn:active{transform:scale(.94);}
 @media (max-width:720px){
   .clients-page-title{display:none;}
   #view-all > .card > h2,
@@ -331,6 +350,9 @@ tr.locked td{background:#FAFAFC;}
   .cl-acc-contract{padding:8px 10px 8px 12px;gap:4px;}
   .cl-acc-contract-amt{font-size:12px;min-width:4em;}
   .cl-acc-menu button{min-height:42px;}
+  .cl-acc-pin{display:none!important;}
+  .cl-acc-header,.cl-acc-contract{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
+  .ct-party-inn input{width:13ch;padding-left:8px;padding-right:8px;}
 }
 .contracts-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
 .contracts-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
@@ -2417,6 +2439,9 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
 
 <div id="modalRoot"></div>
 <div id="clAccMenu" class="cl-acc-menu hidden" role="menu"></div>
+<div id="clAccPinPop" class="cl-acc-pin-pop hidden" hidden>
+  <button type="button" class="cl-acc-pin-pop-btn" id="clAccPinPopBtn" aria-label="Закрепить">📌</button>
+</div>
 <div id="printArea"></div>
 <div class="muted sync-line" id="syncState"></div>
 
@@ -3918,6 +3943,7 @@ function renderAllViews(){
 function setView(v, id, keepContract){
   hideMobileCrmAddClient();
   closeClAccMenu();
+  hideAccPinPop();
   const prevClientId = currentClientId;
   currentView = v;
   if(id!==undefined) currentClientId = id;
@@ -3941,6 +3967,7 @@ function setView(v, id, keepContract){
   const parsed = parseNavHash();
   if(parsed) paintNavActive(parsed.view);
   bindMobileCrmAddClient();
+  bindAccordionPinHold();
 })();
 
 /* ====================== ЗАКАЗЧИКИ (СПИСОК) ====================== */
@@ -4088,6 +4115,7 @@ function placeClAccMenu(menu, event){
 }
 function openClAccMenu(event, kind, clientId, contractId){
   if(event){ event.preventDefault(); event.stopPropagation(); }
+  hideAccPinPop();
   const menu = document.getElementById('clAccMenu');
   if(!menu) return;
   const c = getClient(clientId);
@@ -4119,10 +4147,10 @@ function openClAccMenu(event, kind, clientId, contractId){
 }
 function clientAccordionContractRow(c, ct){
   const t = contractTotals(c, ct.id);
-  return `<div class="cl-acc-contract ${ct.pinned?'pinned':''} ${ct.hidden?'hiddenc':''}" onclick="openContract('${ct.id}','${c.id}')">
+  return `<div class="cl-acc-contract ${ct.pinned?'pinned':''} ${ct.hidden?'hiddenc':''}" data-contract-id="${ct.id}" onclick="openContract('${ct.id}','${c.id}')">
     <div class="cl-acc-contract-name">${esc(contractLabel(ct))}</div>
     <span class="cl-acc-contract-amt ${t.debt?'bad':'ok'}">${money(t.debt)}</span>
-    <button type="button" class="cl-acc-icon ${ct.pinned?'is-on':'is-off'}" onclick="event.stopPropagation();toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}" aria-label="${ct.pinned?'Открепить':'Закрепить'}">${ct.pinned?'📌':'📍'}</button>
+    <button type="button" class="cl-acc-icon cl-acc-pin ${ct.pinned?'is-on':'is-off'}" onclick="event.stopPropagation();toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}" aria-label="${ct.pinned?'Открепить':'Закрепить'}">${ct.pinned?'📌':'📍'}</button>
     <button type="button" class="cl-acc-icon" onclick="event.stopPropagation();openServiceForm('${c.id}','${ct.id}',null)" title="Добавить услугу" aria-label="Добавить услугу">+</button>
     <button type="button" class="cl-acc-icon ${ct.showInAct!==false?'act-on':''}" onclick="event.stopPropagation();toggleContractShowInAct('${c.id}','${ct.id}')" title="Показывать в акте" aria-label="Показывать в акте">А</button>
     <button type="button" class="cl-acc-icon" onclick="openClAccMenu(event,'contract','${c.id}','${ct.id}')" title="Ещё" aria-label="Ещё" aria-haspopup="menu">⋯</button>
@@ -4130,6 +4158,7 @@ function clientAccordionContractRow(c, ct){
 }
 function renderClients(){
   closeClAccMenu();
+  hideAccPinPop();
   const showHidden = showHiddenClients;
   const showHiddenBtn = document.getElementById('showHiddenBtn');
   const hiddenCount=DB.clients.filter(c=>c.hidden).length;
@@ -4159,7 +4188,7 @@ function renderClients(){
         <div class="cl-acc-header" onclick="toggleClientAccordion('${c.id}', event)">
           <span class="cl-acc-title">${esc(c.name)||'Без наименования'}</span>
           <div class="cl-acc-tools" onclick="event.stopPropagation()">
-            <button type="button" class="cl-acc-icon ${c.pinned?'is-on':'is-off'}" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}" aria-label="${c.pinned?'Открепить':'Закрепить'}">${c.pinned?'📌':'📍'}</button>
+            <button type="button" class="cl-acc-icon cl-acc-pin ${c.pinned?'is-on':'is-off'}" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}" aria-label="${c.pinned?'Открепить':'Закрепить'}">${c.pinned?'📌':'📍'}</button>
             ${hiddenHint}
             <button type="button" class="cl-acc-icon" onclick="openClAccMenu(event,'client','${c.id}')" title="Ещё" aria-label="Ещё" aria-haspopup="menu">⋯</button>
           </div>
@@ -4219,6 +4248,137 @@ function totSm(l,v){ return `<div class="tot tot-sm"><div class="l">${l}</div><d
 function totInline(l,v,color){ return `<div class="tot" style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;"><span class="l" style="font-size:11px">${l}</span><span class="v" style="font-size:15px;margin-top:0;color:${color||'inherit'}">${v}</span></div>`; }
 function touchClient(c){ if(c) c.updatedAt = new Date().toISOString(); }
 function touchContract(ct){ if(ct) ct.updatedAt = new Date().toISOString(); }
+function isMobileAccPin(){
+  return window.matchMedia('(max-width:720px)').matches;
+}
+function hideAccPinPop(){
+  const pop = document.getElementById('clAccPinPop');
+  if(!pop) return;
+  pop.classList.add('hidden');
+  pop.classList.remove('is-open');
+  pop.hidden = true;
+  pop.dataset.clientId = '';
+  pop.dataset.contractId = '';
+}
+function accPinIsPinned(clientId, contractId){
+  if(contractId){
+    const client = getClient(clientId);
+    const contract = client && getContract(client, contractId);
+    return !!(contract && contract.pinned);
+  }
+  const client = getClient(clientId);
+  return !!(client && client.pinned);
+}
+function showAccPinPop(clientId, contractId, x, y){
+  const pop = document.getElementById('clAccPinPop');
+  const btn = document.getElementById('clAccPinPopBtn');
+  if(!pop || !btn) return;
+  closeClAccMenu();
+  pop.dataset.clientId = clientId || '';
+  pop.dataset.contractId = contractId || '';
+  const pinned = accPinIsPinned(clientId, contractId);
+  btn.textContent = pinned ? '📌' : '📍';
+  btn.setAttribute('aria-label', pinned ? 'Открепить' : 'Закрепить');
+  btn.title = pinned ? 'Открепить' : 'Закрепить';
+  pop.hidden = false;
+  pop.classList.remove('hidden');
+  const size = 48;
+  let left = x - size / 2;
+  let top = y - size - 18;
+  if(top < 8) top = y + 18;
+  left = Math.max(8, Math.min(window.innerWidth - size - 8, left));
+  top = Math.max(8, Math.min(window.innerHeight - size - 8, top));
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+  requestAnimationFrame(() => pop.classList.add('is-open'));
+}
+function confirmAccPinPop(){
+  const pop = document.getElementById('clAccPinPop');
+  if(!pop) return;
+  const clientId = pop.dataset.clientId;
+  const contractId = pop.dataset.contractId;
+  hideAccPinPop();
+  if(!clientId) return;
+  if(contractId) toggleContractPin(clientId, contractId);
+  else togglePin(clientId);
+}
+function bindAccordionPinHold(){
+  const box = document.getElementById('clientsList');
+  const btn = document.getElementById('clAccPinPopBtn');
+  if(btn && !btn.dataset.pinBound){
+    btn.dataset.pinBound = '1';
+    btn.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      confirmAccPinPop();
+    });
+  }
+  if(!box || box.dataset.pinHoldBound) return;
+  box.dataset.pinHoldBound = '1';
+  const holdMs = 550, moveLimit = 10;
+  let hold = null;
+  const cancelHold = () => {
+    if(hold && hold.timer) clearTimeout(hold.timer);
+    hold = null;
+  };
+  box.addEventListener('pointerdown', event => {
+    if(!isMobileAccPin()) return;
+    if(!event.isPrimary) return;
+    if(event.target.closest('.cl-acc-tools') || event.target.closest('.cl-acc-icon')) return;
+    const header = event.target.closest('.cl-acc-header');
+    const contract = event.target.closest('.cl-acc-contract');
+    if(!header && !contract) return;
+    const section = event.target.closest('.cl-acc');
+    const clientId = section && section.dataset.clientId;
+    if(!clientId) return;
+    const contractId = contract ? (contract.dataset.contractId || '') : '';
+    cancelHold();
+    hold = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      clientId,
+      contractId,
+      timer: setTimeout(() => {
+        if(!hold) return;
+        window.__accPinSuppressClick = true;
+        showAccPinPop(hold.clientId, hold.contractId, hold.x, hold.y);
+        hold = null;
+      }, holdMs)
+    };
+  }, {passive:true});
+  box.addEventListener('pointermove', event => {
+    if(!hold || event.pointerId !== hold.pointerId) return;
+    if(Math.hypot(event.clientX - hold.x, event.clientY - hold.y) > moveLimit) cancelHold();
+  }, {passive:true});
+  ['pointerup','pointercancel','pointerleave'].forEach(type => {
+    box.addEventListener(type, event => {
+      if(!hold || event.pointerId !== hold.pointerId) return;
+      cancelHold();
+    }, {passive:true});
+  });
+  box.addEventListener('contextmenu', event => {
+    if(!isMobileAccPin()) return;
+    if(event.target.closest('.cl-acc-header') || event.target.closest('.cl-acc-contract')){
+      event.preventDefault();
+    }
+  });
+  document.addEventListener('click', event => {
+    if(!window.__accPinSuppressClick) return;
+    window.__accPinSuppressClick = false;
+    if(event.target.closest && event.target.closest('#clAccPinPop')) return;
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+  document.addEventListener('pointerdown', event => {
+    const pop = document.getElementById('clAccPinPop');
+    if(!pop || pop.classList.contains('hidden')) return;
+    if(pop.contains(event.target)) return;
+    hideAccPinPop();
+  });
+  window.addEventListener('scroll', hideAccPinPop, true);
+  window.addEventListener('resize', hideAccPinPop);
+}
 function togglePin(id){ const c=getClient(id); c.pinned=!c.pinned; touchClient(c); save(); renderClients(); }
 function toggleHide(id){ const c=getClient(id); c.hidden=!c.hidden; touchClient(c); save(); renderClients(); }
 function deleteClient(id){
