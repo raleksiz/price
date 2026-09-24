@@ -13,7 +13,7 @@
   try{
     var h = (location.hash || '').replace(/^#/, '');
     var html = document.documentElement;
-    if(h.indexOf('client/')===0) html.classList.add('boot-route-client');
+    if(h.indexOf('client/')===0 && h.indexOf('/contract/')>=0) html.classList.add('boot-route-client');
     else if(h==='all') html.classList.add('boot-route-all');
     else if(h==='fields') html.classList.add('boot-route-fields');
     else if(h==='calendar') html.classList.add('boot-route-calendar');
@@ -204,6 +204,7 @@ tr.locked td{background:#FAFAFC;}
 .pill.pre{background:#EDE9FE;color:#5B21B6;}
 .pill.lock{background:#EEE;color:#666;}
 .clients,.contracts-grid{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;}
+#clientsList.clients{display:block;flex-wrap:unset;gap:0;align-items:unset;}
 .clients-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:14px;min-width:0;}
 .clients-page-title{margin:0;font-size:15px;font-weight:700;flex-shrink:0;line-height:1.2;}
 .clients-toolbar #globalTotals{display:none;}
@@ -218,11 +219,118 @@ tr.locked td{background:#FAFAFC;}
   font-size:9px;font-weight:800;line-height:1;font-family:inherit;
   font-variant-numeric:tabular-nums;
 }
-.clients-add-btn{margin-left:auto;flex-shrink:0;}
+.clients-add-fab{
+  margin-left:auto;flex-shrink:0;
+  width:40px;height:40px;min-width:40px;padding:0;border:0;border-radius:14px;
+  background:linear-gradient(135deg,var(--violet),var(--violet-d));color:#fff;
+  display:grid;place-items:center;cursor:pointer;
+  box-shadow:0 9px 21px rgba(110,59,140,.30);
+}
+.clients-add-fab:hover{opacity:.92;}
+.clients-add-fab .cal-icon{width:22px;height:22px;}
+.ct-party-row{
+  display:grid;grid-template-columns:minmax(0,1fr) calc(15ch + 26px);
+  gap:10px;margin-bottom:14px;align-items:end;
+}
+.ct-party-row .field{margin-bottom:0;min-width:0;}
+.ct-party-client{position:relative;}
+.ct-party-client input[readonly]{background:#F6F6F8;color:#555;cursor:default;}
+.ct-party-inn input{font-variant-numeric:tabular-nums;letter-spacing:.02em;}
+.ct-client-drop{
+  position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:30;
+  max-height:220px;overflow-y:auto;
+  background:#fff;border:1.5px solid var(--line);border-radius:10px;
+  box-shadow:0 8px 24px rgba(80,40,120,.12);
+}
+.ct-client-drop button{
+  display:block;width:100%;text-align:left;border:none;background:#fff;
+  padding:8px 10px;font-size:13px;font-family:inherit;color:var(--ink);
+  cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ct-client-drop button:hover{background:var(--soft);color:var(--violet);}
+#clientsToggleAllBtn{font-size:18px;font-weight:700;line-height:1;}
+.cl-acc{
+  background:#fff;border-radius:14px;margin-top:18px;overflow:hidden;
+  border:1px solid var(--line);box-shadow:0 1px 3px rgba(20,20,30,.04);
+  transition:border-radius .15s ease;
+}
+#clientsList .cl-acc:first-child{margin-top:0;}
+.cl-acc.grp-first{border-radius:14px 14px 0 0;margin-bottom:0;}
+.cl-acc.grp-mid{border-radius:0;margin-top:0;margin-bottom:0;border-top:none;}
+.cl-acc.grp-last{border-radius:0 0 14px 14px;margin-top:0;}
+.cl-acc-header{
+  background:#33415E;color:#fff;padding:12px 16px;
+  font-family:Montserrat,Arial,sans-serif;font-weight:700;font-size:14.5px;letter-spacing:.2px;
+  cursor:pointer;display:flex;align-items:center;gap:10px;user-select:none;
+}
+.cl-acc-header:hover{background:#1F2A44;}
+.cl-acc-title{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;line-height:1.35;}
+.cl-acc.pinned .cl-acc-title{font-weight:800;}
+.cl-acc.hiddenc{opacity:.55;}
+.cl-acc-tools{display:flex;align-items:center;gap:2px;flex-shrink:0;}
+.cl-acc-icon{
+  width:32px;height:32px;min-width:32px;padding:0;border:0;border-radius:8px;
+  background:transparent;color:#fff;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:15px;line-height:1;font-family:inherit;position:relative;flex:0 0 32px;
+}
+.cl-acc-icon:hover{background:rgba(255,255,255,.14);}
+.cl-acc-icon.is-off{opacity:.55;}
+.cl-acc-icon.is-on{opacity:1;}
+.cl-acc-hint{pointer-events:none;cursor:default;opacity:.95;}
+.cl-acc-hint:hover{background:transparent;}
+.cl-acc-icon .hidden-count-badge{right:-4px;bottom:-4px;}
+.cl-acc-chevron{flex-shrink:0;transition:transform .25s ease;}
+.cl-acc.open .cl-acc-chevron{transform:rotate(180deg);}
+.cl-acc-body{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+.cl-acc.open .cl-acc-body{max-height:20000px;overflow:visible;}
+.cl-acc-empty{padding:12px 16px;color:var(--muted);font-size:12.5px;}
+.cl-acc-contracts{background:#fff;}
+.cl-acc-contract{
+  display:flex;align-items:center;gap:6px;flex-wrap:nowrap;
+  padding:8px 12px 8px 16px;
+  border-bottom:1px solid var(--line);background:#fff;cursor:pointer;
+}
+.cl-acc-contract:last-child{border-bottom:none;}
+.cl-acc-contract:hover{background:#FBFBFD;}
+.cl-acc-contract.pinned{background:#FBF9FF;}
+.cl-acc-contract.hiddenc{opacity:.55;}
+.cl-acc-contract-name{flex:1 1 auto;min-width:0;font-size:13.5px;line-height:1.35;overflow-wrap:anywhere;}
+.cl-acc-contract.pinned .cl-acc-contract-name{font-weight:700;}
+.cl-acc-contract-amt{
+  flex-shrink:0;font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;
+  white-space:nowrap;min-width:4.5em;text-align:right;
+}
+.cl-acc-contract-amt.bad{color:var(--bad);}
+.cl-acc-contract-amt.ok{color:var(--ok);}
+.cl-acc-contract .cl-acc-icon{color:var(--ink);width:30px;height:30px;min-width:30px;flex-basis:30px;font-weight:700;}
+.cl-acc-contract .cl-acc-icon:hover{background:var(--soft);color:var(--violet);}
+.cl-acc-contract .cl-acc-icon.act-on{background:var(--violet);color:#fff;}
+.cl-acc-contract .cl-acc-icon.act-on:hover{background:var(--violet-d);color:#fff;}
+.cl-acc-menu{
+  position:fixed;z-index:400;
+  min-width:196px;max-width:min(280px,calc(100vw - 16px));padding:4px;
+  border:1.5px solid var(--line);border-radius:10px;
+  background:#fff;box-shadow:0 8px 24px rgba(80,40,120,.14);
+}
+.cl-acc-menu button{
+  display:block;width:100%;text-align:left;border:none;background:#fff;
+  padding:9px 12px;border-radius:8px;font-size:13px;font-weight:700;
+  font-family:inherit;color:var(--ink);cursor:pointer;
+}
+.cl-acc-menu button:hover{background:var(--soft);color:var(--violet);}
+.cl-acc-menu button.danger{color:var(--bad);}
+.cl-acc-menu button.danger:hover{background:#FEE2E2;color:var(--bad);}
+.cl-acc-menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px;}
 @media (max-width:720px){
   .clients-page-title{display:none;}
   #view-all > .card > h2,
   #view-fields > .card > h2{display:none;}
+  .cl-acc-header{padding:11px 12px;font-size:13.5px;gap:6px;flex-wrap:nowrap;}
+  .cl-acc-icon{width:30px;height:30px;min-width:30px;flex-basis:30px;}
+  .cl-acc-contract{padding:8px 10px 8px 12px;gap:4px;}
+  .cl-acc-contract-amt{font-size:12px;min-width:4em;}
+  .cl-acc-menu button{min-height:42px;}
 }
 .contracts-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
 .contracts-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
@@ -1205,6 +1313,14 @@ tr.fields-drag-over td{background:var(--soft);}
   .clients-toolbar{position:sticky;top:0;z-index:12;display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:6px;margin:-22px -20px 10px;padding:8px 20px 8px;background:var(--card);border-radius:16px 16px 0 0;}
   .client-jump{display:block;position:relative;min-width:0;}
   .client-jump-drop{display:none!important;}
+  #view-clients > .card{padding-bottom:76px;}
+  .clients-add-fab{
+    position:fixed;
+    right:max(15px,calc((100vw - 460px)/2 + 15px));
+    bottom:calc(72px + env(safe-area-inset-bottom));
+    width:50px;height:50px;min-width:50px;border-radius:16px;z-index:44;margin:0;
+  }
+  .clients-add-fab .cal-icon{width:25px;height:25px;}
 }
 </style>
 <style id="calendar-ui-styles">
@@ -2011,7 +2127,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   <nav class="mobile-crm-nav" aria-label="Разделы CRM">
     <div class="mobile-crm-nav-clients" id="mobileCrmClientsWrap">
       <button type="button" class="mobile-crm-nav-btn active" data-view="clients" onclick="calendarNavigate('clients')" aria-label="Заказчики" aria-expanded="false"><svg class="cal-icon"><use href="#cal-i-user"/></svg><span>Заказчики</span></button>
-      <button type="button" class="mobile-crm-nav-add hidden" id="mobileCrmAddClient" onclick="mobileCrmAddClient()" aria-label="Новый заказчик" tabindex="-1">+</button>
+      <button type="button" class="mobile-crm-nav-add hidden" id="mobileCrmAddClient" onclick="mobileCrmAddClient()" aria-label="Добавить" tabindex="-1">+</button>
     </div>
     <button type="button" class="mobile-crm-nav-btn" data-view="all" onclick="calendarNavigate('all')" aria-label="Услуги"><svg class="cal-icon"><use href="#cal-i-brief"/></svg><span>Услуги</span></button>
     <button type="button" class="mobile-crm-nav-btn" data-view="fields" onclick="calendarNavigate('fields')" aria-label="Дополнительные поля"><svg class="cal-icon"><use href="#cal-i-grid"/></svg><span>Доп. поля</span></button>
@@ -2030,7 +2146,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   </header>
   <div class="tabs-sticky">
   <div class="tabs">
-    <div class="tab active" data-view="clients" onclick="setView('clients')">Заказчики</div>
+    <div class="tab active" data-view="clients" onclick="goToClientsFromNav()">Заказчики</div>
     <div class="tab" data-view="all" onclick="setView('all')">Все услуги</div>
     <div class="tab" data-view="fields" onclick="setView('fields')">Доп. поля</div>
     <div class="tab" data-view="calendar" onclick="setView('calendar')">Календарь</div>
@@ -2041,10 +2157,10 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   <div class="wrap crm-wrap">
   <div class="app-shell">
     <nav class="side-nav" aria-label="Навигация">
-      <button type="button" class="side-nav-btn active" data-view="clients" onclick="setView('clients')" title="Заказчики">
+      <button type="button" class="side-nav-btn active" data-view="clients" onclick="goToClientsFromNav()" title="Заказчики">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c.6-3.4 3.2-5.2 6.5-5.2s5.9 1.8 6.5 5.2"/></svg>
       </button>
-      <button type="button" class="side-nav-btn" onclick="openClientForm(null)" title="Добавить заказчика">
+      <button type="button" class="side-nav-btn" onclick="openNewContractForm()" title="Добавить">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9.2" cy="8" r="3"/><path d="M3.8 19c.55-3.1 2.85-4.7 5.7-4.7 1.05 0 2 .22 2.8.62"/><path d="M17 11v8"/><path d="M13 15h8"/></svg>
       </button>
       <button type="button" class="side-nav-btn" data-view="all" onclick="setView('all')" title="Все услуги">
@@ -2078,8 +2194,9 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
           <input type="search" id="clientJumpInput" class="client-jump-input" placeholder="Поиск по заказчикам" autocomplete="off" oninput="onClientJumpInput()">
           <div class="client-jump-drop hidden" id="clientJumpDrop"></div>
         </div>
+        <button type="button" class="icon-btn-toggle" id="clientsToggleAllBtn" onclick="toggleAllClientAccordions()" title="Развернуть все" aria-label="Развернуть все" data-mobile-label="Развернуть все">+</button>
         <button type="button" class="icon-btn-toggle" id="showHiddenBtn" onclick="toggleShowHiddenClients()" title="Показывать скрытых" aria-label="Показывать скрытых" aria-pressed="false"><span aria-hidden="true">👁</span></button>
-        <button type="button" class="btn sm clients-add-btn" onclick="openClientForm(null)">+ Заказчик</button>
+        <button type="button" class="clients-add-fab" id="clientsAddFab" onclick="openNewContractForm()" title="Добавить" aria-label="Добавить"><svg class="cal-icon" aria-hidden="true"><use href="#cal-i-plus"/></svg></button>
       </div>
       <div class="clients" id="clientsList"></div>
     </div>
@@ -2232,18 +2349,9 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
 
   <!-- ВИД: КАРТОЧКА ЗАКАЗЧИКА -->
   <div id="view-client" class="hidden">
-  <script>
-  (function(){
-    try{
-      var h=(location.hash||'').replace(/^#/,'');
-      if(h.indexOf('client/')===0 && h.indexOf('/contract/')===-1)
-        document.getElementById('view-client').classList.add('list-narrow');
-    }catch(e){}
-  })();
-  </script>
     <div class="card">
       <div class="toolbar client-head">
-        <button type="button" class="icon-btn" onclick="currentContractId ? openContract(null) : setView('clients')"> ← </button>
+        <button type="button" class="icon-btn" onclick="backToClientsAccordion()"> ← </button>
         <h2 id="cName" class="client-title client-title-editable" ondblclick="openClientForm(currentClientId)" title="Дважды щёлкните, чтобы изменить название заказчика">Заказчик</h2>
         <h3 class="contract-title head-contract-name">Договор</h3>
         <div class="client-meta-row">
@@ -2308,6 +2416,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
 </div>
 
 <div id="modalRoot"></div>
+<div id="clAccMenu" class="cl-acc-menu hidden" role="menu"></div>
 <div id="printArea"></div>
 <div class="muted sync-line" id="syncState"></div>
 
@@ -2357,6 +2466,11 @@ let currentView = 'clients';
 let currentClientId = null;
 let currentContractId = null;
 let showHiddenClients = false;
+const expandedClientIds = new Set();
+const showHiddenContractsByClient = new Set();
+const CLIENTS_MEM_KEY = 'raleksiz_clients_acc_mem';
+const CLIENTS_MEM_TTL = 10 * 60 * 1000;
+const CL_ACC_CHEVRON = '<svg class="cl-acc-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>';
 
 /* ====================== УТИЛИТЫ ====================== */
 function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
@@ -3503,6 +3617,7 @@ async function init(){
     }
     await loadOffers();
     restoreNav();
+    applyClientsMemoryOnBoot();
     renderAllViews();
     setView(currentView, currentClientId, true);
     bindClientNameEdit();
@@ -3528,15 +3643,96 @@ function clientNavUrl(clientId, contractId){
   }
   return base + hash;
 }
+function readClientsMemory(){
+  try{
+    const raw = sessionStorage.getItem(CLIENTS_MEM_KEY);
+    if(!raw) return null;
+    const data = JSON.parse(raw);
+    if(!data || !data.ts || (Date.now() - Number(data.ts) > CLIENTS_MEM_TTL)){
+      sessionStorage.removeItem(CLIENTS_MEM_KEY);
+      return null;
+    }
+    return data;
+  }catch(e){
+    return null;
+  }
+}
+function writeClientsMemory(patch){
+  let prev = null;
+  try{
+    const raw = sessionStorage.getItem(CLIENTS_MEM_KEY);
+    if(raw) prev = JSON.parse(raw);
+  }catch(e){ prev = null; }
+  const expired = !prev || !prev.ts || (Date.now() - Number(prev.ts) > CLIENTS_MEM_TTL);
+  const base = expired ? {} : prev;
+  const data = Object.assign({
+    expanded: [...expandedClientIds],
+    expandedBeforeContract: null,
+    surface: 'accordion',
+    clientId: null,
+    contractId: null
+  }, base, patch || {}, { ts: Date.now() });
+  try{ sessionStorage.setItem(CLIENTS_MEM_KEY, JSON.stringify(data)); }catch(e){}
+  return data;
+}
+function persistAccordionState(){
+  writeClientsMemory({
+    surface: 'accordion',
+    contractId: null,
+    clientId: currentClientId || null,
+    expanded: [...expandedClientIds],
+    expandedBeforeContract: null
+  });
+}
+function applyExpandedIds(ids){
+  expandedClientIds.clear();
+  (ids || []).forEach(id => { if(id) expandedClientIds.add(id); });
+}
+function applyClientsMemoryOnBoot(){
+  const mem = readClientsMemory();
+  if(mem){
+    if(Array.isArray(mem.expanded)){
+      mem.expanded.forEach(id => { if(id) expandedClientIds.add(id); });
+    }
+    if(currentView==='clients' || currentView==='client') writeClientsMemory({});
+    return;
+  }
+  if(expandedClientIds.size && (currentView==='clients' || currentView==='client')) persistAccordionState();
+}
+function goToClientsFromNav(){
+  const mem = readClientsMemory();
+  if(!mem){
+    expandedClientIds.clear();
+    persistAccordionState();
+    setView('clients');
+    return;
+  }
+  if(mem.surface==='contract' && mem.clientId && mem.contractId){
+    const client = getClient(mem.clientId);
+    const contract = client && getContract(client, mem.contractId);
+    if(client && contract){
+      if(Array.isArray(mem.expanded)) applyExpandedIds(mem.expanded);
+      writeClientsMemory({
+        surface: 'contract',
+        clientId: mem.clientId,
+        contractId: mem.contractId
+      });
+      openContract(mem.contractId, mem.clientId);
+      return;
+    }
+  }
+  if(Array.isArray(mem.expanded)) applyExpandedIds(mem.expanded);
+  persistAccordionState();
+  setView('clients');
+}
 function persistNav(){
   if(window.__navSyncing) return;
   let hash = '#clients';
   if(currentView==='all') hash = '#all';
   else if(currentView==='fields') hash = '#fields';
   else if(currentView==='calendar') hash = '#calendar';
-  else if(currentView==='client' && currentClientId){
-    hash = '#client/' + encodeURIComponent(currentClientId);
-    if(currentContractId) hash += '/contract/' + encodeURIComponent(currentContractId);
+  else if(currentView==='client' && currentClientId && currentContractId){
+    hash = '#client/' + encodeURIComponent(currentClientId) + '/contract/' + encodeURIComponent(currentContractId);
   }
   if(location.hash !== hash) history.replaceState(null, '', hash);
 }
@@ -3545,7 +3741,12 @@ function parseNavHash(){
   if(!h || h==='clients') return {view:'clients', clientId:null, contractId:null};
   if(h==='all' || h==='fields' || h==='calendar') return {view:h, clientId:null, contractId:null};
   const m = h.match(/^client\/([^/]+)(?:\/contract\/([^/]+))?$/);
-  if(m) return {view:'client', clientId:decodeURIComponent(m[1]), contractId: m[2] ? decodeURIComponent(m[2]) : null};
+  if(m){
+    const clientId = decodeURIComponent(m[1]);
+    const contractId = m[2] ? decodeURIComponent(m[2]) : null;
+    if(contractId) return {view:'client', clientId, contractId};
+    return {view:'clients', clientId, contractId:null, expand:true};
+  }
   return null;
 }
 function restoreNav(){
@@ -3554,6 +3755,7 @@ function restoreNav(){
   currentView = parsed.view;
   currentClientId = parsed.clientId;
   currentContractId = parsed.contractId;
+  if(parsed.expand && parsed.clientId) expandedClientIds.add(parsed.clientId);
 }
 function paintNavActive(view){
   view = view || currentView;
@@ -3580,7 +3782,7 @@ function showMobileCrmAddClient(){
 }
 function mobileCrmAddClient(){
   hideMobileCrmAddClient();
-  openClientForm(null);
+  openNewContractForm();
 }
 function bindMobileCrmAddClient(){
   const wrap=document.getElementById('mobileCrmClientsWrap');
@@ -3619,6 +3821,7 @@ function onHashChange(){
   const parsed = parseNavHash();
   if(!parsed) return;
   window.__navSyncing = true;
+  if(parsed.expand && parsed.clientId) expandedClientIds.add(parsed.clientId);
   currentView = parsed.view;
   currentClientId = parsed.clientId;
   currentContractId = parsed.contractId;
@@ -3627,7 +3830,18 @@ function onHashChange(){
 }
 function openClientInTab(id, ev){
   if(ev){ ev.preventDefault(); ev.stopPropagation(); }
-  setView('client', id);
+  toggleClientAccordion(id);
+}
+function backToClientsAccordion(){
+  const mem = readClientsMemory();
+  const snapshot = mem && Array.isArray(mem.expandedBeforeContract) ? mem.expandedBeforeContract : [...expandedClientIds];
+  applyExpandedIds(snapshot);
+  const id = currentClientId;
+  if(id) expandedClientIds.add(id);
+  currentContractId = null;
+  persistAccordionState();
+  window.__scrollToClientAcc = id || '';
+  setView('clients', id);
 }
 function bindClientNameEdit(){
   const title = document.getElementById('cName');
@@ -3698,11 +3912,12 @@ function renderAllViews(){
     box.classList.add('filters-collapsed');
     btn.textContent='Показать фильтры';
   }
-  if(currentClientId) renderClientCard();
+  if(currentView==='client' && currentClientId) renderClientCard();
   if(currentView==='calendar' && typeof window.calendarRender==='function') window.calendarRender();
 }
 function setView(v, id, keepContract){
   hideMobileCrmAddClient();
+  closeClAccMenu();
   const prevClientId = currentClientId;
   currentView = v;
   if(id!==undefined) currentClientId = id;
@@ -3713,13 +3928,14 @@ function setView(v, id, keepContract){
     if(el) el.classList.toggle('hidden', k!==v);
   });
   paintNavActive();
+  if(v==='clients' && id) window.__scrollToClientAcc = id;
   if(v==='clients') renderClients();
   if(v==='all') renderAll();
   if(v==='client') renderClientCard();
   if(v==='calendar' && typeof window.calendarActivate==='function') window.calendarActivate();
   persistNav();
   document.documentElement.classList.remove('boot-route-client','boot-route-all','boot-route-fields','boot-route-calendar');
-  window.scrollTo(0,0);
+  if(!(v==='clients' && id)) window.scrollTo(0,0);
 }
 (function(){
   const parsed = parseNavHash();
@@ -3744,7 +3960,176 @@ function sortedClients(){
     return String(a.name).localeCompare(String(b.name), 'ru');
   });
 }
+function contractSortDate(ct){
+  return String((ct && ct.basisDate) || '').trim();
+}
+function sortedContracts(c){
+  return (c.contracts || []).slice().sort((a,b)=>{
+    if(!!b.pinned !== !!a.pinned) return b.pinned ? 1 : -1;
+    const da = contractSortDate(a);
+    const db = contractSortDate(b);
+    if(!!da !== !!db) return da ? -1 : 1;
+    if(da && db && da !== db) return db.localeCompare(da);
+    return String(a.title || contractLabel(a)).localeCompare(String(b.title || contractLabel(b)), 'ru');
+  });
+}
+function clientAccSections(){
+  return [...document.querySelectorAll('#clientsList > .cl-acc')];
+}
+function anyClientAccOpen(){
+  return clientAccSections().some(s => s.classList.contains('open'));
+}
+function updateClientsToggleAllBtn(){
+  const btn = document.getElementById('clientsToggleAllBtn');
+  if(!btn) return;
+  const open = anyClientAccOpen();
+  const label = open ? 'Свернуть все' : 'Развернуть все';
+  btn.textContent = open ? '−' : '+';
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
+  btn.dataset.mobileLabel = label;
+}
+function updateCollapsedClientGroups(){
+  const sections = clientAccSections();
+  sections.forEach((s, i) => {
+    s.classList.remove('grp-first','grp-mid','grp-last','grp-solo');
+    if(s.classList.contains('open')) return;
+    const prevClosed = i > 0 && !sections[i-1].classList.contains('open');
+    const nextClosed = i < sections.length-1 && !sections[i+1].classList.contains('open');
+    if(!prevClosed && !nextClosed) s.classList.add('grp-solo');
+    else if(!prevClosed) s.classList.add('grp-first');
+    else if(!nextClosed) s.classList.add('grp-last');
+    else s.classList.add('grp-mid');
+  });
+}
+function clientsAccScrollOffset(){
+  let offset = 12;
+  const tabs = document.querySelector('.tabs-sticky');
+  if(tabs){
+    const style = window.getComputedStyle(tabs);
+    if(style.position === 'sticky' || style.position === 'fixed') offset += tabs.getBoundingClientRect().height;
+  }
+  const bar = document.querySelector('#view-clients .clients-toolbar');
+  if(bar){
+    const style = window.getComputedStyle(bar);
+    if(style.position === 'sticky' || style.position === 'fixed') offset += bar.getBoundingClientRect().height;
+  }
+  return offset;
+}
+function scrollClientAccIntoView(id, instant){
+  const section = document.getElementById('clientCard-'+id);
+  if(!section) return;
+  const top = section.getBoundingClientRect().top + window.scrollY - clientsAccScrollOffset();
+  window.scrollTo({top: Math.max(0, top), behavior: instant ? 'auto' : 'smooth'});
+}
+function toggleClientAccordion(id, ev){
+  if(ev && ev.target && ev.target.closest && ev.target.closest('.cl-acc-tools')) return;
+  const section = document.getElementById('clientCard-'+id);
+  if(!section) return;
+  const isOpen = section.classList.contains('open');
+  if(isOpen){
+    const bodyEl = section.querySelector('.cl-acc-body');
+    const bodyH = bodyEl ? bodyEl.scrollHeight : 0;
+    const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+    section.classList.remove('open');
+    expandedClientIds.delete(id);
+    if(sectionTop < window.scrollY) window.scrollBy(0, -bodyH);
+  } else {
+    section.classList.add('open');
+    expandedClientIds.add(id);
+    scrollClientAccIntoView(id);
+  }
+  updateCollapsedClientGroups();
+  updateClientsToggleAllBtn();
+  persistAccordionState();
+}
+function toggleAllClientAccordions(){
+  const sections = clientAccSections();
+  if(!sections.length) return;
+  if(anyClientAccOpen()){
+    expandedClientIds.clear();
+    sections.forEach(s => s.classList.remove('open'));
+  } else {
+    sections.forEach(s => {
+      const id = s.dataset.clientId;
+      if(id) expandedClientIds.add(id);
+      s.classList.add('open');
+    });
+  }
+  updateCollapsedClientGroups();
+  updateClientsToggleAllBtn();
+  persistAccordionState();
+}
+function toggleShowHiddenContractsFor(clientId){
+  closeClAccMenu();
+  if(showHiddenContractsByClient.has(clientId)) showHiddenContractsByClient.delete(clientId);
+  else showHiddenContractsByClient.add(clientId);
+  if(clientId) expandedClientIds.add(clientId);
+  persistAccordionState();
+  renderClients();
+}
+function closeClAccMenu(){
+  const menu = document.getElementById('clAccMenu');
+  if(!menu) return;
+  menu.classList.add('hidden');
+  menu.innerHTML = '';
+  menu.removeAttribute('style');
+}
+function placeClAccMenu(menu, event){
+  if(menu.parentElement !== document.body) document.body.appendChild(menu);
+  menu.classList.remove('hidden');
+  const rect = event.currentTarget.getBoundingClientRect();
+  const w = Math.max(196, menu.offsetWidth);
+  const h = menu.offsetHeight;
+  menu.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, rect.right - w)) + 'px';
+  const below = rect.bottom + 4;
+  const above = rect.top - h - 4;
+  menu.style.top = (below + h > window.innerHeight - 8 && above >= 8 ? above : Math.max(8, Math.min(window.innerHeight - h - 8, below))) + 'px';
+}
+function openClAccMenu(event, kind, clientId, contractId){
+  if(event){ event.preventDefault(); event.stopPropagation(); }
+  const menu = document.getElementById('clAccMenu');
+  if(!menu) return;
+  const c = getClient(clientId);
+  if(!c) return;
+  const hiddenContracts = (c.contracts || []).filter(ct => ct.hidden).length;
+  const showHiddenCt = showHiddenContractsByClient.has(clientId);
+  let html = '';
+  if(kind === 'client'){
+    html =
+      `<button type="button" role="menuitem" onclick="closeClAccMenu();expandedClientIds.add('${clientId}');openContractForm('${clientId}',null)">Добавить договор</button>` +
+      (hiddenContracts || showHiddenCt
+        ? `<button type="button" role="menuitem" onclick="toggleShowHiddenContractsFor('${clientId}')">${showHiddenCt ? 'Скрыть скрытые договоры' : 'Показать скрытые договоры'}</button>`
+        : '') +
+      `<button type="button" role="menuitem" onclick="closeClAccMenu();toggleHide('${clientId}')">${c.hidden ? 'Показать заказчика' : 'Скрыть заказчика'}</button>` +
+      `<button type="button" role="menuitem" onclick="closeClAccMenu();openClientForm('${clientId}')">Переименовать</button>` +
+      `<hr>` +
+      `<button type="button" class="danger" role="menuitem" onclick="closeClAccMenu();deleteClient('${clientId}')">Удалить</button>`;
+  } else {
+    const ct = getContract(c, contractId);
+    if(!ct) return;
+    html =
+      `<button type="button" role="menuitem" onclick="closeClAccMenu();openContractForm('${clientId}','${contractId}')">Редактировать</button>` +
+      `<button type="button" role="menuitem" onclick="closeClAccMenu();toggleContractHide('${clientId}','${contractId}')">${ct.hidden ? 'Показать договор' : 'Скрыть договор'}</button>` +
+      `<hr>` +
+      `<button type="button" class="danger" role="menuitem" onclick="closeClAccMenu();deleteContract('${clientId}','${contractId}')">Удалить</button>`;
+  }
+  menu.innerHTML = html;
+  placeClAccMenu(menu, event);
+}
+function clientAccordionContractRow(c, ct){
+  const t = contractTotals(c, ct.id);
+  return `<div class="cl-acc-contract ${ct.pinned?'pinned':''} ${ct.hidden?'hiddenc':''}" onclick="openContract('${ct.id}','${c.id}')">
+    <div class="cl-acc-contract-name">${esc(contractLabel(ct))}</div>
+    <span class="cl-acc-contract-amt ${t.debt?'bad':'ok'}">${money(t.debt)}</span>
+    <button type="button" class="cl-acc-icon ${ct.pinned?'is-on':'is-off'}" onclick="event.stopPropagation();toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}" aria-label="${ct.pinned?'Открепить':'Закрепить'}">${ct.pinned?'📌':'📍'}</button>
+    <button type="button" class="cl-acc-icon" onclick="event.stopPropagation();openServiceForm('${c.id}','${ct.id}',null)" title="Добавить услугу" aria-label="Добавить услугу">+</button>
+    <button type="button" class="cl-acc-icon ${ct.showInAct!==false?'act-on':''}" onclick="event.stopPropagation();toggleContractShowInAct('${c.id}','${ct.id}')" title="Показывать в акте" aria-label="Показывать в акте">А</button>
+    <button type="button" class="cl-acc-icon" onclick="openClAccMenu(event,'contract','${c.id}','${ct.id}')" title="Ещё" aria-label="Ещё" aria-haspopup="menu">⋯</button>
+  </div>`;
+}
 function renderClients(){
+  closeClAccMenu();
   const showHidden = showHiddenClients;
   const showHiddenBtn = document.getElementById('showHiddenBtn');
   const hiddenCount=DB.clients.filter(c=>c.hidden).length;
@@ -3760,25 +4145,38 @@ function renderClients(){
     box.innerHTML = '<div class="muted">'+(needle?'Ничего не найдено.':'Заказчиков пока нет.')+'</div>';
   } else {
     box.innerHTML = list.map(c=>{
-      const t = clientAllTotals(c);
-      return `<div class="cl-card ${c.pinned?'pinned':''} ${c.hidden?'hiddenc':''}" id="clientCard-${c.id}" onclick="openClientInTab('${c.id}', event)">
-        <div class="cl-body"><div class="cl-name">${esc(c.name)||'Без наименования'}</div></div>
-        <div class="cl-bar" onclick="event.stopPropagation()">
-          <span class="cl-amt ${t.debt?'bad':'ok'}">${money(t.debt)}</span>
-          <button type="button" class="cl-ico" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}">${c.pinned?'📌':'📍'}</button>
-          <button type="button" class="cl-ico" onclick="toggleHide('${c.id}')" title="${c.hidden?'Показать':'Скрыть'}">${c.hidden?'🙈':'👁'}</button>
-          <button type="button" class="cl-ico" onclick="openClientForm('${c.id}')" title="Переименовать">✏️</button>
-          <button type="button" class="cl-ico" onclick="deleteClient('${c.id}')" title="Удалить">🗑</button>
+      const hiddenContracts = (c.contracts||[]).filter(ct=>ct.hidden).length;
+      const showHiddenCt = showHiddenContractsByClient.has(c.id);
+      const contracts = sortedContracts(c).filter(ct => showHiddenCt || !ct.hidden);
+      const isOpen = expandedClientIds.has(c.id);
+      const hiddenHint = hiddenContracts
+        ? `<span class="cl-acc-icon cl-acc-hint" title="Скрытых договоров: ${hiddenContracts}" role="img" aria-label="Скрытых договоров: ${hiddenContracts}">👁<span class="hidden-count-badge" aria-hidden="true">${hiddenContracts>99?'99+':hiddenContracts}</span></span>`
+        : '';
+      const body = contracts.length
+        ? `<div class="cl-acc-contracts">${contracts.map(ct => clientAccordionContractRow(c, ct)).join('')}</div>`
+        : `<div class="cl-acc-empty">${!(c.contracts||[]).length ? 'Договоров пока нет' : (showHiddenCt ? 'Скрытых договоров нет.' : 'Скрытые договоры спрятаны — откройте из меню.')}</div>`;
+      return `<section class="cl-acc ${isOpen?'open':''} ${c.pinned?'pinned':''} ${c.hidden?'hiddenc':''}" id="clientCard-${c.id}" data-client-id="${c.id}">
+        <div class="cl-acc-header" onclick="toggleClientAccordion('${c.id}', event)">
+          <span class="cl-acc-title">${esc(c.name)||'Без наименования'}</span>
+          <div class="cl-acc-tools" onclick="event.stopPropagation()">
+            <button type="button" class="cl-acc-icon ${c.pinned?'is-on':'is-off'}" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}" aria-label="${c.pinned?'Открепить':'Закрепить'}">${c.pinned?'📌':'📍'}</button>
+            ${hiddenHint}
+            <button type="button" class="cl-acc-icon" onclick="openClAccMenu(event,'client','${c.id}')" title="Ещё" aria-label="Ещё" aria-haspopup="menu">⋯</button>
+          </div>
+          ${CL_ACC_CHEVRON}
         </div>
-      </div>`;
+        <div class="cl-acc-body">
+          ${body}
+        </div>
+      </section>`;
     }).join('');
   }
-  const totals=document.getElementById('globalTotals');
-  if(totals){
-    let debt=0;
-    DB.clients.forEach(c=>{ debt+=clientAllTotals(c).debt; });
-    totals.innerHTML =
-      `<span class="client-debt-chip" title="Предстоящие оплаты"><b style="color:${debt?'#dc2626':'#16a34a'}">${money(debt)}</b></span>`;
+  updateCollapsedClientGroups();
+  updateClientsToggleAllBtn();
+  const scrollId = window.__scrollToClientAcc;
+  if(scrollId){
+    window.__scrollToClientAcc = '';
+    requestAnimationFrame(()=>scrollClientAccIntoView(scrollId, true));
   }
 }
 function clientJumpSuggestions(query){
@@ -3829,6 +4227,9 @@ function deleteClient(id){
   if(typeof RaleksizCRMCore!=='undefined') RaleksizCRMCore.markDeleted(DB, 'clients', null, id);
   DB.clients = DB.clients.filter(x=>x.id!==id);
   save({immediate:true}); renderAllViews();
+  expandedClientIds.delete(id);
+  showHiddenContractsByClient.delete(id);
+  persistAccordionState();
   if(currentClientId===id) setView('clients', null);
 }
 function getClient(id){ return DB.clients.find(c=>c.id===id); }
@@ -4188,9 +4589,138 @@ function onBasisChange(){
   box.innerHTML = '';
 }
 
+function openNewContractForm(){
+  hideMobileCrmAddClient();
+  openContractForm(null, null);
+}
+function findClientByName(name){
+  const needle = String(name||'').trim().toLowerCase();
+  if(!needle) return null;
+  return DB.clients.find(c => String(c.name||'').trim().toLowerCase() === needle) || null;
+}
+function contractFormInnValue(){
+  return String(document.getElementById('ctClientInn')?.value || '').replace(/\s+/g,'').trim();
+}
+function applyClientInn(client, inn){
+  if(!client) return;
+  const next = String(inn||'').trim();
+  if(String(client.inn||'') === next && String(client.invoicePayerInn||'') === next) return;
+  client.inn = next;
+  client.invoicePayerInn = next;
+  touchClient(client);
+}
+function resolveContractFormClient(){
+  const nameEl = document.getElementById('ctClientName');
+  const idEl = document.getElementById('ctClientId');
+  const locked = !!(idEl && idEl.dataset.locked === '1');
+  const inn = contractFormInnValue();
+  if(locked){
+    const client = getClient(idEl.value);
+    if(!client){ alert('Заказчик не найден'); return null; }
+    applyClientInn(client, inn);
+    return client;
+  }
+  const name = String(nameEl?.value || '').trim();
+  if(!name){ alert('Укажите заказчика'); return null; }
+  let client = idEl && idEl.value ? getClient(idEl.value) : null;
+  if(client && String(client.name||'').trim().toLowerCase() !== name.toLowerCase()) client = null;
+  if(!client) client = findClientByName(name);
+  if(!client){
+    client = {
+      id: uid(), name, token: tokenGen(), pinned:false, hidden:false, sent:false,
+      sentDates: [], services: [], contracts: [], custom: {},
+      inn: inn, invoicePayerInn: inn,
+      updatedAt: new Date().toISOString()
+    };
+    DB.clients.push(client);
+  } else {
+    applyClientInn(client, inn);
+  }
+  if(!Array.isArray(client.contracts)) client.contracts = [];
+  return client;
+}
+function contractClientChoices(query){
+  const needle = String(query||'').trim().toLowerCase();
+  return sortedClients().filter(c => !needle || String(c.name||'').toLowerCase().includes(needle)).slice(0, 12);
+}
+function closeContractClientDrop(){
+  const drop = document.getElementById('ctClientDrop');
+  if(drop) drop.classList.add('hidden');
+}
+function renderContractClientDrop(force){
+  const drop = document.getElementById('ctClientDrop');
+  const input = document.getElementById('ctClientName');
+  if(!drop || !input || input.readOnly){ closeContractClientDrop(); return; }
+  const list = contractClientChoices(input.value);
+  drop.innerHTML = list.map(c => `<button type="button" onclick="pickContractClient('${c.id}')">${esc(c.name)||'Без наименования'}</button>`).join('');
+  drop.classList.toggle('hidden', !list.length && !force);
+  if(!list.length) drop.classList.add('hidden');
+}
+function onContractClientNameInput(){
+  const input = document.getElementById('ctClientName');
+  const idEl = document.getElementById('ctClientId');
+  const picked = idEl && idEl.value ? getClient(idEl.value) : null;
+  if(picked && String(picked.name||'').trim() !== String(input.value||'').trim()){
+    idEl.value = '';
+  }
+  renderContractClientDrop();
+}
+function onContractClientNameKey(event){
+  if(event.key === 'Escape'){ closeContractClientDrop(); return; }
+  if(event.key === 'Enter'){
+    event.preventDefault();
+    const first = document.querySelector('#ctClientDrop button');
+    if(first) first.click();
+    else closeContractClientDrop();
+  }
+}
+function pickContractClient(id){
+  const c = getClient(id);
+  if(!c) return;
+  const idEl = document.getElementById('ctClientId');
+  const nameEl = document.getElementById('ctClientName');
+  const innEl = document.getElementById('ctClientInn');
+  if(idEl) idEl.value = c.id;
+  if(nameEl) nameEl.value = c.name || '';
+  if(innEl) innEl.value = rememberedPayerInn(c);
+  closeContractClientDrop();
+}
+function bindContractClientPicker(){
+  const input = document.getElementById('ctClientName');
+  if(!input || input.readOnly) return;
+  input.addEventListener('focus', () => renderContractClientDrop(true));
+  input.addEventListener('input', onContractClientNameInput);
+  input.addEventListener('keydown', onContractClientNameKey);
+  if(!document.body.dataset.ctClientDropBound){
+    document.body.dataset.ctClientDropBound = '1';
+    document.addEventListener('pointerdown', event => {
+      const row = document.getElementById('ctPartyRow');
+      if(!row || row.contains(event.target)) return;
+      closeContractClientDrop();
+    });
+  }
+}
+function isBareContractForm(){
+  const basisType = document.getElementById('clBasisType')?.value || '';
+  if(basisType) return false;
+  const getValue = function(id){
+    const element = document.getElementById(id);
+    return element ? element.value.trim() : '';
+  };
+  if(getValue('ctTitle')) return false;
+  if(getValue('bDoc') || getValue('bUrl') || getValue('bParentDoc')) return false;
+  if(getValue('bDate') || getValue('bParentDate') || getValue('basisOfferExpiry')) return false;
+  if(Number(getValue('ctContractPrice')||0) || Number(getValue('clPrepay')||0) || Number(getValue('ctTerm')||0)) return false;
+  return true;
+}
+function saveContractForm(){
+  const contractId = document.getElementById('ctEditingId')?.value || null;
+  saveContract(contractId);
+}
 function openContractForm(clientId, contractId){
-  const client = getClient(clientId);
-  const contract = contractId ? getContract(client, contractId) : null;
+  const client = clientId ? getClient(clientId) : null;
+  if(contractId && !client){ alert('Заказчик не найден'); return; }
+  const contract = (contractId && client) ? getContract(client, contractId) : null;
 
   const ct = contract || {
     id: null,
@@ -4221,8 +4751,27 @@ function openContractForm(clientId, contractId){
     return `<option value="${esc(status)}" ${ct.status === status ? 'selected' : ''}>${esc(status)}</option>`;
   }).join('');
 
+  const partyLocked = !!(contractId && client);
+  const partyName = client ? (client.name || '') : '';
+  const partyInn = client ? rememberedPayerInn(client) : '';
+  const partyId = client ? client.id : '';
+
   openModal(`
     <h1>${contractId ? 'Карточка договора' : 'Новая карточка договора'}</h1>
+    <input type="hidden" id="ctEditingId" value="${contractId ? esc(contractId) : ''}">
+
+    <div class="ct-party-row" id="ctPartyRow">
+      <div class="field ct-party-client">
+        <label for="ctClientName">Заказчик</label>
+        <input id="ctClientName" value="${esc(partyName)}" placeholder="ООО «Название»" autocomplete="off" ${partyLocked ? 'readonly aria-readonly="true"' : ''}>
+        <input type="hidden" id="ctClientId" value="${esc(partyId)}"${partyLocked ? ' data-locked="1"' : ''}>
+        <div class="ct-client-drop hidden" id="ctClientDrop"></div>
+      </div>
+      <div class="field ct-party-inn">
+        <label for="ctClientInn">ИНН</label>
+        <input id="ctClientInn" value="${esc(partyInn)}" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="необязательно">
+      </div>
+    </div>
 
     <div class="field">
       <label>Основание оказания услуг</label>
@@ -4268,7 +4817,7 @@ function openContractForm(clientId, contractId){
     <div class="row" style="margin-top:8px">
       <button type="button" class="btn ghost" onclick="closeModal()">Отмена</button>
       ${contractId ? `<button type="button" class="btn danger" onclick="deleteContract('${clientId}','${contractId}')">Удалить</button>` : ''}
-      <button type="button" class="btn" onclick="saveContract('${clientId}', ${contractId ? `'${contractId}'` : 'null'})">Сохранить</button>
+      <button type="button" class="btn" onclick="saveContractForm()">Сохранить</button>
     </div>
   `, false, 'contract-form');
 
@@ -4288,6 +4837,7 @@ function openContractForm(clientId, contractId){
   };
 
   onBasisChange();
+  bindContractClientPicker();
 
   if (ct.basisType === 'offer'){
     const select = document.getElementById('offerSel');
@@ -4296,10 +4846,8 @@ function openContractForm(clientId, contractId){
   }
 }
 
-function saveContract(clientId, contractId){
-  const client = getClient(clientId);
-  const contract = contractId ? getContract(client, contractId) : null;
-  const basisType = document.getElementById('clBasisType').value;
+function saveContract(contractId){
+  let basisType = document.getElementById('clBasisType').value;
 
   const getValue = function(id){
     const element = document.getElementById(id);
@@ -4327,13 +4875,26 @@ function saveContract(clientId, contractId){
     return box.value;
   });
 
+  const prepay = Number(getValue('clPrepay') || 0);
+  const contractPrice = Number(getValue('ctContractPrice') || 0);
+  const term = Number(getValue('ctTerm') || 0);
+  const discount = Number(document.getElementById('clDisc').value || 0);
+  if(prepay<0 || contractPrice<0 || term<0 || discount<0 || discount>100){
+    alert('Цена, предоплата и срок не могут быть отрицательными; скидка должна быть от 0 до 100%');
+    return;
+  }
+
+  const client = resolveContractFormClient();
+  if(!client) return;
+  const contract = contractId ? getContract(client, contractId) : null;
+
   const data = {
     status: document.getElementById('clStatus').value || 'Разовая услуга',
     tariff: document.getElementById('clTariff').value || 'Base',
-    discount: Number(document.getElementById('clDisc').value || 0),
-    prepay: Number(getValue('clPrepay') || 0),
-    contractPrice: Number(getValue('ctContractPrice') || 0),
-    term: Number(getValue('ctTerm') || 0),
+    discount: discount,
+    prepay: prepay,
+    contractPrice: contractPrice,
+    term: term,
     basisType: basisType,
     basisDoc: getValue('bDoc'),
     basisDate: basisDateValue || '',
@@ -4349,9 +4910,11 @@ function saveContract(clientId, contractId){
     title: getValue('ctTitle'),
     updatedAt: new Date().toISOString()
   };
-  if(data.prepay<0 || data.contractPrice<0 || data.term<0 || data.discount<0 || data.discount>100){
-    alert('Цена, предоплата и срок не могут быть отрицательными; скидка должна быть от 0 до 100%');
-    return;
+  if(!contractId && isBareContractForm()){
+    basisType = 'request';
+    data.basisType = 'request';
+    data.basisDate = data.basisDate || todayISO();
+    data.title = data.title || ('Обращение от ' + fmtDate(data.basisDate));
   }
 
   if (basisType === 'request'){
@@ -4398,6 +4961,8 @@ function saveContract(clientId, contractId){
 
   save();
   closeModal();
+  if(!contractId && client.id) expandedClientIds.add(client.id);
+  if(currentView==='clients') persistAccordionState();
   renderAllViews();
 }
 
@@ -4414,7 +4979,13 @@ function deleteContract(clientId, contractId){
   // Вместе с договором удаляем привязанные услуги, иначе акт/список услуг
   // останутся ссылаться на несуществующую сущность.
   c.services = (c.services || []).filter(s=>s.contractId!==contractId);
-  save({immediate:true}); closeModal(); renderClientCard();
+  save({immediate:true}); closeModal();
+  if(currentView==='client' && currentContractId===contractId){
+    backToClientsAccordion();
+  } else {
+    if(clientId) expandedClientIds.add(clientId);
+    renderAllViews();
+  }
 }
 function saveClient(id){
   const name = document.getElementById('clName').value.trim();
@@ -5446,7 +6017,12 @@ function closeAccountMenu(){ closePopupMenu('accountMenuList','accountMenuBtn');
 document.addEventListener('mousedown', e=>{
   if(!e.target.closest('.doc-menu')) closeDocMenu();
   if(!e.target.closest('.side-account-menu')) closeAccountMenu();
+  if(!e.target.closest('#clAccMenu') && !(e.target.closest && e.target.closest('.cl-acc-icon[aria-haspopup="menu"]'))) closeClAccMenu();
 });
+document.addEventListener('scroll', ()=>{
+  const menu = document.getElementById('clAccMenu');
+  if(menu && !menu.classList.contains('hidden')) closeClAccMenu();
+}, true);
 function contractFilterLabels(ct){
   if(!ct) return [];
   const labels = [];
@@ -5682,8 +6258,33 @@ function contractTotals(c, contractId, from, to){
     : list.reduce((a,s)=>a+debtOf(s),0);
   return { sum, paid, pre, debt, count: list.length };
 }
-function openContract(contractId){
+function openContract(contractId, clientId){
+  if(!contractId){
+    backToClientsAccordion();
+    return;
+  }
+  if(clientId) currentClientId = clientId;
+  const fromAccordion = currentView === 'clients';
   currentContractId = contractId;
+  if(fromAccordion){
+    writeClientsMemory({
+      surface: 'contract',
+      clientId: currentClientId,
+      contractId,
+      expanded: [...expandedClientIds],
+      expandedBeforeContract: [...expandedClientIds]
+    });
+  } else {
+    writeClientsMemory({
+      surface: 'contract',
+      clientId: currentClientId,
+      contractId
+    });
+  }
+  if(currentView!=='client'){
+    setView('client', currentClientId, true);
+    return;
+  }
   persistNav();
   renderClientCard();
 }
@@ -5697,8 +6298,13 @@ function openClientActInTestMode(event,linkEl){
   return false;
 }
 function renderClientCard(){
+  if(currentView!=='client') return;
   const c = getClient(currentClientId);
   if(!c){ setView('clients'); return; }
+  if(!currentContractId){
+    backToClientsAccordion();
+    return;
+  }
   document.getElementById('cName').textContent = c.name || 'Без наименования';
 
   const link = BASE_URL + 'act-view.html?c=' + c.token;
@@ -5715,20 +6321,12 @@ function renderClientCard(){
   chip.innerHTML = '<b style="color:' + (t.debt ? '#dc2626' : '#16a34a') + '">' + money(t.debt) + '</b>';
 
   const viewEl = document.getElementById('view-client');
-  if(!currentContractId){
-    closeDocMenu();
-    if(viewEl) viewEl.classList.add('list-narrow');
-    document.getElementById('cContractsList').classList.remove('hidden');
-    document.getElementById('cContractDetail').classList.add('hidden');
-    renderContractsList(c);
-  } else {
-    if(viewEl) viewEl.classList.remove('list-narrow');
-    const ct = getContract(c, currentContractId);
-    if(!ct){ currentContractId = null; renderClientCard(); return; }
-    document.getElementById('cContractsList').classList.add('hidden');
-    document.getElementById('cContractDetail').classList.remove('hidden');
-    renderContractDetail(c, ct);
-  }
+  if(viewEl) viewEl.classList.remove('list-narrow');
+  const ct = getContract(c, currentContractId);
+  if(!ct){ backToClientsAccordion(); return; }
+  document.getElementById('cContractsList').classList.add('hidden');
+  document.getElementById('cContractDetail').classList.remove('hidden');
+  renderContractDetail(c, ct);
 }
 function toggleContractPin(clientId, contractId){
   const c = getClient(clientId);
@@ -5737,7 +6335,8 @@ function toggleContractPin(clientId, contractId){
   ct.pinned = !ct.pinned;
   touchContract(ct);
   save();
-  renderContractsList(c);
+  if(clientId) expandedClientIds.add(clientId);
+  renderClients();
 }
 function toggleContractHide(clientId, contractId){
   const c = getClient(clientId);
@@ -5746,7 +6345,8 @@ function toggleContractHide(clientId, contractId){
   ct.hidden = !ct.hidden;
   touchContract(ct);
   save();
-  renderContractsList(c);
+  if(clientId) expandedClientIds.add(clientId);
+  renderClients();
 }
 function toggleContractShowInAct(clientId, contractId){
   const c = getClient(clientId);
@@ -5755,13 +6355,8 @@ function toggleContractShowInAct(clientId, contractId){
   ct.showInAct = ct.showInAct === false ? true : false;
   touchContract(ct);
   save();
-  renderContractsList(c);
-}
-function sortedContracts(c){
-  return (c.contracts || []).slice().sort((a,b)=>{
-    if(!!b.pinned !== !!a.pinned) return b.pinned ? 1 : -1;
-    return String(a.title || contractLabel(a)).localeCompare(String(b.title || contractLabel(b)), 'ru');
-  });
+  if(clientId) expandedClientIds.add(clientId);
+  renderClients();
 }
 function toggleShowHiddenContracts(){
   const box = document.getElementById('cContractsList');
@@ -8559,7 +9154,7 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
     const custom=document.getElementById('calendarCustomOverlay');if(custom&&custom.classList.contains('open'))window.calendarCustomClose();
     const filter=document.getElementById('calendarFilterOverlay');if(filter&&filter.classList.contains('open'))window.calendarCloseFilters();
     calCloseQuickFilters();calClearDateDrag();const menu=document.getElementById('calendarRecordMenu');if(menu)menu.classList.add('hidden');
-    if(typeof closeModal==='function')closeModal();if(typeof setView==='function')setView(view);
+    if(typeof closeModal==='function')closeModal();if(view==='clients'&&typeof goToClientsFromNav==='function')goToClientsFromNav();else if(typeof setView==='function')setView(view);
   };
   window.calendarOpenCrmMenu=function(event){
     if(event){event.preventDefault();event.stopPropagation();}
