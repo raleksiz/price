@@ -284,7 +284,8 @@ tr.locked td{background:#FAFAFC;}
 .cl-acc-icon.is-on{opacity:1;}
 .cl-acc-hint{pointer-events:none;cursor:default;opacity:.95;}
 .cl-acc-hint:hover{background:transparent;}
-.cl-acc-icon .hidden-count-badge{right:-4px;bottom:-4px;}
+.cl-acc-icon .cal-icon{width:18px;height:18px;}
+.cl-acc-contract .cl-acc-icon .cal-icon{width:17px;height:17px;}
 .cl-acc-chevron{flex-shrink:0;transition:transform .25s ease;}
 .cl-acc.open .cl-acc-chevron{transform:rotate(180deg);}
 .cl-acc-body{max-height:0;overflow:hidden;transition:max-height .35s ease;}
@@ -361,9 +362,15 @@ tr.locked td{background:#FAFAFC;}
 #view-client.list-narrow .contracts-toolbar,
 #view-client.list-narrow .contracts-empty-add{display:none;}
 @media (min-width:721px){
-  #view-clients > .card,
+  #view-clients > .card{
+    max-width:980px;
+    margin-left:auto;
+    margin-right:auto;
+    padding-left:14px;
+    padding-right:14px;
+  }
   #view-client.list-narrow > .card{
-    max-width:1084px;
+    max-width:980px;
     margin-left:auto;
     margin-right:auto;
   }
@@ -3647,6 +3654,7 @@ async function init(){
     setView(currentView, currentClientId, true);
     bindClientNameEdit();
     bindExcelFilters();
+    if(typeof window.calendarWarmRecords==='function') window.calendarWarmRecords();
     if(!window.__actsHashBound){
       window.__actsHashBound = true;
       window.addEventListener('hashchange', onHashChange);
@@ -4145,12 +4153,23 @@ function openClAccMenu(event, kind, clientId, contractId){
   menu.innerHTML = html;
   placeClAccMenu(menu, event);
 }
+function accordionCalIcon(clientId, contractId){
+  if(typeof window.calendarHasSoonTasks!=='function' || !window.calendarHasSoonTasks(clientId, contractId||null)) return '';
+  const title = contractId ? 'Календарь по этому договору' : 'Календарь по этому заказчику';
+  const args = contractId ? `'${clientId}','${contractId}'` : `'${clientId}'`;
+  return `<button type="button" class="cl-acc-icon cl-acc-cal" onclick="event.stopPropagation();openAccordionCalendar(${args})" title="${esc(title)}" aria-label="${esc(title)}"><svg class="cal-icon" aria-hidden="true"><use href="#cal-i-calendar"/></svg></button>`;
+}
+function openAccordionCalendar(clientId, contractId){
+  if(typeof window.calendarOpenForCrm==='function') window.calendarOpenForCrm(clientId, contractId||null);
+  else setView('calendar');
+}
 function clientAccordionContractRow(c, ct){
   const t = contractTotals(c, ct.id);
   return `<div class="cl-acc-contract ${ct.pinned?'pinned':''} ${ct.hidden?'hiddenc':''}" data-contract-id="${ct.id}" onclick="openContract('${ct.id}','${c.id}')">
     <div class="cl-acc-contract-name">${esc(contractLabel(ct))}</div>
     <span class="cl-acc-contract-amt ${t.debt?'bad':'ok'}">${money(t.debt)}</span>
     <button type="button" class="cl-acc-icon cl-acc-pin ${ct.pinned?'is-on':'is-off'}" onclick="event.stopPropagation();toggleContractPin('${c.id}','${ct.id}')" title="${ct.pinned?'Открепить':'Закрепить'}" aria-label="${ct.pinned?'Открепить':'Закрепить'}">${ct.pinned?'📌':'📍'}</button>
+    ${accordionCalIcon(c.id, ct.id)}
     <button type="button" class="cl-acc-icon" onclick="event.stopPropagation();openServiceForm('${c.id}','${ct.id}',null)" title="Добавить услугу" aria-label="Добавить услугу">+</button>
     <button type="button" class="cl-acc-icon ${ct.showInAct!==false?'act-on':''}" onclick="event.stopPropagation();toggleContractShowInAct('${c.id}','${ct.id}')" title="Показывать в акте" aria-label="Показывать в акте">А</button>
     <button type="button" class="cl-acc-icon" onclick="openClAccMenu(event,'contract','${c.id}','${ct.id}')" title="Ещё" aria-label="Ещё" aria-haspopup="menu">⋯</button>
@@ -4189,6 +4208,7 @@ function renderClients(){
           <span class="cl-acc-title">${esc(c.name)||'Без наименования'}</span>
           <div class="cl-acc-tools" onclick="event.stopPropagation()">
             <button type="button" class="cl-acc-icon cl-acc-pin ${c.pinned?'is-on':'is-off'}" onclick="togglePin('${c.id}')" title="${c.pinned?'Открепить':'Закрепить'}" aria-label="${c.pinned?'Открепить':'Закрепить'}">${c.pinned?'📌':'📍'}</button>
+            ${accordionCalIcon(c.id)}
             ${hiddenHint}
             <button type="button" class="cl-acc-icon" onclick="openClAccMenu(event,'client','${c.id}')" title="Ещё" aria-label="Ещё" aria-haspopup="menu">⋯</button>
           </div>
@@ -7962,7 +7982,7 @@ function customFieldHtmlForPdf(s){
     columns:{date:true,time:true,title:true,party:true,state:true,reminders:true},
     editing:null, editorKey:null, editorBaseline:'', editorSource:null, dialogAction:null,
     focusId:null, toastTimer:null, pendingSync:false, dateDrag:null, suppressClickUntil:0, expandedMobile:new Set(),
-    linkApproval:{client:false,contract:false}, linkCandidate:null, customAnchor:null,
+    linkApproval:{client:false,contract:false}, linkCandidate:null, customAnchor:null, preserveFilters:false,
     editorChoices:{client:[],contract:[]}, quickChoices:{client:[],contract:[]}, filterChoices:{client:[],contract:[]}, quickFilterKind:null, quickActiveIndex:0, quickSaving:false, syncRetrying:false, syncDialogId:null
   };
 
@@ -8912,7 +8932,49 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
     });
   }
 
-  window.calendarActivate=function(){calEnsureInit();cal.archive=false;cal.selected.clear();cal.collapsed.clear();cal.expandedMobile.clear();cal.focusId=null;window.calendarRender();calLoadRecords(false);};
+  window.calendarHasSoonTasks=function(clientId, contractId){
+    if(!clientId || !cal.loaded) return false;
+    const start=cal.serverDate||todayISO();
+    const end=calAddDays(start,10);
+    return cal.records.some(record=>{
+      if(!calIsActive(record) || !record.date) return false;
+      if(record.date<start || record.date>end) return false;
+      if(record.clientId!==clientId) return false;
+      if(contractId && record.contractId!==contractId) return false;
+      return true;
+    });
+  };
+  window.calendarOpenForCrm=function(clientId, contractId){
+    calEnsureInit();
+    const client=typeof getClient==='function'?getClient(clientId):null;
+    const contract=client && contractId && typeof getContract==='function'?getContract(client, contractId):null;
+    cal.filters.q='';
+    cal.filters.from='';
+    cal.filters.to='';
+    cal.filters.urgent=false;
+    cal.filters.moved=false;
+    cal.filters.client=clientId||'';
+    cal.filters.contract=contract?contractLabel(contract):'';
+    cal.preserveFilters=true;
+    if(typeof persistAccordionState==='function') persistAccordionState();
+    if(typeof setView==='function') setView('calendar');
+  };
+  window.calendarWarmRecords=function(){
+    calEnsureInit();
+    if(cal.loaded || cal.loading) return;
+    Promise.resolve(calLoadRecords(false)).then(()=>{
+      if(currentView==='clients' && typeof renderClients==='function') renderClients();
+    });
+  };
+  window.calendarActivate=function(){
+    calEnsureInit();
+    if(!cal.preserveFilters){
+      cal.filters.client='';
+      cal.filters.contract='';
+    }
+    cal.preserveFilters=false;
+    cal.archive=false;cal.selected.clear();cal.collapsed.clear();cal.expandedMobile.clear();cal.focusId=null;window.calendarRender();calLoadRecords(false);
+  };
   window.calendarRender=function(){
   calEnsureInit();
   calRender();
