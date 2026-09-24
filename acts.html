@@ -88,7 +88,7 @@ textarea.autogrow{resize:none;overflow:hidden;}
   .pay-prepay-btn{width:32px;min-height:42px;}
 }
 .tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:stretch;margin-bottom:16px;}
-.tab{padding:9px 14px;border-radius:10px;background:#fff;border:1.5px solid var(--line);cursor:pointer;font-size:13px;font-weight:700;color:#6b6b7b;}
+.tab{padding:9px 14px;border-radius:10px;background:#fff;border:1.5px solid var(--line);cursor:pointer;font-size:13px;font-weight:700;color:#6b6b7b;touch-action:manipulation;}
 .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
 .tab-ico{
   padding:9px 12px;border-radius:10px;background:#fff;border:1.5px solid var(--line);
@@ -110,7 +110,7 @@ textarea.autogrow{resize:none;overflow:hidden;}
 .side-nav-btn{
   width:44px;height:44px;padding:0;border-radius:10px;border:1.5px solid var(--line);
   background:#fff;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;
-  justify-content:center;flex-shrink:0;
+  justify-content:center;flex-shrink:0;touch-action:manipulation;
 }
 .side-nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 .side-account-menu .side-nav-btn svg{fill:currentColor;stroke:none;}
@@ -1639,8 +1639,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   .crm-brand,.tabs-sticky{display:none!important}
   .crm-wrap{padding:0!important}.wrap.crm-wrap{max-width:none!important}.app-shell{display:block!important}.side-nav{display:none!important}.app-main{width:100%!important}
   .mobile-crm-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,460px);min-height:62px;padding:5px 6px calc(5px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid #E4E5EA;display:grid;grid-template-columns:repeat(5,1fr);z-index:90;backdrop-filter:blur(12px)}
-  .mobile-crm-nav-btn{border:0;background:transparent;color:#7a8798;min-height:50px;display:grid;place-items:center;border-radius:10px;padding:0;min-width:0}.mobile-crm-nav-btn.active{color:#6E3B8C;background:#F3ECFA}.mobile-crm-nav-btn .cal-icon{width:21px;height:21px}.mobile-crm-nav-btn span{font-size:9px;line-height:1;margin-top:-5px;white-space:nowrap}
-  .mobile-crm-nav-btn{-webkit-touch-callout:none}
+  .mobile-crm-nav-btn{border:0;background:transparent;color:#7a8798;min-height:50px;display:grid;place-items:center;border-radius:10px;padding:0;min-width:0;touch-action:manipulation;-webkit-touch-callout:none}.mobile-crm-nav-btn.active{color:#6E3B8C;background:#F3ECFA}.mobile-crm-nav-btn .cal-icon{width:21px;height:21px}.mobile-crm-nav-btn span{font-size:9px;line-height:1;margin-top:-5px;white-space:nowrap}
   .calendar-page{--cal-bg:#F4F0FA;--cal-surface:#fff;--cal-ink:#2B1A6B;--cal-muted:#666B73;--cal-line:#E4E5EA;--cal-purple:#6E3B8C;--cal-purple-2:#F3ECFA;--cal-red:#c2413a;--cal-red-soft:#fff0ef;--cal-amber:#a56410;--cal-amber-soft:#fff6df;--cal-green:#23735a;min-height:calc(100vh - 62px);padding-bottom:20px;background:var(--cal-bg);font-size:15px;line-height:1.4;overflow-x:clip}
   .cal-app-header,.cal-quick-add,.cal-desktop-view{display:none!important}
   .cal-workspace{padding:0;max-width:460px;margin:0 auto}
@@ -2542,6 +2541,8 @@ const expandedClientIds = new Set();
 const showHiddenContractsByClient = new Set();
 const CLIENTS_MEM_KEY = 'raleksiz_clients_acc_mem';
 const CLIENTS_MEM_TTL = 10 * 60 * 1000;
+const CLIENTS_NAV_DOUBLE_MS = 1600;
+let lastClientsNavTap = 0;
 const CL_ACC_MENU_SVG = '<svg class="cl-acc-menu-dots" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="18" r="1.75"/></svg>';
 const CL_ACC_EYE_SVG = '<svg class="cal-icon" aria-hidden="true"><use href="#cal-i-eye"/></svg>';
 const CL_ACC_PLUS_SVG = '<svg class="cal-icon" aria-hidden="true"><use href="#cal-i-plus"/></svg>';
@@ -3773,7 +3774,20 @@ function applyClientsMemoryOnBoot(){
   }
   if(expandedClientIds.size && (currentView==='clients' || currentView==='client')) persistAccordionState();
 }
-function goToClientsFromNav(){
+function goToCollapsedClientsList(){
+  lastClientsNavTap = 0;
+  expandedClientIds.clear();
+  currentContractId = null;
+  writeClientsMemory({
+    surface: 'accordion',
+    clientId: null,
+    contractId: null,
+    expanded: [],
+    expandedBeforeContract: null
+  });
+  setView('clients', null);
+}
+function restoreClientsFromMemory(){
   const mem = readClientsMemory();
   if(!mem){
     expandedClientIds.clear();
@@ -3798,6 +3812,19 @@ function goToClientsFromNav(){
   if(Array.isArray(mem.expanded)) applyExpandedIds(mem.expanded);
   persistAccordionState();
   setView('clients');
+}
+function goToClientsFromNav(){
+  const now = Date.now();
+  if(lastClientsNavTap && (now - lastClientsNavTap) <= CLIENTS_NAV_DOUBLE_MS){
+    goToCollapsedClientsList();
+    return;
+  }
+  lastClientsNavTap = now;
+  if(currentView === 'client'){
+    goToCollapsedClientsList();
+    return;
+  }
+  restoreClientsFromMemory();
 }
 function persistNav(){
   if(window.__navSyncing) return;
