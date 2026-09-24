@@ -2198,7 +2198,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
     <button type="button" class="mobile-crm-nav-btn" data-view="all" onclick="calendarNavigate('all')" aria-label="Услуги"><svg class="cal-icon"><use href="#cal-i-brief"/></svg><span>Услуги</span></button>
     <button type="button" class="mobile-crm-nav-btn" data-view="fields" onclick="calendarNavigate('fields')" aria-label="Дополнительные поля"><svg class="cal-icon"><use href="#cal-i-grid"/></svg><span>Доп. поля</span></button>
     <button type="button" class="mobile-crm-nav-btn" data-view="calendar" onclick="calendarNavigate('calendar')" aria-label="Календарь"><svg class="cal-icon"><use href="#cal-i-calendar"/></svg><span>Календарь</span></button>
-    <button type="button" class="mobile-crm-nav-btn" id="mobileCrmMenuBtn" onclick="calendarOpenCrmMenu(event)" aria-label="Меню" aria-expanded="false"><svg class="cal-icon"><use href="#cal-i-menu"/></svg><span>Меню</span></button>
+    <button type="button" class="mobile-crm-nav-btn" id="mobileCrmMenuBtn" aria-label="Меню" aria-expanded="false"><svg class="cal-icon"><use href="#cal-i-menu"/></svg><span>Меню</span></button>
   </nav>
   <header class="crm-brand">
     <div class="brand-row">
@@ -3985,10 +3985,51 @@ function setView(v, id, keepContract){
   document.documentElement.classList.remove('boot-route-client','boot-route-all','boot-route-fields','boot-route-calendar');
   if(!(v==='clients' && id)) window.scrollTo(0,0);
 }
+function bindMobileCrmMenuHold(){
+  const btn = document.getElementById('mobileCrmMenuBtn');
+  if(!btn || btn.dataset.menuHoldBound) return;
+  btn.dataset.menuHoldBound = '1';
+  const holdMs = 550, moveLimit = 10;
+  let timer = null, pointerId = null, x0 = 0, y0 = 0, openedByHold = false;
+  const cancel = () => { if(timer){ clearTimeout(timer); timer = null; } pointerId = null; };
+  const menuIsOpen = () => {
+    const overlay = document.getElementById('calendarCustomOverlay');
+    const content = document.getElementById('calendarCustomContent');
+    return !!(overlay && overlay.classList.contains('open') && content && content.classList.contains('cal-crm-menu'));
+  };
+  btn.addEventListener('pointerdown', event => {
+    if(!event.isPrimary || event.button) return;
+    cancel();
+    pointerId = event.pointerId;
+    x0 = event.clientX;
+    y0 = event.clientY;
+    openedByHold = false;
+    timer = setTimeout(() => {
+      timer = null;
+      openedByHold = true;
+      if(typeof window.calendarOpenCrmMenu === 'function') window.calendarOpenCrmMenu();
+    }, holdMs);
+  }, {passive:true});
+  btn.addEventListener('pointermove', event => {
+    if(event.pointerId !== pointerId) return;
+    if(Math.hypot(event.clientX - x0, event.clientY - y0) > moveLimit) cancel();
+  }, {passive:true});
+  ['pointerup','pointercancel','lostpointercapture'].forEach(type => btn.addEventListener(type, event => {
+    if(event.pointerId === pointerId) cancel();
+  }, {passive:true}));
+  btn.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    if(openedByHold){ openedByHold = false; return; }
+    if(menuIsOpen() && typeof window.calendarCustomClose === 'function') window.calendarCustomClose();
+  }, true);
+  btn.addEventListener('contextmenu', event => { event.preventDefault(); });
+}
 (function(){
   const parsed = parseNavHash();
   if(parsed) paintNavActive(parsed.view);
   bindAccordionPinHold();
+  bindMobileCrmMenuHold();
 })();
 
 /* ====================== ЗАКАЗЧИКИ (СПИСОК) ====================== */
