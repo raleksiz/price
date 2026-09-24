@@ -205,9 +205,11 @@ tr.locked td{background:#FAFAFC;}
 .pill.lock{background:#EEE;color:#666;}
 .clients,.contracts-grid{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;}
 #clientsList.clients{display:block;flex-wrap:unset;gap:0;align-items:unset;}
-.clients-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:14px;min-width:0;}
+.clients-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;min-width:0;}
+.clients-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:0;min-width:0;flex:1 1 auto;}
 .clients-page-title{margin:0;font-size:15px;font-weight:700;flex-shrink:0;line-height:1.2;}
-.clients-toolbar #globalTotals{display:none;}
+.clients-toolbar #globalTotals{display:none!important;}
+#clientsList:empty{display:none;}
 .icon-btn-toggle{position:relative;background:#fff;border:1.5px solid var(--line);border-radius:8px;width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;gap:3px;font-size:16px;cursor:pointer;color:#666;flex-shrink:0;}
 .icon-btn-toggle:hover{border-color:var(--violet);color:var(--violet);}
 .icon-btn-toggle.active{border-color:var(--violet);background:var(--soft);color:var(--violet);}
@@ -837,13 +839,16 @@ details[open] summary::before{content:"▾ ";}
 .filters-toolbar{display:flex;align-items:stretch;gap:8px;margin-bottom:22px;min-width:0;}
 .filters-toggle{display:none !important;flex:0 0 auto;margin-bottom:0;}
 .all-filters{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
-  column-gap:8px;row-gap:8px;flex:1 1 auto;min-width:0;overflow:visible;
+  display:flex;flex-wrap:nowrap;align-items:stretch;gap:8px;
+  flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin;
 }
+.all-filters .xl-filter{flex:1 0 155px;min-width:155px;}
 .all-filters.filters-collapsed{display:none;}
 @media (min-width:721px){
-  .all-filters.filters-collapsed{display:grid;}
+  .all-filters.filters-collapsed{display:flex;}
 }
+.all-filters::-webkit-scrollbar{height:8px;}
 .xl-filter{display:block;position:relative;min-width:0;}
 .all-filters .xl-filter-head{display:contents;}
 .all-filters .xl-filter-head label{
@@ -917,7 +922,8 @@ details[open] summary::before{content:"▾ ";}
 @media (max-width:720px){
   .filters-toolbar{display:block;margin-bottom:12px;}
   .filters-toggle{display:block !important;width:100%;margin-bottom:8px;}
-  .all-filters{display:grid;grid-template-columns:1fr 1fr;overflow:visible;}
+  .all-filters{display:grid;grid-template-columns:1fr 1fr;overflow:visible;gap:8px;}
+  .all-filters .xl-filter{flex:none;min-width:0;}
   .all-filters.filters-collapsed{display:none;}
 }
 .client-head{min-width:0;width:100%;}
@@ -1372,10 +1378,12 @@ tr.fields-drag-over td{background:var(--soft);}
 #cfEditors textarea.autogrow{min-height:38px;}
 @media (max-width:720px){
   /* строка быстрого перехода к заказчику */
-  .clients-toolbar{position:sticky;top:0;z-index:12;display:flex;flex-wrap:nowrap;align-items:center;gap:6px;margin:-22px -20px 10px;padding:8px 20px;background:var(--card);border-radius:16px 16px 0 0;min-height:50px;box-sizing:border-box;}
+  .clients-head{display:block;margin:-22px -20px 8px;}
+  .clients-toolbar{position:sticky;top:0;z-index:12;display:flex;flex-wrap:nowrap;align-items:center;gap:6px;margin:0;padding:8px 20px;background:var(--card);border-radius:16px 16px 0 0;min-height:50px;box-sizing:border-box;}
   .client-jump{display:block;position:relative;min-width:0;flex:1 1 auto;}
   .client-jump-drop{display:none!important;}
-  #view-clients > .card{padding-bottom:76px;}
+  #view-clients > .card{padding-bottom:8px;}
+  #clientsList:not(:empty){padding-bottom:70px;}
   .clients-add-fab{
     position:fixed;
     right:max(15px,calc((100vw - 460px)/2 + 15px));
@@ -1632,8 +1640,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   .crm-wrap{padding:0!important}.wrap.crm-wrap{max-width:none!important}.app-shell{display:block!important}.side-nav{display:none!important}.app-main{width:100%!important}
   .mobile-crm-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,460px);min-height:62px;padding:5px 6px calc(5px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid #E4E5EA;display:grid;grid-template-columns:repeat(5,1fr);z-index:90;backdrop-filter:blur(12px)}
   .mobile-crm-nav-btn{border:0;background:transparent;color:#7a8798;min-height:50px;display:grid;place-items:center;border-radius:10px;padding:0;min-width:0}.mobile-crm-nav-btn.active{color:#6E3B8C;background:#F3ECFA}.mobile-crm-nav-btn .cal-icon{width:21px;height:21px}.mobile-crm-nav-btn span{font-size:9px;line-height:1;margin-top:-5px;white-space:nowrap}
-  .mobile-crm-nav-clients{position:relative;min-width:0;display:grid;-webkit-touch-callout:none;user-select:none}
-  .mobile-crm-nav-add{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:36px;min-width:36px;height:36px;padding:0;border:1px solid #E4E5EA;border-radius:12px;background:#fff;color:#6E3B8C;font-size:22px;font-weight:700;line-height:1;display:grid;place-items:center;box-shadow:0 8px 20px rgba(31,25,50,.16);z-index:92}
+  .mobile-crm-nav-btn{-webkit-touch-callout:none}
   .calendar-page{--cal-bg:#F4F0FA;--cal-surface:#fff;--cal-ink:#2B1A6B;--cal-muted:#666B73;--cal-line:#E4E5EA;--cal-purple:#6E3B8C;--cal-purple-2:#F3ECFA;--cal-red:#c2413a;--cal-red-soft:#fff0ef;--cal-amber:#a56410;--cal-amber-soft:#fff6df;--cal-green:#23735a;min-height:calc(100vh - 62px);padding-bottom:20px;background:var(--cal-bg);font-size:15px;line-height:1.4;overflow-x:clip}
   .cal-app-header,.cal-quick-add,.cal-desktop-view{display:none!important}
   .cal-workspace{padding:0;max-width:460px;margin:0 auto}
@@ -2188,10 +2195,7 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   </svg>
   <div class="cal-bulk-bar" id="calendarBulkBar" hidden></div>
   <nav class="mobile-crm-nav" aria-label="Разделы CRM">
-    <div class="mobile-crm-nav-clients" id="mobileCrmClientsWrap">
-      <button type="button" class="mobile-crm-nav-btn active" data-view="clients" onclick="calendarNavigate('clients')" aria-label="Заказчики" aria-expanded="false"><svg class="cal-icon"><use href="#cal-i-user"/></svg><span>Заказчики</span></button>
-      <button type="button" class="mobile-crm-nav-add hidden" id="mobileCrmAddClient" onclick="mobileCrmAddClient()" aria-label="Добавить" tabindex="-1">+</button>
-    </div>
+    <button type="button" class="mobile-crm-nav-btn active" data-view="clients" onclick="calendarNavigate('clients')" aria-label="Заказчики"><svg class="cal-icon"><use href="#cal-i-user"/></svg><span>Заказчики</span></button>
     <button type="button" class="mobile-crm-nav-btn" data-view="all" onclick="calendarNavigate('all')" aria-label="Услуги"><svg class="cal-icon"><use href="#cal-i-brief"/></svg><span>Услуги</span></button>
     <button type="button" class="mobile-crm-nav-btn" data-view="fields" onclick="calendarNavigate('fields')" aria-label="Дополнительные поля"><svg class="cal-icon"><use href="#cal-i-grid"/></svg><span>Доп. поля</span></button>
     <button type="button" class="mobile-crm-nav-btn" data-view="calendar" onclick="calendarNavigate('calendar')" aria-label="Календарь"><svg class="cal-icon"><use href="#cal-i-calendar"/></svg><span>Календарь</span></button>
@@ -2247,15 +2251,17 @@ body>.cal-menu{position:fixed!important;z-index:2147483000!important;isolation:i
   <!-- ВИД: ЗАКАЗЧИКИ -->
   <div id="view-clients">
     <div class="card">
-      <div class="clients-toolbar">
-        <h2 class="clients-page-title">Заказчики</h2>
-        <div id="globalTotals"></div>
-        <div class="client-jump" id="clientJump">
-          <input type="search" id="clientJumpInput" class="client-jump-input" placeholder="Поиск по заказчикам" autocomplete="off" oninput="onClientJumpInput()">
-          <div class="client-jump-drop hidden" id="clientJumpDrop"></div>
+      <div class="clients-head">
+        <div class="clients-toolbar">
+          <h2 class="clients-page-title">Заказчики</h2>
+          <div id="globalTotals"></div>
+          <div class="client-jump" id="clientJump">
+            <input type="search" id="clientJumpInput" class="client-jump-input" placeholder="Поиск по заказчикам" autocomplete="off" oninput="onClientJumpInput()">
+            <div class="client-jump-drop hidden" id="clientJumpDrop"></div>
+          </div>
+          <button type="button" class="icon-btn-toggle" id="clientsToggleAllBtn" onclick="toggleAllClientAccordions()" title="Развернуть все" aria-label="Развернуть все" data-mobile-label="Развернуть все">+</button>
+          <button type="button" class="icon-btn-toggle" id="showHiddenBtn" onclick="toggleShowHiddenClients()" title="Показывать скрытых" aria-label="Показывать скрытых" aria-pressed="false"><span aria-hidden="true">👁</span></button>
         </div>
-        <button type="button" class="icon-btn-toggle" id="clientsToggleAllBtn" onclick="toggleAllClientAccordions()" title="Развернуть все" aria-label="Развернуть все" data-mobile-label="Развернуть все">+</button>
-        <button type="button" class="icon-btn-toggle" id="showHiddenBtn" onclick="toggleShowHiddenClients()" title="Показывать скрытых" aria-label="Показывать скрытых" aria-pressed="false"><span aria-hidden="true">👁</span></button>
         <button type="button" class="clients-add-fab" id="clientsAddFab" onclick="openNewContractForm()" title="Добавить" aria-label="Добавить"><svg class="cal-icon" aria-hidden="true"><use href="#cal-i-plus"/></svg></button>
       </div>
       <div class="clients" id="clientsList"></div>
@@ -3832,59 +3838,6 @@ function paintNavActive(view){
     t.classList.toggle('active', item===view || (item==='clients' && view==='client'));
   });
 }
-function hideMobileCrmAddClient(){
-  const wrap=document.getElementById('mobileCrmClientsWrap');
-  const add=document.getElementById('mobileCrmAddClient');
-  const btn=wrap&&wrap.querySelector('.mobile-crm-nav-btn');
-  if(wrap)wrap.classList.remove('is-add-open');
-  if(add)add.classList.add('hidden');
-  if(btn)btn.setAttribute('aria-expanded','false');
-}
-function showMobileCrmAddClient(){
-  const wrap=document.getElementById('mobileCrmClientsWrap');
-  const add=document.getElementById('mobileCrmAddClient');
-  const btn=wrap&&wrap.querySelector('.mobile-crm-nav-btn');
-  if(wrap)wrap.classList.add('is-add-open');
-  if(add)add.classList.remove('hidden');
-  if(btn)btn.setAttribute('aria-expanded','true');
-}
-function mobileCrmAddClient(){
-  hideMobileCrmAddClient();
-  openNewContractForm();
-}
-function bindMobileCrmAddClient(){
-  const wrap=document.getElementById('mobileCrmClientsWrap');
-  const btn=wrap&&wrap.querySelector('.mobile-crm-nav-btn');
-  if(!btn||btn.dataset.addBound)return;
-  btn.dataset.addBound='1';
-  const holdMs=550,moveLimit=10;
-  let timer=null,pointerId=null,x0=0,y0=0,opened=false;
-  const cancel=()=>{if(timer){clearTimeout(timer);timer=null;}pointerId=null;};
-  btn.addEventListener('pointerdown',event=>{
-    if(!event.isPrimary||event.button)return;
-    cancel();
-    pointerId=event.pointerId;
-    x0=event.clientX;y0=event.clientY;opened=false;
-    timer=setTimeout(()=>{timer=null;opened=true;showMobileCrmAddClient();},holdMs);
-  },{passive:true});
-  btn.addEventListener('pointermove',event=>{
-    if(event.pointerId!==pointerId)return;
-    if(Math.hypot(event.clientX-x0,event.clientY-y0)>moveLimit)cancel();
-  },{passive:true});
-  ['pointerup','pointercancel','lostpointercapture'].forEach(type=>btn.addEventListener(type,event=>{
-    if(event.pointerId===pointerId)cancel();
-  },{passive:true}));
-  btn.addEventListener('click',event=>{
-    if(opened){event.preventDefault();event.stopPropagation();opened=false;}
-    else hideMobileCrmAddClient();
-  },true);
-  btn.addEventListener('contextmenu',event=>{if(pointerId!==null||opened)event.preventDefault();});
-  document.addEventListener('pointerdown',event=>{
-    if(!wrap.classList.contains('is-add-open'))return;
-    if(wrap.contains(event.target))return;
-    hideMobileCrmAddClient();
-  },true);
-}
 function onHashChange(){
   const parsed = parseNavHash();
   if(!parsed) return;
@@ -3984,7 +3937,6 @@ function renderAllViews(){
   if(currentView==='calendar' && typeof window.calendarRender==='function') window.calendarRender();
 }
 function setView(v, id, keepContract){
-  hideMobileCrmAddClient();
   closeClAccMenu();
   hideAccPinPop();
   const prevClientId = currentClientId;
@@ -4009,7 +3961,6 @@ function setView(v, id, keepContract){
 (function(){
   const parsed = parseNavHash();
   if(parsed) paintNavActive(parsed.view);
-  bindMobileCrmAddClient();
   bindAccordionPinHold();
 })();
 
@@ -4857,7 +4808,6 @@ function onBasisChange(){
 }
 
 function openNewContractForm(){
-  hideMobileCrmAddClient();
   openContractForm(null, null);
 }
 function findClientByName(name){
@@ -5024,7 +4974,7 @@ function openContractForm(clientId, contractId){
   const partyId = client ? client.id : '';
 
   openModal(`
-    <h1>${contractId ? 'Карточка договора' : 'Новая карточка договора'}</h1>
+    <h1>${contractId ? 'Карточка договора' : 'Карточка нового договора'}</h1>
     <input type="hidden" id="ctEditingId" value="${contractId ? esc(contractId) : ''}">
 
     <div class="ct-party-row" id="ctPartyRow">
@@ -6135,9 +6085,62 @@ function filterOptionsFor(key){
   if(key==='fFrom' || key==='fTo') return uniqDatesSorted(values);
   return uniqSorted(values);
 }
+function placeXlDrop(wrap, box){
+  if(!wrap || !box) return;
+  box.__xlWrap = wrap;
+  if(box.parentElement !== document.body) document.body.appendChild(box);
+  const r = wrap.getBoundingClientRect();
+  const width = Math.max(120, r.width);
+  const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8));
+  const spaceBelow = window.innerHeight - r.bottom - 8;
+  const spaceAbove = r.top - 8;
+  const openUp = spaceBelow < 140 && spaceAbove > spaceBelow;
+  const maxH = Math.min(220, Math.max(96, openUp ? spaceAbove : spaceBelow));
+  box.style.position = 'fixed';
+  box.style.left = left + 'px';
+  box.style.width = width + 'px';
+  box.style.right = 'auto';
+  box.style.zIndex = '80';
+  box.style.maxHeight = maxH + 'px';
+  if(openUp){
+    box.style.top = 'auto';
+    box.style.bottom = (window.innerHeight - r.top + 2) + 'px';
+  } else {
+    box.style.top = (r.bottom + 2) + 'px';
+    box.style.bottom = 'auto';
+  }
+}
+function clearXlDropPos(box){
+  if(!box) return;
+  const home = box.__xlWrap;
+  if(home && box.parentElement !== home) home.appendChild(box);
+  box.__xlWrap = null;
+  if(!box.style) return;
+  box.style.position = box.style.left = box.style.width = box.style.right = '';
+  box.style.top = box.style.bottom = box.style.zIndex = box.style.maxHeight = '';
+}
+function bindXlDropPosition(){
+  if(window.__xlDropPosBound) return;
+  window.__xlDropPosBound = true;
+  const reposition = ()=>{
+    document.querySelectorAll('.xl-filter-drop:not(.hidden)').forEach(box=>{
+      const wrap = box.__xlWrap || box.closest('.xl-filter');
+      if(wrap) placeXlDrop(wrap, box);
+    });
+  };
+  window.addEventListener('resize', reposition);
+  window.addEventListener('scroll', reposition, true);
+}
+function xlDropBox(wrap){
+  if(!wrap) return null;
+  return wrap.querySelector('.xl-filter-drop') || [...document.querySelectorAll('body > .xl-filter-drop')].find(el => el.__xlWrap === wrap) || null;
+}
 function closeXlDrops(except){
   document.querySelectorAll('.xl-filter-drop').forEach(el=>{
-    if(el !== except) el.classList.add('hidden');
+    if(el !== except){
+      el.classList.add('hidden');
+      clearXlDropPos(el);
+    }
   });
 }
 function xlDropButtons(box){
@@ -6184,13 +6187,14 @@ function clearXlFilter(wrap){
 }
 function refreshOpenXlDrops(){
   document.querySelectorAll('.xl-filter-input').forEach(input=>{
-    const box = input.closest('.xl-filter')?.querySelector('.xl-filter-drop');
+    const wrap = input.closest('.xl-filter');
+    const box = xlDropBox(wrap);
     if(box && !box.classList.contains('hidden')) openXlDrop(input);
   });
 }
 function openXlDrop(input, opts){
   const wrap = input.closest('.xl-filter');
-  const box = wrap && wrap.querySelector('.xl-filter-drop');
+  const box = xlDropBox(wrap);
   if(!box) return;
   const key = input.dataset.filter || input.id;
   const typing = opts && 'typed' in opts ? !!opts.typed : input.dataset.xlTyping === '1';
@@ -6215,6 +6219,8 @@ function openXlDrop(input, opts){
   if(active) active.classList.add('active');
   closeXlDrops(box);
   box.classList.remove('hidden');
+  bindXlDropPosition();
+  placeXlDrop(wrap, box);
 }
 function bindExcelFilters(){
   if(window.__xlFiltersBound) return;
@@ -6224,7 +6230,7 @@ function bindExcelFilters(){
     input.addEventListener('click', ()=>openXlDrop(input));
     input.addEventListener('input', ()=>{ input.dataset.xlTyping = '1'; openXlDrop(input, {typed:true}); renderAll(); });
     input.addEventListener('keydown', e=>{
-      const box = input.closest('.xl-filter').querySelector('.xl-filter-drop');
+      const box = xlDropBox(input.closest('.xl-filter'));
       const open = box && !box.classList.contains('hidden');
       if(e.key==='Escape'){ closeXlDrops(); input.blur(); return; }
       if(!open) return;
@@ -6246,13 +6252,16 @@ function bindExcelFilters(){
       clearXlFilter(clearBtn.closest('.xl-filter'));
       return;
     }
-    if(!e.target.closest('.xl-filter')) closeXlDrops();
     const pick = e.target.closest('.xl-filter-drop [data-val]');
     if(pick){
-      const input = pick.closest('.xl-filter').querySelector('.xl-filter-input');
-      pickXlValue(input, pick.dataset.val);
+      const drop = pick.closest('.xl-filter-drop');
+      const wrap = (drop && drop.__xlWrap) || pick.closest('.xl-filter');
+      const input = wrap && wrap.querySelector('.xl-filter-input');
+      if(input) pickXlValue(input, pick.dataset.val);
       e.preventDefault();
+      return;
     }
+    if(!e.target.closest('.xl-filter') && !e.target.closest('.xl-filter-drop')) closeXlDrops();
   });
 }
 function togglePopupMenu(listId, btnId, ev){
