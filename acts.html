@@ -280,6 +280,11 @@ tr.locked td{background:#FAFAFC;}
 }
 .cl-acc-icon:hover{background:rgba(255,255,255,.14);}
 .cl-acc-icon .cal-icon{width:18px;height:18px;}
+.cl-acc-cal{flex-shrink:0;visibility:visible;}
+.cl-acc-header .cl-acc-cal{color:#fff;opacity:.78;}
+.cl-acc-header .cl-acc-cal.has-soon{opacity:1;color:#F6D860;}
+.cl-acc-contract .cl-acc-cal{color:var(--ink);opacity:.55;}
+.cl-acc-contract .cl-acc-cal.has-soon{opacity:1;color:var(--violet);}
 .cl-acc-menu-btn{
   flex:0 0 40px;width:40px;min-width:40px;padding:0;border:0;border-right:1px solid rgba(255,255,255,.2);
   border-radius:0;background:transparent;color:rgba(255,255,255,.88);
@@ -330,6 +335,7 @@ tr.locked td{background:#FAFAFC;}
 .cl-acc-contract .cl-acc-icon .cal-icon{width:17px;height:17px;}
 .cl-acc-contract .cl-acc-icon.act-on{background:var(--violet);color:#fff;border-radius:9px;}
 .cl-acc-contract .cl-acc-icon.act-on:hover{background:var(--violet-d);color:#fff;}
+.cl-acc-contract .cl-acc-cal.has-soon:hover{color:var(--violet-d);}
 .cl-acc-cal-empty{visibility:hidden;pointer-events:none;}
 .cl-acc-add{
   width:30px;height:30px;min-width:30px;flex:0 0 30px;border:0;border-radius:50%;
@@ -4227,10 +4233,11 @@ function accordionMenuBtn(kind, clientId, contractId){
 }
 function accordionCalIcon(clientId, contractId, keepSlot){
   const has = typeof window.calendarHasSoonTasks==='function' && window.calendarHasSoonTasks(clientId, contractId||null);
-  if(!has) return keepSlot ? '<span class="cl-acc-icon cl-acc-cal cl-acc-cal-empty" aria-hidden="true"></span>' : '';
+  const desktop = typeof window.matchMedia==='function' && window.matchMedia('(min-width:721px)').matches;
+  if(!has && !desktop) return keepSlot ? '<span class="cl-acc-icon cl-acc-cal cl-acc-cal-empty" aria-hidden="true"></span>' : '';
   const title = contractId ? 'Календарь по этому договору' : 'Календарь по этому заказчику';
   const args = contractId ? `'${clientId}','${contractId}'` : `'${clientId}'`;
-  return `<button type="button" class="cl-acc-icon cl-acc-cal" onclick="event.stopPropagation();openAccordionCalendar(${args})" title="${esc(title)}" aria-label="${esc(title)}"><svg class="cal-icon" aria-hidden="true"><use href="#cal-i-calendar"/></svg></button>`;
+  return `<button type="button" class="cl-acc-icon cl-acc-cal${has?' has-soon':''}" onclick="event.stopPropagation();openAccordionCalendar(${args})" title="${esc(title)}" aria-label="${esc(title)}"><svg class="cal-icon" aria-hidden="true"><use href="#cal-i-calendar"/></svg></button>`;
 }
 function openAccordionCalendar(clientId, contractId){
   if(typeof window.calendarOpenForCrm==='function') window.calendarOpenForCrm(clientId, contractId||null);
@@ -4269,7 +4276,7 @@ function renderClients(){
       const showHiddenCt = showHiddenContractsByClient.has(c.id);
       const contracts = sortedContracts(c).filter(ct => showHiddenCt || !ct.hidden);
       const isOpen = expandedClientIds.has(c.id);
-      const cal = accordionCalIcon(c.id);
+      const cal = accordionCalIcon(c.id, null, true);
       const hiddenHint = hiddenContracts
         ? `<button type="button" class="cl-acc-hidden-chip${showHiddenCt?' is-on':''}" onclick="onAccHiddenHint(event,'${c.id}')" title="Скрытых договоров: ${hiddenContracts}" aria-label="Скрытых договоров: ${hiddenContracts}">${CL_ACC_EYE_SVG}<span>${hiddenContracts>99?'99+':hiddenContracts}</span></button>`
         : '';
@@ -8417,7 +8424,11 @@ function customFieldHtmlForPdf(s){
       cal.serverDate=data.serverDateMoscow||cal.serverDate||todayISO();
       cal.loaded=true;cal.lastLoad=Date.now();calSetError('');window.calendarRender();calOfferDraft();
     }catch(error){calSetError(calErrorMessage(error),true);window.calendarRender();}
-    finally{cal.loading=false;window.calendarRender();}
+    finally{
+      cal.loading=false;
+      window.calendarRender();
+      if(currentView==='clients' && typeof renderClients==='function') renderClients();
+    }
   }
   function calReplaceRecord(record){
     if(!record)return;
@@ -9123,13 +9134,25 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
   }
 
   window.calendarHasSoonTasks=function(clientId, contractId){
-    if(!clientId || !cal.loaded) return false;
+    if(!clientId) return false;
+    const records=Array.isArray(cal.records)?cal.records:[];
+    if(!cal.loaded && !records.length) return false;
     const start=cal.serverDate||todayISO();
     const end=calAddDays(start,10);
-    return cal.records.some(record=>{
+    const client=typeof getClient==='function'?getClient(clientId):null;
+    const clientName=String(client&&client.name||'').trim().toLowerCase();
+    const contract=client && contractId && typeof getContract==='function'?getContract(client, contractId):null;
+    const contractName=contract?String((typeof contractLabel==='function'?contractLabel(contract):'')||'').trim().toLowerCase():'';
+    return records.some(record=>{
       if(!calIsActive(record) || !record.date) return false;
-      if(record.clientId!==clientId) return false;
-      if(contractId && record.contractId!==contractId) return false;
+      const sameClient=String(record.clientId||'')===String(clientId)
+        || (clientName && String(record.clientText||'').trim().toLowerCase()===clientName);
+      if(!sameClient) return false;
+      if(contractId){
+        const sameContract=String(record.contractId||'')===String(contractId)
+          || (contractName && String(record.contractText||'').trim().toLowerCase()===contractName);
+        if(!sameContract) return false;
+      }
       const overdue=record.status==='overdue' || record.date<start;
       const soon=record.date>=start && record.date<=end;
       return overdue || soon;
