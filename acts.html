@@ -333,11 +333,12 @@ tr.locked td{background:#FAFAFC;}
 .cl-acc-cal-empty{visibility:hidden;pointer-events:none;}
 .cl-acc-add{
   width:30px;height:30px;min-width:30px;flex:0 0 30px;border:0;border-radius:50%;
-  background:linear-gradient(135deg,var(--violet),var(--violet-d));color:#fff;
+  background:linear-gradient(135deg,var(--violet),var(--violet-d));color:#F6D860;
   box-shadow:0 5px 12px rgba(110,59,140,.26);
   display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
 }
-.cl-acc-contract .cl-acc-add:hover{background:linear-gradient(135deg,#6D28D9,var(--violet-d));color:#fff;}
+.cl-acc-contract .cl-acc-add{color:#F6D860;}
+.cl-acc-contract .cl-acc-add:hover{background:linear-gradient(135deg,#6D28D9,var(--violet-d));color:#F6D860;}
 .cl-acc-add .cal-icon{width:15px;height:15px;stroke-width:2.2;}
 .cl-acc-menu{
   position:fixed;z-index:400;
@@ -4201,7 +4202,7 @@ function openClAccMenu(event, kind, clientId, contractId){
     html =
       `<button type="button" role="menuitem" onclick="closeClAccMenu();togglePin('${clientId}')">${c.pinned ? 'Открепить' : 'Закрепить'}</button>` +
       `<button type="button" role="menuitem" onclick="closeClAccMenu();toggleHide('${clientId}')">${c.hidden ? 'Показать заказчика' : 'Скрыть заказчика'}</button>` +
-      `<button type="button" role="menuitem" onclick="closeClAccMenu();openClientForm('${clientId}')">Переименовать</button>` +
+      `<button type="button" role="menuitem" onclick="closeClAccMenu();openClientForm('${clientId}')">Редактировать</button>` +
       `<hr>` +
       `<button type="button" class="danger" role="menuitem" onclick="closeClAccMenu();deleteClient('${clientId}')">Удалить</button>`;
   } else {
@@ -4525,8 +4526,16 @@ function openClientForm(id){
   const c = id ? getClient(id) : { id:null, name:'', custom:{} };
   openModal(`
     <h1>${id?'Заказчик':'Новый заказчик'}</h1>
-    <div class="field"><label>Наименование заказчика (именительный падеж)</label>
-      <input id="clName" value="${esc(c.name)}" placeholder="ООО «Название»"></div>
+    <div class="ct-party-row" id="clPartyRow">
+      <div class="field ct-party-client">
+        <label for="clName">Заказчик</label>
+        <input id="clName" value="${esc(c.name)}" placeholder="ООО «Название»" autocomplete="off">
+      </div>
+      <div class="field ct-party-inn">
+        <label for="clInn">ИНН</label>
+        <input id="clInn" value="${esc(rememberedPayerInn(c))}" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="необязательно">
+      </div>
+    </div>
     <div class="row" style="margin-top:8px">
       <button type="button" class="btn ghost" onclick="closeModal()">Отмена</button>
       <button type="button" class="btn" onclick="saveClient(${id?"'"+id+"'":'null'})">Сохранить</button>
@@ -5275,11 +5284,19 @@ function deleteContract(clientId, contractId){
 function saveClient(id){
   const name = document.getElementById('clName').value.trim();
   if(!name){ alert('Укажи наименование заказчика'); return; }
-  if(id){ const client=getClient(id); client.name = name; touchClient(client); }
+  const inn = String(document.getElementById('clInn')?.value || '').replace(/\s+/g,'').trim();
+  if(id){
+    const client=getClient(id);
+    client.name = name;
+    applyClientInn(client, inn);
+    touchClient(client);
+  }
   else {
     DB.clients.push({
       id: uid(), name, token: tokenGen(), pinned:false, hidden:false, sent:false,
-      sentDates: [], services: [], contracts: [], custom: {}, updatedAt:new Date().toISOString()
+      sentDates: [], services: [], contracts: [], custom: {},
+      inn, invoicePayerInn: inn,
+      updatedAt:new Date().toISOString()
     });
   }
   save({immediate:true}); closeModal(); renderAllViews();
