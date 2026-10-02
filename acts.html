@@ -1094,7 +1094,6 @@ tr.fields-drag-over td{background:var(--soft);}
 #printArea{position:fixed;left:-10000px;top:0;width:794px;background:#fff;padding:34px 44px 48px;font-size:12px;color:#111;font-family:Inter,system-ui,-apple-system,sans-serif;}
 #printArea .pa-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:18px;}
 #printArea .pa-logo{width:190px;height:auto;object-fit:contain;display:block;}
-#printArea .pa-head-meta{text-align:right;font-size:10.5px;line-height:1.55;color:#555;max-width:290px;}
 #printArea h1{font-size:16px;text-align:center;margin:4px 0 4px;color:#111;}
 #printArea .pa-sub{text-align:center;font-size:11px;color:#555;margin-bottom:18px;}
 #printArea .pa-pre{font-size:11.5px;line-height:1.75;margin-bottom:16px;overflow-wrap:anywhere;word-break:break-word;}
@@ -7843,12 +7842,26 @@ function openPdfDialog(){
     <div class="row"><button type="button" class="btn ghost" onclick="closeModal()">Отмена</button>
     <button type="button" class="btn" id="pdfBtn" onclick="makePdf()">Сформировать PDF</button></div>`, false, 'pdf-form');
 }
+function pdfRangeDefaults(today, services){
+  let month = today.slice(0,7);
+  if(Number(today.slice(8,10)) < 6){
+    const year = Number(today.slice(0,4));
+    const monthNumber = Number(today.slice(5,7));
+    month = monthNumber===1 ? (year-1)+'-12' : year+'-'+String(monthNumber-1).padStart(2,'0');
+  }
+  const p = reportingPeriod(month, today);
+  const dates = (services||[]).map(s=>String(s.date||'')).filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date)).sort();
+  if(dates.length && dates[0]>p.start) p.start=dates[0];
+  return p;
+}
 function fillPdfRangeDefaults(){
   const fromEl = document.getElementById('pdfFrom');
   const toEl = document.getElementById('pdfTo');
   if(!fromEl || !toEl) return;
   const today = todayISO();
-  const p = reportingPeriod(today.slice(0,7), today);
+  const c = getClient(currentClientId);
+  const ct = getContract(c, currentContractId);
+  const p = pdfRangeDefaults(today, ct ? contractServices(c, ct.id) : []);
   fromEl.value = crmDateDisplay(p.start);
   toEl.value = crmDateDisplay(p.end);
 }
@@ -7950,14 +7963,9 @@ function buildPrintHtml(c, ct, from, to, no){
   return `
     <div class="pa-head">
       <img class="pa-logo" src="${BRAND_LOGO_URL}" alt="RALEKSIZ HOUSE">
-      <div class="pa-head-meta">
-        Акт оказанных услуг<br>
-        № ${esc(no)}<br>
-        Дата составления: ${fmtDate(today)}
-      </div>
     </div>
     <h1>АКТ № ${esc(no)} оказанных услуг</h1>
-    <div class="pa-sub">${esc(period)}</div>
+    <div class="pa-sub">${esc(period)}<br>Дата составления: ${fmtDate(today)}</div>
     <div class="pa-pre">
       <b>Исполнитель: </b>ИП Рузлев Алексей Иванович (ОГРНИП 326330000056115)<br>
       <b>Заказчик:</b> ${esc(c.name)}<br>
