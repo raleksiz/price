@@ -371,10 +371,69 @@
   }
   ::selection{background:var(--purple-light);}
 
+  /* ---------- CRM navigation (only after переход from CRM) ---------- */
+  .crm-session-nav[hidden],.crm-session-menu-panel[hidden]{display:none!important;}
+  .crm-session-nav{font-family:'Inter',Arial,sans-serif;}
+  .crm-session-nav-btn{
+    width:44px;height:44px;padding:0;border:1.5px solid var(--line);border-radius:10px;
+    background:#fff;color:var(--navy);cursor:pointer;text-decoration:none;
+    display:inline-grid;place-items:center;flex-shrink:0;touch-action:manipulation;
+  }
+  .crm-session-nav-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .crm-session-nav-btn:hover{border-color:var(--purple);color:var(--purple);}
+  .crm-session-nav-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .crm-session-nav-label{display:none;}
+  .crm-price-glyph{width:20px;height:20px;display:grid;place-items:center;font-family:'Montserrat',Arial,sans-serif;font-size:20px;font-weight:800;line-height:1;}
+  .crm-session-menu{position:relative;display:grid;}
+  .crm-session-menu-panel{
+    position:absolute;left:calc(100% + 8px);bottom:0;z-index:310;
+    width:216px;padding:4px;border:1.5px solid var(--line);border-radius:10px;
+    background:#fff;box-shadow:0 8px 24px rgba(80,40,120,.16);
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;
+  }
+  .crm-session-menu-panel a,.crm-session-menu-panel button{
+    min-width:0;min-height:40px;margin:0;padding:0 9px;border:0;border-radius:8px;
+    background:#fff;color:var(--navy);font:700 12px/1 'Inter',Arial,sans-serif;
+    text-decoration:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .crm-session-menu-panel a:hover,.crm-session-menu-panel button:hover{background:var(--purple-light);color:var(--purple);}
+  .crm-session-menu-panel .crm-session-menu-wide{grid-column:1/-1;}
+  .crm-session-menu-panel .crm-session-menu-account{font-size:16px;}
+  .crm-session-menu-panel .danger{color:#B42318;}
+  .crm-session-menu-panel svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+
+  @media (min-width:721px){
+    body.crm-session-nav-visible{padding-left:56px;}
+    .crm-session-nav{
+      position:fixed;left:8px;top:16px;z-index:300;
+      display:flex;flex-direction:column;gap:6px;width:44px;
+    }
+  }
+
+  @media (max-width:720px){
+    body.crm-session-nav-visible{padding-bottom:calc(62px + env(safe-area-inset-bottom));}
+    .crm-session-nav{
+      position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:300;
+      width:min(100%,460px);min-height:62px;padding:5px 6px calc(5px + env(safe-area-inset-bottom));
+      background:rgba(255,255,255,.97);border-top:1px solid var(--line);backdrop-filter:blur(12px);
+      display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+    }
+    .crm-session-nav-btn{width:100%;height:auto;min-height:50px;border:0;background:transparent;color:#7a8798;}
+    .crm-session-nav-btn.active{background:var(--purple-light);border-color:transparent;color:var(--purple);}
+    .crm-session-nav-btn svg{width:21px;height:21px;}
+    .crm-session-nav-label{display:block;margin-top:-5px;font-size:9px;line-height:1;white-space:nowrap;}
+    .crm-session-nav-btn .crm-price-glyph{width:21px;height:21px;font-size:20px;}
+    .crm-session-menu-panel{
+      position:fixed;left:auto;right:max(8px,calc((100vw - 460px)/2 + 8px));
+      bottom:calc(70px + env(safe-area-inset-bottom));width:216px;
+    }
+  }
+
 
   /* ===== SECRET PRINT (only via hidden link, class body.print-mode) ===== */
   @media print {
     body.print-mode { background: #fff !important; }
+    .crm-session-nav{display:none!important;}
 
     /* Hide footer only in print-mode */
     body.print-mode footer { display: none !important; }
@@ -437,6 +496,37 @@
 </style>
 </head>
 <body>
+
+<nav class="crm-session-nav" id="crmSessionNav" aria-label="Навигация CRM" hidden>
+  <a class="crm-session-nav-btn" href="acts.html#clients" aria-label="Заказчики" title="Заказчики">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c.6-3.4 3.2-5.2 6.5-5.2s5.9 1.8 6.5 5.2"/></svg>
+    <span class="crm-session-nav-label">Заказчики</span>
+  </a>
+  <a class="crm-session-nav-btn" href="acts.html#all" aria-label="Услуги" title="Все услуги">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v13H3zM9 7V4h6v3m-12 5h18M10 12v2h4v-2"/></svg>
+    <span class="crm-session-nav-label">Услуги</span>
+  </a>
+  <a class="crm-session-nav-btn active" href="index.html?crm=1" aria-label="Прайс" title="Прайс" aria-current="page">
+    <span class="crm-price-glyph" aria-hidden="true">₽</span>
+    <span class="crm-session-nav-label">Прайс</span>
+  </a>
+  <a class="crm-session-nav-btn" href="acts.html#calendar" aria-label="Календарь" title="Календарь">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Zm-2 5h18M8 2v4m8-4v4"/></svg>
+    <span class="crm-session-nav-label">Календарь</span>
+  </a>
+  <div class="crm-session-menu">
+    <button type="button" class="crm-session-nav-btn" id="crmSessionMenuBtn" aria-label="Меню" title="Меню" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      <span class="crm-session-nav-label">Меню</span>
+    </button>
+    <div class="crm-session-menu-panel" id="crmSessionMenuPanel" hidden>
+      <a class="crm-session-menu-wide" href="acts.html#fields"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span>Доп. поля</span></a>
+      <a class="crm-session-menu-wide" href="offer.html?crm=1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 5H6a2 2 0 0 0-2 2v9"/></svg><span>Оффер</span></a>
+      <button type="button" class="crm-session-menu-account" onclick="priceToolbarOpenToken()" title="Токен" aria-label="Токен">🔑</button>
+      <button type="button" class="crm-session-menu-account danger" onclick="priceToolbarLogout()" title="Выйти" aria-label="Выйти">🚪</button>
+    </div>
+  </div>
+</nav>
 
 <header class="brand">
   <div class="brand-row">
@@ -518,6 +608,80 @@
   <div class="print-control"><button id="printLink" type="button" onclick="doPrint()">печать</button></div>
 </footer>
 
+<script>
+(function(){
+  const SESSION_KEY='raleksiz_acts_session';
+  const TOKEN_KEY='raleksiz_gh_token';
+  const SESSION_TTL=7*24*60*60*1000;
+  const fromCrm=new URLSearchParams(window.location.search).get('crm')==='1';
+  let sessionOk=false;
+  try{
+    const ts=Number(localStorage.getItem(SESSION_KEY));
+    sessionOk=!!ts && Date.now()-ts<SESSION_TTL;
+  }catch(e){}
+  if(!fromCrm || !sessionOk) return;
+
+  const nav=document.getElementById('crmSessionNav');
+  const btn=document.getElementById('crmSessionMenuBtn');
+  const panel=document.getElementById('crmSessionMenuPanel');
+  if(!nav || !btn || !panel) return;
+  nav.hidden=false;
+  document.body.classList.add('crm-session-nav-visible');
+
+  const isMobile=()=>window.matchMedia('(max-width:720px)').matches;
+  const menuIsOpen=()=>!panel.hidden;
+  const openMenu=()=>{ panel.hidden=false; btn.classList.add('active'); btn.setAttribute('aria-expanded','true'); };
+  const closeMenu=()=>{ panel.hidden=true; btn.classList.remove('active'); btn.setAttribute('aria-expanded','false'); };
+  const holdMs=420,moveLimit=10;
+  let timer=null,pointerId=null,x0=0,y0=0,openedByHold=false;
+  const cancelHold=()=>{ if(timer){clearTimeout(timer);timer=null;} pointerId=null; };
+
+  btn.addEventListener('pointerdown',event=>{
+    if(!isMobile() || !event.isPrimary || event.button) return;
+    if(event.pointerType==='touch') event.preventDefault();
+    cancelHold();
+    pointerId=event.pointerId;x0=event.clientX;y0=event.clientY;openedByHold=false;
+    timer=setTimeout(()=>{timer=null;openedByHold=true;openMenu();},holdMs);
+  },{passive:false});
+  btn.addEventListener('pointermove',event=>{
+    if(event.pointerId!==pointerId) return;
+    if(Math.hypot(event.clientX-x0,event.clientY-y0)>moveLimit) cancelHold();
+  },{passive:true});
+  ['pointerup','pointercancel','lostpointercapture'].forEach(type=>btn.addEventListener(type,event=>{
+    if(event.pointerId===pointerId) cancelHold();
+  },{passive:true}));
+  btn.addEventListener('click',event=>{
+    event.preventDefault();event.stopPropagation();
+    if(openedByHold){openedByHold=false;return;}
+    if(isMobile()){
+      if(menuIsOpen()) closeMenu();
+      return;
+    }
+    menuIsOpen()?closeMenu():openMenu();
+  });
+  btn.addEventListener('contextmenu',event=>{
+    if(!isMobile()) return;
+    event.preventDefault();
+    if(menuIsOpen()) return;
+    cancelHold();openedByHold=true;openMenu();
+  });
+  document.addEventListener('pointerdown',event=>{if(menuIsOpen()&&!event.target.closest('.crm-session-menu'))closeMenu();});
+  window.addEventListener('resize',closeMenu);
+
+  window.priceToolbarOpenToken=function(){
+    const current=localStorage.getItem(TOKEN_KEY)||'';
+    const value=prompt('GitHub token (Contents: Read and write для Price-private и price):',current);
+    if(value===null) return;
+    if(value.trim()) localStorage.setItem(TOKEN_KEY,value.trim());
+    else localStorage.removeItem(TOKEN_KEY);
+    closeMenu();
+  };
+  window.priceToolbarLogout=function(){
+    try{localStorage.removeItem(SESSION_KEY);}catch(e){}
+    window.location.assign('index.html');
+  };
+})();
+</script>
 <script src="crm-core.js"></script>
 <script src="calculator.js"></script>
 <script>
@@ -1198,4 +1362,3 @@ document.addEventListener('keydown', e => {
 </script>
 </body>
 </html>
-
