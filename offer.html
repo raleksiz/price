@@ -136,7 +136,6 @@
   .crm-session-nav-btn:hover{border-color:#6E3B8C;color:#6E3B8C;}
   .crm-session-nav-btn.active{background:#2B1A6B;border-color:#2B1A6B;color:#fff;}
   .crm-session-nav-label{display:none;}
-  .crm-price-glyph{width:20px;height:20px;display:grid;place-items:center;font-family:'Montserrat',Arial,sans-serif;font-size:20px;font-weight:500;line-height:1;}
   .crm-session-menu{position:relative;display:grid;}
   .crm-session-menu-panel{
     position:absolute;left:calc(100% + 8px);bottom:0;z-index:310;
@@ -169,7 +168,6 @@
     .crm-session-nav-btn.active{background:#F3ECFA;border-color:transparent;color:#6E3B8C;}
     .crm-session-nav-btn svg{width:21px;height:21px;}
     .crm-session-nav-label{display:block;margin-top:-5px;font-size:9px;line-height:1;white-space:nowrap;}
-    .crm-session-nav-btn .crm-price-glyph{width:21px;height:21px;font-size:20px;}
     .crm-session-menu-panel{
       position:fixed;left:auto;right:max(8px,calc((100vw - 460px)/2 + 8px));
       bottom:calc(70px + env(safe-area-inset-bottom));width:216px;
@@ -188,7 +186,7 @@
     <span class="crm-session-nav-label">Услуги</span>
   </a>
   <a class="crm-session-nav-btn" href="index.html?crm=1" aria-label="Прайс" title="Прайс">
-    <span class="crm-price-glyph" aria-hidden="true">₽</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 20V4h5a5 5 0 0 1 0 10H6m0 3h8"/></svg>
     <span class="crm-session-nav-label">Прайс</span>
   </a>
   <a class="crm-session-nav-btn" href="acts.html#calendar" aria-label="Календарь" title="Календарь">
