@@ -1092,10 +1092,10 @@ tr.fields-drag-over td{background:var(--soft);}
 .sent-flag-compact{margin-bottom:10px;}
 .sent-flag-label{text-transform:none;font-size:13px;margin:0;font-weight:700;}
 #printArea{position:fixed;left:-10000px;top:0;width:794px;background:#fff;padding:34px 44px 48px;font-size:12px;color:#111;font-family:Inter,system-ui,-apple-system,sans-serif;}
-#printArea .pa-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:18px;}
+#printArea .pa-head{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:14px;}
 #printArea .pa-logo{width:190px;height:auto;object-fit:contain;display:block;}
-#printArea h1{font-size:16px;text-align:center;margin:4px 0 4px;color:#111;}
-#printArea .pa-sub{text-align:center;font-size:11px;color:#555;margin-bottom:18px;}
+#printArea .pa-head-meta{text-align:right;font-size:11px;line-height:1.55;color:#555;max-width:330px;}
+#printArea .pa-head-title{font-size:14px;font-weight:700;color:#111;}
 #printArea .pa-pre{font-size:11.5px;line-height:1.75;margin-bottom:16px;overflow-wrap:anywhere;word-break:break-word;}
 #printArea .pa-intro{margin-top:12px;font-size:11.5px;line-height:1.6;}
 #printArea table{font-size:10.8px;table-layout:fixed;}
@@ -7980,9 +7980,12 @@ function buildPrintHtml(c, ct, from, to, no){
   return `
     <div class="pa-head">
       <img class="pa-logo" src="${BRAND_LOGO_URL}" alt="RALEKSIZ HOUSE">
+      <div class="pa-head-meta">
+        <div class="pa-head-title">Акт № ${esc(no)} оказанных услуг</div>
+        <div>${esc(period)}</div>
+        <div>Дата составления: ${fmtDate(today)}</div>
+      </div>
     </div>
-    <h1>АКТ № ${esc(no)} оказанных услуг</h1>
-    <div class="pa-sub">${esc(period)}<br>Дата составления: ${fmtDate(today)}</div>
     <div class="pa-pre">
       <b>Исполнитель: </b>ИП Рузлев Алексей Иванович (ОГРНИП 326330000056115)<br>
       <b>Заказчик:</b> ${esc(c.name)}<br>
