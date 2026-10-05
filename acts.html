@@ -1530,6 +1530,7 @@ body.cal-row-pointer-dragging,body.cal-row-pointer-dragging *{cursor:grabbing!im
 .cal-time-cell{white-space:nowrap;color:#4f4a58;font-variant-numeric:tabular-nums}.cal-time-part{white-space:nowrap}.cal-all-day-label{color:var(--cal-purple);font-weight:500;font-size:13px;white-space:nowrap}
 .cal-title-cell{font-weight:400;line-height:1.32;min-width:0;overflow-wrap:anywhere;display:block}.cal-title-subline{margin-top:3px;display:flex;align-items:center;gap:5px;color:var(--cal-muted);font-size:12px}.cal-title-subline .cal-icon{width:15px;height:15px}.cal-location-mark{display:inline-grid;place-items:center;width:18px;height:18px;color:var(--cal-muted);text-decoration:none}.cal-location-mark .cal-icon{width:15px;height:15px}.cal-sync-mark{display:inline-grid;place-items:center;border:0;background:transparent;padding:0;color:var(--cal-red)}
 .cal-party-cell{min-width:0;line-height:1.22;color:var(--cal-ink)}.cal-party-cell div{display:block;overflow-wrap:anywhere;white-space:normal}.cal-party-cell div:first-child{font-size:13px;font-weight:500}.cal-party-cell div+div{margin-top:4px;color:var(--cal-muted);font-size:12px}
+.cal-party-link{all:unset;color:inherit;font:inherit;cursor:pointer;border-radius:4px;text-decoration:none}.cal-party-link:hover{color:var(--cal-purple);text-decoration:underline;text-underline-offset:2px}.cal-party-link:focus-visible{outline:2px solid var(--cal-purple-3);outline-offset:2px}
 .cal-chip{width:max-content;max-width:100%;border:1px solid var(--cal-line,#e5e3eb);background:#fff;border-radius:999px;padding:5px 8px;font-size:12px;font-weight:400;line-height:1.2;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;min-height:0;color:var(--cal-ink,#2B1A6B);box-shadow:none;outline:none}
 .cal-state-cell .cal-chip{max-width:none}
 .cal-chip.upcoming{color:#2f6fca;border-color:#cdddf4;background:#eaf2ff}
@@ -8525,9 +8526,20 @@ function customFieldHtmlForPdf(s){
     const contract=calContractName(record.clientId,record.contractId,record.contractText);
     return {client,contract,text:[client,contract].filter(Boolean).join(' · ')};
   }
-  function calPartyFocusHtml(p){
+  function calLinkedContract(record){
+    if(!record||!record.clientId||!record.contractId)return null;
+    const client=calClientList().find(item=>String(item.id)===String(record.clientId));
+    const contract=client&&(client.contracts||[]).find(item=>String(item.id)===String(record.contractId));
+    return client&&contract?{client,contract}:null;
+  }
+  function calPartyValueHtml(record,value){
+    const label=calEscape(value);
+    if(!calLinkedContract(record))return label;
+    return '<button type="button" class="cal-party-link" onclick="event.preventDefault();event.stopPropagation();calendarOpenRecordContract(\''+calEscape(record.id)+'\',event)" aria-label="Открыть связанный договор: '+label+'">'+label+'</button>';
+  }
+  function calPartyFocusHtml(record,p){
     if(!p.client&&!p.contract)return '<span data-cal-focus="client">'+calEscape('Без связи с заказчиком')+'</span>';
-    return [p.client?'<span data-cal-focus="client">'+calEscape(p.client)+'</span>':'',p.contract?'<span data-cal-focus="contract">'+calEscape(p.contract)+'</span>':''].filter(Boolean).join(' · ');
+    return [p.client?'<span data-cal-focus="client">'+calPartyValueHtml(record,p.client)+'</span>':'',p.contract?'<span data-cal-focus="contract">'+calPartyValueHtml(record,p.contract)+'</span>':''].filter(Boolean).join(' · ');
   }
   function calQuickInput(kind){return document.getElementById(kind==='client'?'calQuickClient':'calQuickContract');}
   function calSyncQuickFilterClears(){
@@ -8759,7 +8771,7 @@ function customFieldHtmlForPdf(s){
       <div class="cal-date-cell" data-cal-focus="date"><span class="cal-date-chip ${calDateClass(record)}">${calEscape(calDesktopDate(record.date))}</span></div>
       <div class="cal-time-cell" data-cal-focus="time">${calDesktopTimeHtml(record)}</div>
       <div class="cal-title-cell"><span class="cal-title-text" data-cal-focus="title"${titleAttr}>${calEscape(record.title)}</span>${subline}</div>
-      <div class="cal-party-cell"><div data-cal-focus="client">${calEscape(p.client||'—')}</div><div data-cal-focus="contract">${calEscape(p.contract||'')}</div></div>
+      <div class="cal-party-cell"><div data-cal-focus="client">${p.client?calPartyValueHtml(record,p.client):'—'}</div><div data-cal-focus="contract">${p.contract?calPartyValueHtml(record,p.contract):''}</div></div>
       <div class="cal-state-cell"><button type="button" class="cal-state-trigger" onclick="event.stopPropagation();calendarOpenStateMenu('${calEscape(record.id)}',event)" aria-label="Изменить состояние">${calStatusChips(record)}</button></div>
       <button type="button" class="cal-bell" onclick="event.stopPropagation();calendarOpenReminders('${calEscape(record.id)}')" aria-label="Открыть напоминания">${record.reminders&&record.reminders.length?calIcon('bell')+record.reminders.length:'—'}</button>
       <button type="button" class="cal-more" onclick="event.stopPropagation();calendarOpenRecordMenu('${calEscape(record.id)}',event)" aria-label="Действия">${calIcon('more')}</button>
@@ -8795,7 +8807,7 @@ function customFieldHtmlForPdf(s){
       <div data-cal-focus="date"><strong>${calEscape(action.date)}</strong><span>${calEscape(action.detail)}</span></div>
       <div data-cal-focus="date">${calEscape(calIsoToRu(record.date)||'Без даты')}<span data-cal-focus="time">${calEscape(calTime(record))}</span></div>
       <div data-cal-focus="title"><strong>${calEscape(record.title)}</strong>${Number(record.moveCount)?'<span class="cal-archive-moved">'+calIcon('repeat')+'Перенесено · '+record.moveCount+'</span>':''}</div>
-      <div><span data-cal-focus="client">${calEscape(party.client||'—')}</span><span data-cal-focus="contract">${calEscape(party.contract||'')}</span></div>
+      <div><span data-cal-focus="client">${party.client?calPartyValueHtml(record,party.client):'—'}</span><span data-cal-focus="contract">${party.contract?calPartyValueHtml(record,party.contract):''}</span></div>
       <span class="cal-archive-state ${completed?'completed':'cancelled'}">${completed?'Выполнено':'Отменено'}</span>
       <div class="cal-archive-actions"><button type="button" onclick="event.stopPropagation();calendarArchiveRestore('${calEscape(record.id)}')">Вернуть</button><button type="button" onclick="event.stopPropagation();calendarArchiveDelete('${calEscape(record.id)}')">Удалить</button></div>
     </article>`;
@@ -8835,7 +8847,7 @@ function customFieldHtmlForPdf(s){
 const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" title="Перенесено '+record.moveCount+' раз">'+calIcon('repeat')+record.moveCount+'</span>':'')+calReminderChip(record)+calSyncChip(record)+calLocationMark(record);
     if(focus)return `<article class="cal-mobile-card cal-focus-front${cal.selected.has(record.id)?' selected':''}" data-record-id="${calEscape(record.id)}">
       <div class="cal-mobile-actions"><div class="cal-mobile-action-side"><button type="button" class="done" onclick="calendarMobileComplete('${calEscape(record.id)}')">${calIcon('check')}Готово</button></div><div class="cal-mobile-action-side"><button type="button" class="move" onclick="calendarOpenMove('${calEscape(record.id)}')">Перенести</button></div></div>
-      <div class="cal-focus-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)">${controls}<div class="cal-focus-top"><div class="cal-date-line"><span class="cal-date-chip${overdue?' overdue':''}" data-cal-focus="date">${calEscape(calPrettyDate(record.date))}</span><span class="cal-time-label" data-cal-focus="time">${calFocusTime(record)}</span></div></div><h3 class="cal-mobile-title" data-cal-focus="title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calPartyFocusHtml(p)}</div><div class="cal-mobile-meta">${badges}</div></div>
+      <div class="cal-focus-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)">${controls}<div class="cal-focus-top"><div class="cal-date-line"><span class="cal-date-chip${overdue?' overdue':''}" data-cal-focus="date">${calEscape(calPrettyDate(record.date))}</span><span class="cal-time-label" data-cal-focus="time">${calFocusTime(record)}</span></div></div><h3 class="cal-mobile-title" data-cal-focus="title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calPartyFocusHtml(record,p)}</div><div class="cal-mobile-meta">${badges}</div></div>
     </article>`;
     const dateTitle=record.date?calPrettyDate(record.date):'—';
     const dayText=record.date?(overdue?'Просрочено':calDateLong(record.date).split(' · ')[1]||''):'Без даты';
@@ -8843,7 +8855,7 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
       <div class="cal-mobile-actions"><div class="cal-mobile-action-side"><button type="button" class="done" onclick="calendarMobileComplete('${calEscape(record.id)}')">${calIcon('check')}Готово</button></div><div class="cal-mobile-action-side"><button type="button" class="move" onclick="calendarOpenMove('${calEscape(record.id)}')">Перенести</button></div></div>
       <div class="cal-mobile-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)"><span class="cal-select-mark" aria-hidden="true">${calIcon('check')}</span>
         <div class="cal-mobile-date"><strong class="${overdue?'overdue':''}" data-cal-focus="date">${calEscape(dateTitle)}</strong><span class="${overdue?'overdue-text':''}" data-cal-focus="date">${calEscape(dayText)}</span><span data-cal-focus="time">${calEscape(calTime(record))}</span></div>
-        <div class="cal-mobile-content">${controls}<h3 class="cal-mobile-title" data-cal-focus="title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calPartyFocusHtml(p)}</div><div class="cal-mobile-meta">${compactBadges}</div></div>
+        <div class="cal-mobile-content">${controls}<h3 class="cal-mobile-title" data-cal-focus="title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calPartyFocusHtml(record,p)}</div><div class="cal-mobile-meta">${compactBadges}</div></div>
       </div></article>`;
   }
   function calMobileArchiveCard(record){
@@ -8851,7 +8863,7 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
     return `<article class="cal-mobile-card cal-mobile-archive-card${cal.selected.has(record.id)?' selected':''}" data-record-id="${calEscape(record.id)}" data-archive-card="true">
       <div class="cal-mobile-surface" onclick="calendarMobileCardClick('${calEscape(record.id)}',event)"><span class="cal-select-mark" aria-hidden="true">${calIcon('check')}</span>
         <div class="cal-mobile-date" data-cal-focus="date"><strong>${calEscape(calPrettyDate(record.date))}</strong><span data-cal-focus="time">${calEscape(calTime(record))}</span><span class="cal-archive-origin">исходная дата</span></div>
-        <div class="cal-mobile-content"><div class="cal-mobile-controls"><button type="button" class="cal-mobile-restore" onclick="event.stopPropagation();calendarArchiveRestore('${calEscape(record.id)}')" aria-label="Вернуть в работу">${calIcon('repeat')}</button><button type="button" class="cal-mobile-more" onclick="event.stopPropagation();calendarOpenRecordMenu('${calEscape(record.id)}',event)" aria-label="Действия">${calIcon('more')}</button></div><div class="cal-mobile-archive-status ${completed?'completed':'cancelled'}">${completed?'Выполнено':'Отменено'} · ${calEscape(action.date)} · ${calEscape(action.detail.replace(/^\S+\s*/,''))}</div><h3 class="cal-mobile-title" data-cal-focus="title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calPartyFocusHtml(p)}</div>${Number(record.moveCount)?'<div class="cal-mobile-meta"><span class="cal-chip moved">'+calIcon('repeat')+record.moveCount+'</span></div>':''}</div>
+        <div class="cal-mobile-content"><div class="cal-mobile-controls"><button type="button" class="cal-mobile-restore" onclick="event.stopPropagation();calendarArchiveRestore('${calEscape(record.id)}')" aria-label="Вернуть в работу">${calIcon('repeat')}</button><button type="button" class="cal-mobile-more" onclick="event.stopPropagation();calendarOpenRecordMenu('${calEscape(record.id)}',event)" aria-label="Действия">${calIcon('more')}</button></div><div class="cal-mobile-archive-status ${completed?'completed':'cancelled'}">${completed?'Выполнено':'Отменено'} · ${calEscape(action.date)} · ${calEscape(action.detail.replace(/^\S+\s*/,''))}</div><h3 class="cal-mobile-title" data-cal-focus="title">${calEscape(record.title)}</h3><div class="cal-mobile-party">${calPartyFocusHtml(record,p)}</div>${Number(record.moveCount)?'<div class="cal-mobile-meta"><span class="cal-chip moved">'+calIcon('repeat')+record.moveCount+'</span></div>':''}</div>
       </div>
     </article>`;
   }
@@ -9283,6 +9295,12 @@ const compactBadges=(Number(record.moveCount)?'<span class="cal-chip moved" titl
   window.calendarSelectVisible=function(checked){const box=document.getElementById('calDesktop');if(!box)return;[...box.querySelectorAll('.cal-row')].filter(row=>row.offsetParent!==null).forEach(row=>{if(checked)cal.selected.add(row.dataset.recordId);else cal.selected.delete(row.dataset.recordId);});window.calendarRender();};
   window.calendarClearSelection=function(){cal.selected.clear();window.calendarRender();};
   window.calendarMobileCardClick=function(id,event){if(Date.now()<cal.suppressClickUntil)return;const card=event.currentTarget.closest('.cal-mobile-card');if(card&&(card.classList.contains('swipe-left')||card.classList.contains('swipe-right'))){card.classList.remove('swipe-left','swipe-right');return;}if(cal.selected.size){window.calendarToggleSelection(id);return;}window.calendarOpenEditor(id,event);};
+  window.calendarOpenRecordContract=function(id,event){
+    if(event){event.preventDefault();event.stopPropagation();}
+    const record=cal.records.find(item=>item.id===id),linked=calLinkedContract(record);
+    if(!linked){calToast('Связанный договор не найден');return;}
+    if(typeof openContract==='function')openContract(linked.contract.id,linked.client.id);
+  };
   window.calendarMobileComplete=function(id){calAction(id,'complete');};
   window.calendarToggleUrgent=function(id){calAction(id,'urgent');};
   window.calendarOpenMove=function(id,initialDate){
