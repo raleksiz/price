@@ -8066,8 +8066,8 @@ async function makePdf(){
       pdf.addImage(img, 'JPEG', 0, pos, iw, ih);
       left -= ph;
     }
-    const nm = (c.name||'act').replace(/[^\wА-Яа-яЁё\- ]/g,'').trim().replace(/\s+/g,'_');
-    pdf.save(`Акт_${no}_${nm}.pdf`);
+    const nm = (c.name||'act').replace(/[^\wА-Яа-яЁё\- ]/g,'').trim().replace(/\s+/g,' ');
+    pdf.save(`Акт ${no} ${nm}.pdf`);
     area.innerHTML = '';
     closeModal();
   }catch(e){
