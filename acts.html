@@ -8055,16 +8055,31 @@ async function makePdf(){
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p','mm','a4');
     const pw = 210, ph = 297;
-    const iw = pw, ih = canvas.height * pw / canvas.width;
-    const img = canvas.toDataURL('image/jpeg', 0.95);
-    let left = ih, pos = 0;
-    pdf.addImage(img, 'JPEG', 0, 0, iw, ih);
-    left -= ph;
-    while(left > 0){
-      pos -= ph;
-      pdf.addPage();
-      pdf.addImage(img, 'JPEG', 0, pos, iw, ih);
-      left -= ph;
+    const marginX = 5, marginTop = 10, marginBottom = 10;
+    const printableWidth = pw - marginX * 2;
+    const printableHeight = ph - marginTop - marginBottom;
+    const pxPerMm = canvas.width / printableWidth;
+    const pageHeightPx = Math.max(1, Math.floor(printableHeight * pxPerMm));
+    let sourceY = 0, pageIndex = 0;
+    while(sourceY < canvas.height){
+      const sliceHeightPx = Math.min(pageHeightPx, canvas.height - sourceY);
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width = canvas.width;
+      pageCanvas.height = sliceHeightPx;
+      const pageCtx = pageCanvas.getContext('2d');
+      pageCtx.fillStyle = '#ffffff';
+      pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+      pageCtx.drawImage(
+        canvas,
+        0, sourceY, canvas.width, sliceHeightPx,
+        0, 0, canvas.width, sliceHeightPx
+      );
+      if(pageIndex > 0) pdf.addPage();
+      const pageImg = pageCanvas.toDataURL('image/jpeg', 0.95);
+      const sliceHeightMm = sliceHeightPx / pxPerMm;
+      pdf.addImage(pageImg, 'JPEG', marginX, marginTop, printableWidth, sliceHeightMm);
+      sourceY += sliceHeightPx;
+      pageIndex += 1;
     }
     const nm = (c.name||'act').replace(/[^\wА-Яа-яЁё\- ]/g,'').trim().replace(/\s+/g,' ');
     pdf.save(`Акт ${no} ${nm}.pdf`);
