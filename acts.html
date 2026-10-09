@@ -5415,7 +5415,7 @@ function openServiceForm(clientId, contractId, svcId){
     <div class="row" style="margin-top:8px">
       <button type="button" class="btn ghost" onclick="closeModal()">Отмена</button>
       ${s?`<button type="button" class="btn danger" onclick="deleteService('${clientId}','${svcId}')">Удалить</button>`:''}
-      <button type="button" class="btn" onclick="saveService('${clientId}',${svcId?"'"+svcId+"'":'null'})">Сохранить</button>
+      <button type="button" class="btn" id="svcSaveBtn" onclick="saveService('${clientId}',${svcId?"'"+svcId+"'":'null'})">Сохранить</button>
     </div>
   `, false, 'service-form');
   window.__ctx = { 
@@ -5986,7 +5986,9 @@ function onPayChange(silent){
     : '';
   hint.innerHTML = `<span style="color:${availColor}">${esc(availTxt)}</span>` + (plannedTxt ? ' · ' + esc(plannedTxt) : '');
 }
+let SERVICE_SAVE_IN_PROGRESS = false;
 function saveService(clientId, svcId){
+  if(SERVICE_SAVE_IN_PROGRESS) return;
   const c = getClient(clientId);
   const existingService = svcId ? c.services.find(x=>x.id===svcId) : null;
   if(svcId && !existingService){ alert('Услуга не найдена — возможно, база обновилась. Закрой окно и открой услугу заново.'); return; }
@@ -6090,30 +6092,43 @@ function saveService(clientId, svcId){
     baseContractCode,
     baseContractPrice
   };
-  if(svcId){
-    Object.assign(existingService, data);
-    if(!isLegacyService){
-      delete existingService.legacyCatalogCode;
-      delete existingService.legacyCatalogName;
+  SERVICE_SAVE_IN_PROGRESS = true;
+  const saveButton = document.getElementById('svcSaveBtn');
+  if(saveButton) saveButton.disabled = true;
+  let pendingSave;
+  try{
+    if(svcId){
+      Object.assign(existingService, data);
+      if(!isLegacyService){
+        delete existingService.legacyCatalogCode;
+        delete existingService.legacyCatalogName;
+      }
+      if(window.__ctx.unlockOnSave) existingService.locked = false;
     }
-    if(window.__ctx.unlockOnSave) existingService.locked = false;
+    else {
+      c.services.push(Object.assign({id: uid(), createdAt: new Date().toISOString(), locked:false}, data));
+      if(c.sent && isComplete(data)){ c.sent = false; }
+    }
+    if(pay==='full_prepay' || pay==='part_prepay'){
+      syncMonthActualPrepay(c, contractId, monthKey(date), actualPrepay);
+    }
+    if(ct && typeof RaleksizCRMCore!=='undefined'){
+      RaleksizCRMCore.recalculateContractPayments(c.services, ct);
+    }
+    if(ct && ct.status==='Абонемент' && date){
+      // При смене фактической предоплаты пересчитываем весь месяц.
+      const from = (pay==='full_prepay' || pay==='part_prepay') ? '' : date;
+      recalculateContractMonthServices(c, contractId, monthKey(date), from);
+    }
+    pendingSave = save({immediate:true});
+    closeModal();
+    renderAllViews();
+  }catch(error){
+    SERVICE_SAVE_IN_PROGRESS = false;
+    if(saveButton) saveButton.disabled = false;
+    throw error;
   }
-  else {
-    c.services.push(Object.assign({id: uid(), createdAt: new Date().toISOString(), locked:false}, data));
-    if(c.sent && isComplete(data)){ c.sent = false; }
-  }
-  if(pay==='full_prepay' || pay==='part_prepay'){
-    syncMonthActualPrepay(c, contractId, monthKey(date), actualPrepay);
-  }
-  if(ct && typeof RaleksizCRMCore!=='undefined'){
-    RaleksizCRMCore.recalculateContractPayments(c.services, ct);
-  }
-  if(ct && ct.status==='Абонемент' && date){
-    // При смене фактической предоплаты пересчитываем весь месяц.
-    const from = (pay==='full_prepay' || pay==='part_prepay') ? '' : date;
-    recalculateContractMonthServices(c, contractId, monthKey(date), from);
-  }
-  save({immediate:true}); closeModal(); renderAllViews();
+  Promise.resolve(pendingSave).finally(()=>{ SERVICE_SAVE_IN_PROGRESS = false; });
 }
 function deleteService(clientId, svcId){
   const c = getClient(clientId);
