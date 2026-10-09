@@ -377,6 +377,38 @@
     sync.deleted[type][key] = when || isoNow();
   }
 
+  function hasTombstone(map, key) {
+    return !!map && Object.prototype.hasOwnProperty.call(map, text(key));
+  }
+
+  // Удаление является окончательным, пока пользователь явно не создаст новую
+  // сущность с новым id. Служебный перерасчёт в устаревшей вкладке не должен
+  // возвращать запись, для которой уже существует tombstone.
+  function purgeDeletedEntities(db) {
+    db = db && typeof db === 'object' ? db : {};
+    var deleted = ensureSyncMeta(db).deleted;
+    db.priceList = (Array.isArray(db.priceList) ? db.priceList : []).filter(function (item) {
+      return !hasTombstone(deleted.priceList, item && item.code);
+    });
+    db.customFields = (Array.isArray(db.customFields) ? db.customFields : []).filter(function (item) {
+      return !hasTombstone(deleted.customFields, item && item.id);
+    });
+    db.clients = (Array.isArray(db.clients) ? db.clients : []).filter(function (client) {
+      return !hasTombstone(deleted.clients, client && client.id);
+    }).map(function (client) {
+      client.contracts = (Array.isArray(client.contracts) ? client.contracts : []).filter(function (contract) {
+        return !hasTombstone(deleted.contracts, tombstoneKey(client.id, contract && contract.id));
+      });
+      var validContracts = new Set(client.contracts.map(function (contract) { return contract.id; }));
+      client.services = (Array.isArray(client.services) ? client.services : []).filter(function (service) {
+        return !hasTombstone(deleted.services, tombstoneKey(client.id, service && service.id)) &&
+          (!service.contractId || validContracts.has(service.contractId));
+      });
+      return client;
+    });
+    return db;
+  }
+
   function migrateDB(input) {
     var db = input && typeof input === 'object' ? input : {};
     var fallback = db.updated || isoNow();
@@ -387,6 +419,7 @@
     db.surcharges = db.surcharges && typeof db.surcharges === 'object' ? db.surcharges : {};
     ensureCatalogMeta(db);
     var sync = ensureSyncMeta(db);
+    purgeDeletedEntities(db);
     ['priceList', 'surcharges', 'customFields', 'catTitles', 'catShort'].forEach(function (section) {
       if (!sync.sections[section]) sync.sections[section] = fallback;
     });
@@ -527,7 +560,7 @@
     });
     out.contracts = Array.from(contracts.values()).filter(function (contract) {
       var removed = deleted.contracts[tombstoneKey(out.id, contract.id)];
-      return !removed || timestamp(removed) < entityTimestamp(contract, 0);
+      return !removed;
     });
     var validContracts = new Set(out.contracts.map(function (contract) { return contract.id; }));
     var services = new Map();
@@ -537,7 +570,7 @@
     });
     out.services = Array.from(services.values()).filter(function (service) {
       var removed = deleted.services[tombstoneKey(out.id, service.id)];
-      return (!removed || timestamp(removed) < entityTimestamp(service, 0)) &&
+      return !removed &&
         (!service.contractId || validContracts.has(service.contractId));
     });
     out.sentDates = Array.from(new Set((local.sentDates || []).concat(remote.sentDates || []))).sort();
@@ -574,7 +607,7 @@
           localSync.sections[section], remoteSync.sections[section]
         ).filter(function (item) {
           var removed = deleted.priceList[text(item && item.code)];
-          return !removed || timestamp(removed) < entityTimestamp(item, 0);
+          return !removed;
         });
       } else if (section === 'customFields') {
         out[section] = mergeArraySection(
@@ -582,7 +615,7 @@
           localSync.sections[section], remoteSync.sections[section]
         ).filter(function (item) {
           var removed = deleted.customFields[text(item && item.id)];
-          return !removed || timestamp(removed) < entityTimestamp(item, 0);
+          return !removed;
         });
       } else if (
         local[section] && remote[section] &&
@@ -605,7 +638,7 @@
     });
     out.clients = Array.from(clients.values()).filter(function (client) {
       var removed = deleted.clients[client.id];
-      return !removed || timestamp(removed) < entityTimestamp(client, 0);
+      return !removed;
     }).map(function (client) {
       var localClient = (local.clients || []).find(function (item) { return item.id === client.id; });
       var remoteClient = (remote.clients || []).find(function (item) { return item.id === client.id; });
@@ -1108,6 +1141,7 @@
     seedCurrentMonthSnapshot: seedCurrentMonthSnapshot,
     ensureSyncMeta: ensureSyncMeta,
     markDeleted: markDeleted,
+    purgeDeletedEntities: purgeDeletedEntities,
     migrateDB: migrateDB,
     mergeDB: mergeDB,
     mergeDBThreeWay: mergeDBThreeWay,
